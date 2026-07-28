@@ -1,0 +1,9 @@
+V10.1 – Professional Dashboard UI
+
+- Reka bentuk semula Dashboard Pentadbir.
+- Sidebar profesional dengan kumpulan menu yang jelas.
+- Header moden dengan notifikasi dan profil pengguna.
+- Kad statistik, carta ringkasan dan panel aktiviti baharu.
+- Paparan responsif untuk komputer, tablet dan telefon.
+- Semua fungsi, data dan URL asal dikekalkan.
+- Tiada migration pangkalan data diperlukan.

@@ -1,0 +1,11 @@
+APLIKASI KEHADIRAN GURU – V10.1 PROFESSIONAL DASHBOARD UI
+
+1. Gantikan semua kandungan repository dengan kandungan build ini.
+2. GitHub Desktop Summary:
+   Build V10.1 - Professional Dashboard UI
+3. Commit to main dan Push origin.
+4. Tunggu Render Auto Deploy selesai.
+5. Buka aplikasi dan tekan Kemas Kini jika notis PWA dipaparkan.
+6. Jika paparan lama masih muncul, lakukan hard refresh (Ctrl+F5).
+
+Tiada migration baharu diperlukan.
