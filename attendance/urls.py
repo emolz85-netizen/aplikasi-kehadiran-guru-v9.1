@@ -32,4 +32,10 @@ urlpatterns = [
     path("import-guru/", views.import_teachers, name="import_teachers"),
     path("log-audit/", views.audit_log_page, name="audit_log_page"),
     path("log-audit/export-csv/", views.audit_log_export_csv, name="audit_log_export_csv"),
+    path("notifikasi/", views.notification_center, name="notification_center"),
+    path("notifikasi/<int:pk>/baca/", views.notification_mark_read, name="notification_mark_read"),
+    path("notifikasi/baca-semua/", views.notification_mark_all_read, name="notification_mark_all_read"),
+    path("push/public-key/", views.push_public_key, name="push_public_key"),
+    path("push/subscribe/", views.push_subscribe, name="push_subscribe"),
+    path("push/unsubscribe/", views.push_unsubscribe, name="push_unsubscribe"),
 ]

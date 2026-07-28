@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog
+from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog, PushSubscription, AppNotification, VapidConfiguration
 
 
 @admin.register(SchoolSettings)
@@ -105,3 +105,29 @@ class SystemAuditLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+@admin.register(PushSubscription)
+class PushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "is_active", "updated_at")
+    list_filter = ("is_active", "updated_at")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "endpoint")
+    readonly_fields = ("endpoint", "p256dh", "auth", "user_agent", "created_at", "updated_at")
+
+
+@admin.register(AppNotification)
+class AppNotificationAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "user", "category", "title", "is_read")
+    list_filter = ("category", "is_read", "created_at")
+    search_fields = ("user__username", "title", "message")
+    readonly_fields = ("created_at", "read_at")
+
+
+@admin.register(VapidConfiguration)
+class VapidConfigurationAdmin(admin.ModelAdmin):
+    list_display = ("subject", "created_at", "updated_at")
+    readonly_fields = ("public_key", "private_key_pem", "created_at", "updated_at")
+    def has_add_permission(self, request):
+        return not VapidConfiguration.objects.exists()
+    def has_delete_permission(self, request, obj=None):
+        return False

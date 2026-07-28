@@ -1,0 +1,31 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Pusat Notifikasi{% endblock %}
+{% block content %}
+<section class="page-heading notification-heading">
+  <div><span class="eyebrow">V9.2.004</span><h1>🔔 Pusat Notifikasi</h1><p>Semua makluman kehadiran, cuti, keselamatan dan sistem.</p></div>
+  <div class="notification-actions">
+    <button type="button" id="enablePush" class="primary">Aktifkan Push Notification</button>
+    <button type="button" id="disablePush" class="secondary">Nyahaktifkan</button>
+    <form method="post" action="{% url 'notification_mark_all_read' %}">{% csrf_token %}<button type="submit" class="secondary">Tanda semua dibaca</button></form>
+  </div>
+</section>
+<div id="pushStatus" class="push-status">Status push sedang diperiksa…</div>
+<nav class="filter-tabs">
+  <a href="{% url 'notification_center' %}" class="{% if not selected_category %}active{% endif %}">Semua</a>
+  <a href="?category=KEHADIRAN" class="{% if selected_category == 'KEHADIRAN' %}active{% endif %}">Kehadiran</a>
+  <a href="?category=CUTI" class="{% if selected_category == 'CUTI' %}active{% endif %}">Cuti</a>
+  <a href="?category=KESELAMATAN" class="{% if selected_category == 'KESELAMATAN' %}active{% endif %}">Keselamatan</a>
+  <a href="?category=SISTEM" class="{% if selected_category == 'SISTEM' %}active{% endif %}">Sistem</a>
+</nav>
+<section class="notification-list">
+{% for item in items %}
+  <article class="notification-card {% if not item.is_read %}unread{% endif %}">
+    <div class="notification-icon">{% if item.category == 'KEHADIRAN' %}🕒{% elif item.category == 'CUTI' %}📅{% elif item.category == 'KESELAMATAN' %}🛡️{% else %}📢{% endif %}</div>
+    <div class="notification-body"><div class="notification-meta"><span>{{ item.get_category_display }}</span><time>{{ item.created_at|date:"d/m/Y H:i" }}</time></div><h3>{{ item.title }}</h3><p>{{ item.message }}</p></div>
+    <div>{% if not item.is_read %}<form method="post" action="{% url 'notification_mark_read' item.pk %}">{% csrf_token %}<button type="submit" class="small-button">Buka</button></form>{% else %}<a class="small-button secondary" href="{{ item.url|default:'/' }}">Lihat</a>{% endif %}</div>
+  </article>
+{% empty %}<div class="empty-state"><h3>Tiada notifikasi</h3><p>Notifikasi baharu akan dipaparkan di sini.</p></div>{% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'attendance/push.js' %}"></script>{% endblock %}

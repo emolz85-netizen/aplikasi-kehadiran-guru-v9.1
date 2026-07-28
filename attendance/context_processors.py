@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import SchoolSettings
+from .models import SchoolSettings, AppNotification
 
 
 def school_context(request):
@@ -11,7 +11,8 @@ def school_context(request):
             "SCHOOL_LATITUDE": school.latitude,
             "SCHOOL_LONGITUDE": school.longitude,
             "SCHOOL_RADIUS_METERS": school.radius_meters,
-            "APP_VERSION": "9.2.003",
+            "APP_VERSION": "9.2.004",
+            "NOTIFICATION_UNREAD_COUNT": AppNotification.objects.filter(user=request.user, is_read=False).count() if request.user.is_authenticated else 0,
         }
     except Exception:
         return {
@@ -20,5 +21,6 @@ def school_context(request):
             "SCHOOL_LATITUDE": settings.SCHOOL_LATITUDE,
             "SCHOOL_LONGITUDE": settings.SCHOOL_LONGITUDE,
             "SCHOOL_RADIUS_METERS": settings.SCHOOL_RADIUS_METERS,
-            "APP_VERSION": "9.2.003",
+            "APP_VERSION": "9.2.004",
+            "NOTIFICATION_UNREAD_COUNT": AppNotification.objects.filter(user=request.user, is_read=False).count() if request.user.is_authenticated else 0,
         }

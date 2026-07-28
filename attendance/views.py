@@ -2,6 +2,7 @@ import base64
 import io
 import math
 import calendar
+import json
 from datetime import time, datetime, timedelta
 
 from django.conf import settings
@@ -17,16 +18,16 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm
-from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest
+from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification
 
 def health(request):
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.003"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.004"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.003"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.004"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -36,15 +37,51 @@ def manifest(request):
         "display": "standalone",
         "background_color": "#e5e7eb",
         "theme_color": "#4b5563",
+        "icons": [
+            {"src": "/static/attendance/icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "/static/attendance/icon-512.png", "sizes": "512x512", "type": "image/png"},
+        ],
     })
 
 def service_worker(request):
-    script = '''
-const CACHE = "kehadiran-v9-2-003";
-self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
-self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+    script = r'''
+const CACHE = "kehadiran-v9-2-004";
+self.addEventListener("install", event => {
+  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["/", "/login/"])));
+});
+self.addEventListener("activate", event => event.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+});
+self.addEventListener("push", event => {
+  let data = {title: "Sistem Kehadiran Guru", body: "Anda menerima notifikasi baharu.", url: "/notifikasi/"};
+  try { data = Object.assign(data, event.data.json()); } catch (e) {}
+  event.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: "/static/attendance/icon-192.png",
+    badge: "/static/attendance/icon-192.png",
+    data: {url: data.url || "/notifikasi/"},
+    tag: "kehadiran-" + (data.notification_id || Date.now()),
+    renotify: true
+  }));
+});
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = event.notification.data && event.notification.data.url ? event.notification.data.url : "/notifikasi/";
+  event.waitUntil(clients.matchAll({type: "window", includeUncontrolled: true}).then(list => {
+    for (const client of list) {
+      if (client.url.includes(target) && "focus" in client) return client.focus();
+    }
+    return clients.openWindow ? clients.openWindow(target) : null;
+  }));
+});
 '''
-    return HttpResponse(script, content_type="application/javascript")
+    response = HttpResponse(script, content_type="application/javascript")
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
+    return response
 
 
 
@@ -266,6 +303,12 @@ def record_attendance(request, action):
         rec.check_out_user_agent = user_agent
 
     rec.save()
+    from .push import send_notification
+    local_time = timezone.localtime(now).strftime("%H:%M")
+    if action == "masuk":
+        send_notification(request.user, "Daftar masuk berjaya", f"Kehadiran anda telah direkodkan pada {local_time}.", "KEHADIRAN", "/")
+    else:
+        send_notification(request.user, "Daftar keluar berjaya", f"Rekod pulang anda telah disimpan pada {local_time}.", "KEHADIRAN", "/")
     return JsonResponse({"ok": True, "message": f"Berjaya. Jarak {distance:.1f} m, ketepatan GPS {accuracy:.0f} m."})
 
 @login_required
@@ -376,6 +419,10 @@ def leave_page(request):
                 action="Mohon cuti",
                 details=f"{item.get_leave_type_display()}: {item.start_date:%d/%m/%Y} - {item.end_date:%d/%m/%Y}",
             )
+            from .push import send_notification
+            send_notification(request.user, "Permohonan cuti diterima", "Permohonan cuti anda sedang menunggu semakan pentadbir.", "CUTI", "/cuti/")
+            for admin_user in get_user_model().objects.filter(is_staff=True, is_active=True):
+                send_notification(admin_user, "Permohonan cuti baharu", f"{request.user.get_full_name() or request.user.username} menghantar permohonan cuti.", "CUTI", "/pengurusan-cuti/")
             messages.success(request, "Permohonan cuti berjaya dihantar kepada pentadbir.")
             return redirect("leave_page")
     else:
@@ -454,6 +501,9 @@ def leave_review(request, pk, decision):
             action="Permohonan cuti " + ("diluluskan" if decision == "lulus" else "ditolak"),
             details=f"Oleh {request.user.get_full_name() or request.user.username}; permohonan #{item.pk}",
         )
+        from .push import send_notification
+        keputusan = "diluluskan" if decision == "lulus" else "ditolak"
+        send_notification(item.user, f"Permohonan cuti {keputusan}", f"Permohonan cuti {item.start_date:%d/%m/%Y} hingga {item.end_date:%d/%m/%Y} telah {keputusan}.", "CUTI", "/cuti/")
         messages.success(request, f"Permohonan {item.user.get_full_name() or item.user.username} telah {item.get_status_display().lower()}.")
         return redirect("leave_admin")
     return render(request, "attendance/leave_review.html", {"item": item, "form": form, "decision": decision})
@@ -913,6 +963,9 @@ def password_recovery_request(request):
             if not existing:
                 PasswordRecoveryRequest.objects.create(user=user)
                 AccountActivity.objects.create(user=user, action="Minta reset kata laluan", details="Permintaan dihantar kepada pentadbir")
+                from .push import send_notification
+                for admin_user in User.objects.filter(is_staff=True, is_active=True):
+                    send_notification(admin_user, "Permintaan reset kata laluan", f"{user.get_full_name() or user.username} meminta QR reset kata laluan.", "KESELAMATAN", "/pemulihan-kata-laluan/admin/")
         messages.success(request, "Permintaan telah dihantar. Hubungi pentadbir sekolah untuk mengimbas QR reset.")
         return redirect("password_recovery_status")
     return render(request, "attendance/password_recovery_request.html", {"form": form})
@@ -1031,6 +1084,8 @@ def password_recovery_approve(request, pk):
     item.used_at = None
     item.save()
     AccountActivity.objects.create(user=item.user, action="QR reset diluluskan", details=f"Diluluskan oleh {request.user.username}")
+    from .push import send_notification
+    send_notification(item.user, "QR reset telah dijana", "Pentadbir telah menjana QR reset kata laluan yang sah selama 15 minit.", "KESELAMATAN", "/lupa-kata-laluan/status/")
     messages.success(request, f"QR reset untuk {item.user.username} telah dijana dan sah selama 15 minit.")
     return redirect("password_recovery_admin")
 
@@ -1130,3 +1185,76 @@ def audit_log_export_csv(request):
         ])
     write_audit(request=request, category="LAPORAN", action="Eksport log audit CSV", description=f"{logs.count()} rekod dieksport.", status_code=200)
     return response
+
+
+@login_required
+def notification_center(request):
+    category = request.GET.get("category", "").upper()
+    items = AppNotification.objects.filter(user=request.user)
+    if category in {"KEHADIRAN", "CUTI", "KESELAMATAN", "SISTEM"}:
+        items = items.filter(category=category)
+    return render(request, "attendance/notifications.html", {
+        "items": items[:150],
+        "selected_category": category,
+        "unread_count": AppNotification.objects.filter(user=request.user, is_read=False).count(),
+    })
+
+
+@login_required
+@require_POST
+def notification_mark_read(request, pk):
+    from .push import mark_notification_read
+    item = get_object_or_404(AppNotification, pk=pk, user=request.user)
+    mark_notification_read(item)
+    return redirect(item.url or "notification_center")
+
+
+@login_required
+@require_POST
+def notification_mark_all_read(request):
+    AppNotification.objects.filter(user=request.user, is_read=False).update(is_read=True, read_at=timezone.now())
+    messages.success(request, "Semua notifikasi ditandakan sebagai telah dibaca.")
+    return redirect("notification_center")
+
+
+@login_required
+def push_public_key(request):
+    from .push import get_vapid_configuration
+    return JsonResponse({"publicKey": get_vapid_configuration().public_key})
+
+
+@login_required
+@require_POST
+def push_subscribe(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+        endpoint = payload["endpoint"]
+        keys = payload["keys"]
+        p256dh = keys["p256dh"]
+        auth = keys["auth"]
+    except (ValueError, KeyError, TypeError):
+        return JsonResponse({"ok": False, "message": "Data langganan tidak sah."}, status=400)
+    subscription, _ = PushSubscription.objects.update_or_create(
+        endpoint=endpoint,
+        defaults={
+            "user": request.user,
+            "p256dh": p256dh,
+            "auth": auth,
+            "user_agent": request.META.get("HTTP_USER_AGENT", "")[:2000],
+            "is_active": True,
+        },
+    )
+    return JsonResponse({"ok": True, "message": "Push Notification telah diaktifkan.", "id": subscription.pk})
+
+
+@login_required
+@require_POST
+def push_unsubscribe(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+        endpoint = payload.get("endpoint", "")
+    except ValueError:
+        endpoint = ""
+    if endpoint:
+        PushSubscription.objects.filter(user=request.user, endpoint=endpoint).update(is_active=False)
+    return JsonResponse({"ok": True, "message": "Push Notification telah dinyahaktifkan."})

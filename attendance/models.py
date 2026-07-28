@@ -230,3 +230,67 @@ class SystemAuditLog(models.Model):
 
     def __str__(self):
         return f"{self.created_at:%d/%m/%Y %H:%M} - {self.username_snapshot or 'Sistem'} - {self.action}"
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="push_subscriptions")
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()
+    auth = models.TextField()
+    user_agent = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = "Langganan push"
+        verbose_name_plural = "Langganan push"
+
+    def __str__(self):
+        return f"{self.user} - {self.endpoint[:45]}"
+
+
+class AppNotification(models.Model):
+    CATEGORY_CHOICES = [
+        ("KEHADIRAN", "Kehadiran"),
+        ("CUTI", "Cuti"),
+        ("KESELAMATAN", "Keselamatan"),
+        ("SISTEM", "Sistem"),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="app_notifications")
+    title = models.CharField(max_length=160)
+    message = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="SISTEM")
+    url = models.CharField(max_length=500, blank=True, default="/")
+    is_read = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["user", "is_read", "created_at"], name="notif_user_read_idx")]
+        verbose_name = "Notifikasi aplikasi"
+        verbose_name_plural = "Notifikasi aplikasi"
+
+    def __str__(self):
+        return f"{self.user} - {self.title}"
+
+
+class VapidConfiguration(models.Model):
+    public_key = models.TextField()
+    private_key_pem = models.TextField()
+    subject = models.CharField(max_length=255, default="mailto:admin@skuluansuan.local")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Konfigurasi VAPID"
+        verbose_name_plural = "Konfigurasi VAPID"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and VapidConfiguration.objects.exists():
+            self.pk = VapidConfiguration.objects.first().pk
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return "Kunci Web Push VAPID"

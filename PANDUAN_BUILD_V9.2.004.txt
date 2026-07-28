@@ -1,0 +1,34 @@
+BUILD V9.2.004 — WEB PUSH NOTIFICATION (PWA)
+================================================
+
+Fungsi baharu:
+1. Push Notification melalui standard Web Push, tanpa Firebase.
+2. Service Worker menerima notifikasi walaupun tab aplikasi ditutup.
+3. Pusat Notifikasi dalam aplikasi dengan badge belum dibaca.
+4. Pengguna boleh aktif/nyahaktif push bagi setiap peranti.
+5. Kunci VAPID dijana automatik dan disimpan dalam pangkalan data.
+6. Notifikasi automatik untuk daftar masuk/keluar, permohonan dan keputusan cuti,
+   permintaan reset kata laluan serta QR reset yang diluluskan.
+7. Langganan tamat/rosak dinyahaktifkan secara automatik.
+
+MIGRATION
+- 0008_build_92004_push_notifications.py
+- Render perlu menjalankan: python manage.py migrate
+
+CARA MENGAKTIFKAN PADA TELEFON/KOMPUTER
+1. Log masuk ke sistem melalui HTTPS.
+2. Buka menu Notifikasi.
+3. Tekan "Aktifkan Push Notification".
+4. Pilih Allow/Benarkan pada pelayar.
+5. Ulang langkah ini bagi setiap peranti yang mahu menerima notifikasi.
+
+SOKONGAN PELAYAR
+- Chrome / Edge desktop dan Android: disokong.
+- iPhone/iPad: pasang laman ke Home Screen dahulu, kemudian aktifkan notifikasi
+  (iOS/iPadOS 16.4 atau lebih baharu).
+- Mod Incognito/Private mungkin tidak menyimpan langganan.
+
+CATATAN
+- Web Push memerlukan HTTPS. Render menyediakan HTTPS secara automatik.
+- Kunci VAPID tidak perlu dimasukkan ke Environment Variables.
+- Notifikasi dalam aplikasi tetap disimpan walaupun push pelayar gagal.
