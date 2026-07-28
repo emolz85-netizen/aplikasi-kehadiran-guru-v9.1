@@ -1,0 +1,33 @@
+APLIKASI KEHADIRAN GURU — BUILD 9.1.002
+
+Fokus: Tetapan Sekolah dan Hari Kelepasan
+
+CIRI:
+1. Tetapan sekolah boleh diurus oleh admin:
+   - Nama sekolah
+   - Alamat
+   - Logo
+   - Latitude dan longitude
+   - Radius GPS
+   - Had ketepatan GPS
+   - Waktu Isnin–Khamis: 07:10 hingga 13:00
+   - Waktu Jumaat: 07:10 hingga 11:40
+2. Admin boleh tambah Hari Kelepasan.
+3. Pada hari kelepasan atau hujung minggu, butang kehadiran dinyahaktifkan.
+4. Kalendar guru menandakan hari kelepasan.
+
+NAIK TARAF MELALUI GITHUB DESKTOP:
+1. Ekstrak ZIP ini.
+2. Salin semua kandungan ke folder repository aplikasi-kehadiran-guru-v9.1.
+3. Pilih Replace files apabila diminta.
+4. Commit: Build 9.1.002 - Tetapan Sekolah dan Hari Kelepasan
+5. Push origin.
+6. Render akan auto-deploy dan menjalankan migration.
+
+SELEPAS DEPLOY:
+- Log masuk sebagai admin.
+- Klik Tetapan Sekolah untuk semak waktu dan GPS.
+- Klik Hari Kelepasan untuk menambah cuti sekolah.
+
+PENTING:
+Migration ini tidak memadam rekod guru atau kehadiran sedia ada.

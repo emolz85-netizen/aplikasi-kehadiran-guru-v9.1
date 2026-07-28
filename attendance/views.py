@@ -15,16 +15,16 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm
-from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, AccountActivity
+from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity
 
 def health(request):
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.1"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.002"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.1"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.002"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -38,7 +38,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-1-1";
+const CACHE = "kehadiran-v9-1-002";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -93,6 +93,7 @@ def haversine_m(lat1, lon1, lat2, lon2):
 @login_required
 def dashboard(request):
     today = timezone.localdate()
+    today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
     record = Attendance.objects.filter(user=request.user, date=today).first()
     month_records = Attendance.objects.filter(
         user=request.user,
@@ -123,6 +124,10 @@ def dashboard(request):
             duty_days.add(day)
             day += timezone.timedelta(days=1)
 
+    holiday_days = {item.date: item.name for item in SchoolHoliday.objects.filter(
+        is_active=True, date__year=today.year, date__month=today.month
+    )}
+
     records_by_day = {r.date.day: r for r in month_records}
     month_calendar = []
     for week in calendar.Calendar(firstweekday=0).monthdatescalendar(today.year, today.month):
@@ -132,7 +137,9 @@ def dashboard(request):
             label = ""
             if day.month == today.month:
                 state = "empty"
-                if day in leave_days:
+                if day in holiday_days:
+                    state, label = "holiday", holiday_days[day]
+                elif day in leave_days:
                     state, label = "leave", "Cuti"
                 elif day in duty_days:
                     state, label = "duty", "Tugas rasmi"
@@ -159,6 +166,7 @@ def dashboard(request):
         "target_out": target_out,
         "month_calendar": month_calendar,
         "month_name": today.strftime("%B %Y"),
+        "today_holiday": today_holiday,
     })
 
 @login_required
@@ -189,6 +197,17 @@ def record_attendance(request, action):
         }, status=403)
 
     today = timezone.localdate()
+    holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
+    if holiday:
+        return JsonResponse({
+            "ok": False,
+            "message": f"Hari ini ialah {holiday.name}. Kehadiran tidak diperlukan."
+        }, status=403)
+    if today.weekday() >= 5:
+        return JsonResponse({
+            "ok": False,
+            "message": "Hari ini ialah hujung minggu. Kehadiran tidak diperlukan."
+        }, status=403)
     now = timezone.now()
     rec, _ = Attendance.objects.get_or_create(user=request.user, date=today)
     selfie = request.FILES.get("selfie")

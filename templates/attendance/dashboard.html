@@ -1,5 +1,10 @@
 {% extends "attendance/base.html" %}
 {% block content %}
+{% if today_holiday %}
+<div class="message holiday-notice"><strong>Hari Kelepasan:</strong> {{ today_holiday.name }}. Kehadiran tidak diperlukan hari ini.</div>
+{% elif today.weekday >= 5 %}
+<div class="message holiday-notice"><strong>Hujung minggu.</strong> Kehadiran tidak diperlukan hari ini.</div>
+{% endif %}
 <div class="hero">
   <div><h1>Selamat datang, {{ user.get_full_name|default:user.username }}</h1><p>{{ today }} · <span id="digital-clock"></span></p></div>
   <span>{{ school.radius_meters }} m GPS</span>
@@ -23,8 +28,8 @@
   </div>
   <div class="actions"><button onclick="refreshGPS()">Segarkan GPS</button><a id="map-link" class="button-link" target="_blank" hidden>Lihat di Google Maps</a></div>
   <div class="actions">
-    <button class="primary" onclick="rekod('masuk')" {% if record.check_in %}disabled{% endif %}>Rekod Masuk</button>
-    <button onclick="rekod('keluar')" {% if not record.check_in or record.check_out %}disabled{% endif %}>Rekod Keluar</button>
+    <button class="primary" onclick="rekod('masuk')" {% if record.check_in or today_holiday or today.weekday >= 5 %}disabled{% endif %}>Rekod Masuk</button>
+    <button onclick="rekod('keluar')" {% if not record.check_in or record.check_out or today_holiday or today.weekday >= 5 %}disabled{% endif %}>Rekod Keluar</button>
   </div>
   <canvas id="snapshot" hidden></canvas>
 </section>
@@ -34,7 +39,7 @@
   <div class="calendar-legend">
     <span class="legend present">Hadir</span><span class="legend late">Lewat</span>
     <span class="legend absent">Tiada rekod</span><span class="legend leave">Cuti</span>
-    <span class="legend duty">Tugas rasmi</span>
+    <span class="legend duty">Tugas rasmi</span><span class="legend holiday">Hari kelepasan</span>
   </div>
   <div class="attendance-calendar">
     <div class="weekday">Isn</div><div class="weekday">Sel</div><div class="weekday">Rab</div><div class="weekday">Kha</div><div class="weekday">Jum</div><div class="weekday">Sab</div><div class="weekday">Ahd</div>

@@ -21,3 +21,12 @@ BUILD 9.1.1
 - Menambah kalendar kehadiran bulanan pada dashboard guru.
 - Kalendar membezakan Hadir, Lewat, Tiada Rekod, Cuti dan Tugas Rasmi.
 - Cache PWA dinaik taraf kepada kehadiran-v9-1-1.
+
+
+BUILD 9.1.002
+- Tambah alamat sekolah dalam Tetapan Sekolah.
+- Tambah modul Hari Kelepasan.
+- Sekat rekod kehadiran pada hari kelepasan dan hujung minggu.
+- Paparkan hari kelepasan dalam dashboard dan kalendar guru.
+- Tambah pautan Tetapan Sekolah dan Hari Kelepasan untuk admin.
+- Waktu lalai dikekalkan: Isnin–Khamis 07:10–13:00; Jumaat 07:10–11:40.

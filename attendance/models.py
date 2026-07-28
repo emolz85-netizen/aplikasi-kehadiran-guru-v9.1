@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 
 class SchoolSettings(models.Model):
     school_name = models.CharField(max_length=200, default="SK Ulu Ansuan")
+    address = models.TextField(blank=True, default="")
     latitude = models.FloatField(default=5.745697)
     longitude = models.FloatField(default=117.173844)
     radius_meters = models.PositiveIntegerField(default=50)
@@ -37,6 +38,21 @@ class SchoolSettings(models.Model):
         if date_value.weekday() == 4:
             return self.friday_check_in, self.friday_check_out
         return self.weekday_check_in, self.weekday_check_out
+
+
+class SchoolHoliday(models.Model):
+    name = models.CharField(max_length=200, verbose_name="Nama hari kelepasan")
+    date = models.DateField(unique=True, verbose_name="Tarikh")
+    description = models.TextField(blank=True, verbose_name="Catatan")
+    is_active = models.BooleanField(default=True, verbose_name="Aktif")
+
+    class Meta:
+        ordering = ["date"]
+        verbose_name = "Hari kelepasan"
+        verbose_name_plural = "Hari kelepasan"
+
+    def __str__(self):
+        return f"{self.name} ({self.date:%d/%m/%Y})"
 
 
 class TeacherProfile(models.Model):

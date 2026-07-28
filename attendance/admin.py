@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, AccountActivity
+from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity
 
 
 @admin.register(SchoolSettings)
 class SchoolSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
-        ("Sekolah", {"fields": ("school_name", "logo")}),
+        ("Sekolah", {"fields": ("school_name", "address", "logo")}),
         ("GPS", {"fields": ("latitude", "longitude", "radius_meters", "max_gps_accuracy_meters")}),
         ("Isnin hingga Khamis", {"fields": ("weekday_check_in", "weekday_check_out")}),
         ("Jumaat", {"fields": ("friday_check_in", "friday_check_out")}),
@@ -17,6 +17,15 @@ class SchoolSettingsAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SchoolHoliday)
+class SchoolHolidayAdmin(admin.ModelAdmin):
+    list_display = ("name", "date", "is_active")
+    list_filter = ("is_active", "date")
+    search_fields = ("name", "description")
+    date_hierarchy = "date"
+    ordering = ("date",)
 
 
 @admin.register(TeacherProfile)
