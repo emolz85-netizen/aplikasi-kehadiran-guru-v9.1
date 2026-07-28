@@ -30,3 +30,13 @@ BUILD 9.1.002
 - Paparkan hari kelepasan dalam dashboard dan kalendar guru.
 - Tambah pautan Tetapan Sekolah dan Hari Kelepasan untuk admin.
 - Waktu lalai dikekalkan: Isnin–Khamis 07:10–13:00; Jumaat 07:10–11:40.
+
+BUILD 9.1.003
+- Dashboard Guru Moden dengan jam dan tarikh masa nyata.
+- Kad ringkasan kehadiran mingguan dan bulanan.
+- Status daftar masuk/keluar yang lebih jelas.
+- Paparan GPS langsung: ketepatan, jarak dan status radius.
+- Radar lokasi visual serta pautan Google Maps.
+- Paparan kamera dan status swafoto dipertingkat.
+- Susun atur responsif untuk telefon dan komputer.
+- Tiada migration pangkalan data baharu diperlukan.

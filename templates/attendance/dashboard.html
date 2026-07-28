@@ -1,55 +1,90 @@
 {% extends "attendance/base.html" %}
+{% block title %}Dashboard Guru{% endblock %}
 {% block content %}
 {% if today_holiday %}
 <div class="message holiday-notice"><strong>Hari Kelepasan:</strong> {{ today_holiday.name }}. Kehadiran tidak diperlukan hari ini.</div>
 {% elif today.weekday >= 5 %}
 <div class="message holiday-notice"><strong>Hujung minggu.</strong> Kehadiran tidak diperlukan hari ini.</div>
 {% endif %}
-<div class="hero">
-  <div><h1>Selamat datang, {{ user.get_full_name|default:user.username }}</h1><p>{{ today }} · <span id="digital-clock"></span></p></div>
-  <span>{{ school.radius_meters }} m GPS</span>
-</div>
-<div class="stats four">
-  <div class="card"><b>{{ month_count }}</b><small>Rekod bulan ini</small></div>
-  <div class="card"><b>{{ late_count }}</b><small>Lewat</small></div>
-  <div class="card"><b>{{ target_in|time:"H:i" }}</b><small>Masa masuk</small></div>
-  <div class="card"><b>{{ target_out|time:"H:i" }}</b><small>Masa balik</small></div>
-</div>
-<section class="card">
-  <h2>Kehadiran Hari Ini</h2>
-  <p>Masuk: {% if record.check_in %}{{ record.check_in|date:"H:i:s" }}{% else %}Belum{% endif %}</p>
-  <p>Keluar: {% if record.check_out %}{{ record.check_out|date:"H:i:s" }}{% else %}Belum{% endif %}</p>
-  <p>Status: {% if record %}{{ record.get_status_display }}{% else %}—{% endif %}</p>
-  <video id="camera" autoplay playsinline muted></video>
-  <div class="actions"><button onclick="startCamera()">Buka Kamera</button><button onclick="captureSelfie()">Ambil Swafoto</button></div>
-  <div id="gps-details" class="gps-box">
-    <div id="gps-status">Tekan Segarkan GPS untuk mendapatkan lokasi.</div>
-    <small>Koordinat sekolah: {{ school.latitude }}, {{ school.longitude }} · Ketepatan maksimum: {{ school.max_gps_accuracy_meters }} m</small>
+
+<section class="teacher-hero">
+  <div>
+    <span class="eyebrow" id="greeting">Selamat datang</span>
+    <h1>{{ user.get_full_name|default:user.username }}</h1>
+    <p class="hero-date"><span id="live-date">{{ today }}</span> · <strong id="digital-clock">--:--:--</strong></p>
   </div>
-  <div class="actions"><button onclick="refreshGPS()">Segarkan GPS</button><a id="map-link" class="button-link" target="_blank" hidden>Lihat di Google Maps</a></div>
-  <div class="actions">
-    <button class="primary" onclick="rekod('masuk')" {% if record.check_in or today_holiday or today.weekday >= 5 %}disabled{% endif %}>Rekod Masuk</button>
-    <button onclick="rekod('keluar')" {% if not record.check_in or record.check_out or today_holiday or today.weekday >= 5 %}disabled{% endif %}>Rekod Keluar</button>
+  <div class="hero-status {{ today_status_class }}">
+    <span class="status-dot"></span>
+    <div><small>Status hari ini</small><strong>{{ today_status }}</strong></div>
   </div>
-  <canvas id="snapshot" hidden></canvas>
+</section>
+
+<div class="dashboard-stats">
+  <article class="metric-card"><span class="metric-icon">✓</span><div><b>{{ week_count }}</b><small>Hadir minggu ini</small></div></article>
+  <article class="metric-card"><span class="metric-icon">▦</span><div><b>{{ month_count }}</b><small>Rekod bulan ini</small></div></article>
+  <article class="metric-card"><span class="metric-icon">!</span><div><b>{{ late_count }}</b><small>Lewat bulan ini</small></div></article>
+  <article class="metric-card"><span class="metric-icon">⌖</span><div><b>{{ school.radius_meters }} m</b><small>Radius sekolah</small></div></article>
+</div>
+
+<div class="dashboard-grid">
+  <section class="card attendance-panel">
+    <div class="section-heading">
+      <div><span class="eyebrow">REKOD HARIAN</span><h2>Kehadiran Hari Ini</h2></div>
+      <span class="schedule-chip">{{ target_in|time:"H:i" }} – {{ target_out|time:"H:i" }}</span>
+    </div>
+
+    <div class="today-timeline">
+      <div class="timeline-item {% if record.check_in %}done{% endif %}"><span>Masuk</span><strong>{% if record.check_in %}{{ record.check_in|date:"H:i:s" }}{% else %}Belum{% endif %}</strong></div>
+      <div class="timeline-line"></div>
+      <div class="timeline-item {% if record.check_out %}done{% endif %}"><span>Keluar</span><strong>{% if record.check_out %}{{ record.check_out|date:"H:i:s" }}{% else %}Belum{% endif %}</strong></div>
+    </div>
+
+    <div class="camera-shell">
+      <video id="camera" autoplay playsinline muted></video>
+      <div id="camera-placeholder"><span>◎</span><b>Kamera belum dibuka</b><small>Swafoto membantu pengesahan rekod</small></div>
+      <span id="selfie-badge" class="selfie-badge" hidden>Swafoto tersedia</span>
+    </div>
+    <div class="actions compact-actions">
+      <button type="button" onclick="startCamera()">Buka Kamera</button>
+      <button type="button" class="secondary-button" onclick="captureSelfie()">Ambil Swafoto</button>
+    </div>
+
+    <div class="record-actions">
+      <button class="primary check-button" onclick="rekod('masuk')" {% if record.check_in or today_holiday or today.weekday >= 5 %}disabled{% endif %}><span>→</span> Rekod Masuk</button>
+      <button class="check-button" onclick="rekod('keluar')" {% if not record.check_in or record.check_out or today_holiday or today.weekday >= 5 %}disabled{% endif %}><span>←</span> Rekod Keluar</button>
+    </div>
+    <canvas id="snapshot" hidden></canvas>
+  </section>
+
+  <aside class="card location-panel">
+    <div class="section-heading"><div><span class="eyebrow">GPS LANGSUNG</span><h2>Status Lokasi</h2></div><span id="gps-signal" class="signal-chip waiting">Menunggu</span></div>
+    <div class="gps-radar"><div class="radar-ring ring-one"></div><div class="radar-ring ring-two"></div><div class="school-pin">S</div><div id="user-pin" class="user-pin" hidden>●</div></div>
+    <div id="gps-status" class="gps-message">Tekan butang di bawah untuk mendapatkan lokasi berketepatan tinggi.</div>
+    <div class="location-metrics">
+      <div><small>Ketepatan</small><strong id="accuracy-value">—</strong></div>
+      <div><small>Jarak sekolah</small><strong id="distance-value">—</strong></div>
+      <div><small>Status radius</small><strong id="radius-value">—</strong></div>
+    </div>
+    <div class="coordinates"><small>Koordinat semasa</small><code id="coordinate-value">—</code></div>
+    <div class="actions compact-actions">
+      <button type="button" class="primary" onclick="refreshGPS()">Segarkan GPS</button>
+      <a id="map-link" class="button-link" target="_blank" rel="noopener" hidden>Lihat di Google Maps</a>
+    </div>
+    <small class="location-note">Had ketepatan: {{ school.max_gps_accuracy_meters }} m · Pusat sekolah: {{ school.latitude }}, {{ school.longitude }}</small>
+  </aside>
+</div>
+
+<section class="card school-summary">
+  <div><span class="eyebrow">MAKLUMAT SEKOLAH</span><h2>{{ school.school_name }}</h2>{% if school.address %}<p>{{ school.address }}</p>{% endif %}</div>
+  <div class="school-facts"><span><small>Masuk</small><b>{{ target_in|time:"H:i" }}</b></span><span><small>Balik</small><b>{{ target_out|time:"H:i" }}</b></span><span><small>Radius</small><b>{{ school.radius_meters }} m</b></span></div>
 </section>
 
 <section class="card">
-  <div class="calendar-title"><h2>Kalendar Kehadiran</h2><strong>{{ month_name }}</strong></div>
-  <div class="calendar-legend">
-    <span class="legend present">Hadir</span><span class="legend late">Lewat</span>
-    <span class="legend absent">Tiada rekod</span><span class="legend leave">Cuti</span>
-    <span class="legend duty">Tugas rasmi</span><span class="legend holiday">Hari kelepasan</span>
-  </div>
+  <div class="calendar-title"><div><span class="eyebrow">REKOD BULANAN</span><h2>Kalendar Kehadiran</h2></div><strong>{{ month_name }}</strong></div>
+  <div class="calendar-legend"><span class="legend present">Hadir</span><span class="legend late">Lewat</span><span class="legend absent">Tiada rekod</span><span class="legend leave">Cuti</span><span class="legend duty">Tugas rasmi</span><span class="legend holiday">Hari kelepasan</span></div>
   <div class="attendance-calendar">
     <div class="weekday">Isn</div><div class="weekday">Sel</div><div class="weekday">Rab</div><div class="weekday">Kha</div><div class="weekday">Jum</div><div class="weekday">Sab</div><div class="weekday">Ahd</div>
-    {% for week in month_calendar %}
-      {% for cell in week %}
-      <div class="calendar-day {{ cell.state }}" title="{{ cell.label }}">
-        <b>{{ cell.day }}</b>{% if cell.label %}<small>{{ cell.label }}</small>{% endif %}
-      </div>
-      {% endfor %}
-    {% endfor %}
+    {% for week in month_calendar %}{% for cell in week %}<div class="calendar-day {{ cell.state }}" title="{{ cell.label }}"><b>{{ cell.day }}</b>{% if cell.label %}<small>{{ cell.label }}</small>{% endif %}</div>{% endfor %}{% endfor %}
   </div>
 </section>
 {% endblock %}
@@ -57,6 +92,8 @@
 <script>
 const csrfToken="{{ csrf_token }}";
 const urls={masuk:"{% url 'record_attendance' 'masuk' %}",keluar:"{% url 'record_attendance' 'keluar' %}"};
-setInterval(()=>{document.getElementById('digital-clock').textContent=new Date().toLocaleTimeString('ms-MY')},1000);
+window.schoolLocation={latitude:{{ school.latitude }},longitude:{{ school.longitude }},radius:{{ school.radius_meters }},maxAccuracy:{{ school.max_gps_accuracy_meters }}};
+function updateClock(){const now=new Date();document.getElementById('digital-clock').textContent=now.toLocaleTimeString('ms-MY',{hour12:false});document.getElementById('live-date').textContent=now.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'});const h=now.getHours();document.getElementById('greeting').textContent=h<12?'Selamat pagi':h<15?'Selamat tengah hari':h<19?'Selamat petang':'Selamat malam'}
+updateClock();setInterval(updateClock,1000);
 </script>
 {% endblock %}

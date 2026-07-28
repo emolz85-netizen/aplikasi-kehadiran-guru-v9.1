@@ -1,0 +1,22 @@
+APLIKASI KEHADIRAN GURU — BUILD 9.1.003
+
+Fokus build: Dashboard Guru Moden
+
+Ciri baharu:
+1. Jam digital dan tarikh masa nyata.
+2. Ucapan automatik mengikut waktu.
+3. Ringkasan hadir minggu ini, rekod bulan ini dan lewat.
+4. Status kehadiran hari ini.
+5. GPS langsung dengan ketepatan, jarak dan status radius.
+6. Radar lokasi visual dan pautan Google Maps.
+7. Paparan kamera/swafoto yang lebih kemas.
+8. Rekaan responsif untuk telefon.
+
+Pemasangan:
+1. Ekstrak ZIP ini.
+2. Salin semua kandungan ke folder repository GitHub Desktop.
+3. Pilih Replace files in destination.
+4. Commit: Build 9.1.003 - Dashboard Guru Moden
+5. Push origin dan tunggu Render deploy.
+
+Nota: Build ini tidak memerlukan migration baharu.

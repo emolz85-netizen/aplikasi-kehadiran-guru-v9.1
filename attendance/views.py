@@ -22,9 +22,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.002"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.003"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.002"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.003"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -38,7 +38,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-1-002";
+const CACHE = "kehadiran-v9-1-003";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -156,6 +156,22 @@ def dashboard(request):
 
     school = SchoolSettings.load()
     target_in, target_out = school.times_for_date(today)
+    week_start = today - timezone.timedelta(days=today.weekday())
+    week_records = Attendance.objects.filter(
+        user=request.user,
+        date__gte=week_start,
+        date__lte=today,
+        check_in__isnull=False,
+    )
+    today_status = "Belum daftar masuk"
+    today_status_class = "pending"
+    if record and record.check_out:
+        today_status = "Selesai daftar keluar"
+        today_status_class = "complete"
+    elif record and record.check_in:
+        today_status = "Sudah daftar masuk"
+        today_status_class = "active"
+
     return render(request, "attendance/dashboard.html", {
         "record": record,
         "today": today,
@@ -167,6 +183,9 @@ def dashboard(request):
         "month_calendar": month_calendar,
         "month_name": today.strftime("%B %Y"),
         "today_holiday": today_holiday,
+        "week_count": week_records.count(),
+        "today_status": today_status,
+        "today_status_class": today_status_class,
     })
 
 @login_required
