@@ -1,0 +1,6 @@
+V9.2.006
+- Anti GPS Spoofing risk engine
+- Device Trust management
+- TrustedDevice and LocationSecurityEvent models
+- Attendance risk metadata
+- Admin security dashboard

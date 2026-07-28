@@ -17,6 +17,12 @@ class SchoolSettings(models.Model):
     face_verification_enabled = models.BooleanField(default=True, verbose_name="Aktifkan pengesahan wajah")
     face_match_threshold = models.PositiveSmallIntegerField(default=62, verbose_name="Ambang padanan visual (%)")
     require_liveness_challenge = models.BooleanField(default=True, verbose_name="Wajib cabaran hidup")
+    device_trust_enabled = models.BooleanField(default=True, verbose_name="Aktifkan peranti dipercayai")
+    auto_trust_first_device = models.BooleanField(default=True, verbose_name="Percayai peranti pertama secara automatik")
+    block_untrusted_device = models.BooleanField(default=False, verbose_name="Sekat peranti belum diluluskan")
+    max_location_age_seconds = models.PositiveIntegerField(default=60, verbose_name="Umur maksimum bacaan GPS (saat)")
+    max_plausible_speed_kmh = models.PositiveIntegerField(default=180, verbose_name="Kelajuan maksimum munasabah (km/j)")
+    high_risk_block_threshold = models.PositiveSmallIntegerField(default=80, verbose_name="Ambang sekatan skor risiko")
     logo = models.ImageField(upload_to="school/", null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -116,6 +122,14 @@ class Attendance(models.Model):
     liveness_out_challenge = models.CharField(max_length=120, blank=True)
     selfie_in_hash = models.CharField(max_length=64, blank=True, db_index=True)
     selfie_out_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    check_in_device_id = models.CharField(max_length=64, blank=True, db_index=True)
+    check_out_device_id = models.CharField(max_length=64, blank=True, db_index=True)
+    check_in_risk_score = models.PositiveSmallIntegerField(default=0)
+    check_out_risk_score = models.PositiveSmallIntegerField(default=0)
+    check_in_risk_level = models.CharField(max_length=20, blank=True, default="RENDAH")
+    check_out_risk_level = models.CharField(max_length=20, blank=True, default="RENDAH")
+    check_in_security_flags = models.JSONField(default=list, blank=True)
+    check_out_security_flags = models.JSONField(default=list, blank=True)
 
     class Meta:
         unique_together = ("user", "date")
@@ -307,3 +321,59 @@ class VapidConfiguration(models.Model):
 
     def __str__(self):
         return "Kunci Web Push VAPID"
+
+
+class TrustedDevice(models.Model):
+    STATUS_CHOICES = [("DIPERCAYAI", "Dipercayai"), ("MENUNGGU", "Menunggu kelulusan"), ("DISEKAT", "Disekat")]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="trusted_devices")
+    device_id = models.CharField(max_length=64, db_index=True)
+    device_name = models.CharField(max_length=160, blank=True)
+    platform = models.CharField(max_length=100, blank=True)
+    browser = models.CharField(max_length=100, blank=True)
+    user_agent = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="MENUNGGU")
+    first_ip = models.GenericIPAddressField(null=True, blank=True)
+    last_ip = models.GenericIPAddressField(null=True, blank=True)
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="approved_trusted_devices")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ("user", "device_id")
+        ordering = ["-last_seen_at"]
+        indexes = [models.Index(fields=["user", "status"], name="device_user_status_idx")]
+        verbose_name = "Peranti dipercayai"
+        verbose_name_plural = "Peranti dipercayai"
+
+    def __str__(self):
+        return f"{self.user} - {self.device_name or self.device_id[:12]} ({self.get_status_display()})"
+
+
+class LocationSecurityEvent(models.Model):
+    EVENT_CHOICES = [("GPS", "Integriti GPS"), ("PERANTI", "Peranti"), ("KELAJUAN", "Kelajuan"), ("RISIKO", "Skor risiko")]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="location_security_events")
+    attendance = models.ForeignKey(Attendance, null=True, blank=True, on_delete=models.SET_NULL, related_name="security_events")
+    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES, default="GPS")
+    action = models.CharField(max_length=20, blank=True)
+    risk_score = models.PositiveSmallIntegerField(default=0)
+    risk_level = models.CharField(max_length=20, default="RENDAH")
+    flags = models.JSONField(default=list, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    accuracy = models.FloatField(null=True, blank=True)
+    device_id = models.CharField(max_length=64, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    blocked = models.BooleanField(default=False)
+    details = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["risk_level", "created_at"], name="locsec_risk_date_idx")]
+        verbose_name = "Peristiwa keselamatan lokasi"
+        verbose_name_plural = "Peristiwa keselamatan lokasi"
+
+    def __str__(self):
+        return f"{self.user} - {self.risk_level} ({self.risk_score})"

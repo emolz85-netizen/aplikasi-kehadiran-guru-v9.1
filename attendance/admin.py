@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog, PushSubscription, AppNotification, VapidConfiguration
+from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog, PushSubscription, AppNotification, VapidConfiguration, TrustedDevice, LocationSecurityEvent
 
 
 @admin.register(SchoolSettings)
@@ -10,6 +10,7 @@ class SchoolSettingsAdmin(admin.ModelAdmin):
         ("GPS", {"fields": ("latitude", "longitude", "radius_meters", "max_gps_accuracy_meters")}),
         ("Isnin hingga Khamis", {"fields": ("weekday_check_in", "weekday_check_out")}),
         ("Pengesahan wajah", {"fields": ("face_verification_enabled", "face_match_threshold", "require_liveness_challenge")}),
+        ("Anti GPS Spoofing & Device Trust", {"fields": ("device_trust_enabled", "auto_trust_first_device", "block_untrusted_device", "max_location_age_seconds", "max_plausible_speed_kmh", "high_risk_block_threshold")}),
         ("Jumaat", {"fields": ("friday_check_in", "friday_check_out")}),
     )
 
@@ -49,7 +50,7 @@ class AttendanceAdmin(admin.ModelAdmin):
     list_filter = ("date", "status")
     search_fields = ("user__username", "user__first_name", "user__last_name")
     date_hierarchy = "date"
-    readonly_fields = ("check_in_ip", "check_out_ip", "check_in_device", "check_out_device", "check_in_user_agent", "check_out_user_agent", "face_in_score", "face_out_score", "face_in_status", "face_out_status", "liveness_in_challenge", "liveness_out_challenge", "selfie_in_hash", "selfie_out_hash")
+    readonly_fields = ("check_in_device_id", "check_out_device_id", "check_in_risk_score", "check_out_risk_score", "check_in_risk_level", "check_out_risk_level", "check_in_security_flags", "check_out_security_flags", "check_in_ip", "check_out_ip", "check_in_device", "check_out_device", "check_in_user_agent", "check_out_user_agent", "face_in_score", "face_out_score", "face_in_status", "face_out_status", "liveness_in_challenge", "liveness_out_challenge", "selfie_in_hash", "selfie_out_hash")
 
     @admin.display(description="GPS")
     def gps_link(self, obj):
@@ -132,3 +133,20 @@ class VapidConfigurationAdmin(admin.ModelAdmin):
         return not VapidConfiguration.objects.exists()
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(TrustedDevice)
+class TrustedDeviceAdmin(admin.ModelAdmin):
+    list_display = ("user", "device_name", "platform", "browser", "status", "last_ip", "last_seen_at")
+    list_filter = ("status", "platform", "last_seen_at")
+    search_fields = ("user__username", "user__first_name", "device_name", "device_id", "last_ip")
+    readonly_fields = ("device_id", "first_ip", "first_seen_at", "last_seen_at", "user_agent")
+
+@admin.register(LocationSecurityEvent)
+class LocationSecurityEventAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "user", "action", "risk_level", "risk_score", "blocked", "accuracy", "device_id")
+    list_filter = ("risk_level", "blocked", "event_type", "created_at")
+    search_fields = ("user__username", "device_id", "details", "ip_address")
+    readonly_fields = tuple(field.name for field in LocationSecurityEvent._meta.fields)
+    date_hierarchy = "created_at"
+    def has_add_permission(self, request): return False

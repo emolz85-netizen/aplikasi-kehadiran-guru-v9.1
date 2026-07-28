@@ -21,7 +21,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
-from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification
+from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent
 
 LIVENESS_CHALLENGES = [
     "Senyum dan pandang terus ke kamera",
@@ -54,14 +54,67 @@ def _visual_match(reference, selfie):
     quality_ok = width >= 320 and height >= 240 and 35 <= brightness <= 220 and contrast >= 18
     return digest, score, quality_ok, {"width": width, "height": height, "brightness": round(brightness,1), "contrast": round(contrast,1)}
 
+
+
+def _risk_level(score):
+    if score >= 61: return "TINGGI"
+    if score >= 21: return "SEDERHANA"
+    return "RENDAH"
+
+def _parse_float(value, default=None):
+    try: return float(value)
+    except (TypeError, ValueError): return default
+
+def _evaluate_location_security(request, school, user, lat, lng, accuracy, device_id):
+    flags, score = [], 0
+    now_ms = timezone.now().timestamp() * 1000
+    location_ts = _parse_float(request.POST.get("location_timestamp"), 0)
+    age_seconds = max(0, (now_ms - location_ts) / 1000) if location_ts else 9999
+    if age_seconds > school.max_location_age_seconds:
+        flags.append(f"Bacaan GPS lama ({age_seconds:.0f}s)"); score += 25
+    if accuracy > school.max_gps_accuracy_meters:
+        flags.append(f"Ketepatan lemah ({accuracy:.0f}m)"); score += 25
+    if accuracy <= 1:
+        flags.append("Ketepatan luar biasa sempurna"); score += 15
+    if not device_id or len(device_id) != 64:
+        flags.append("ID peranti tidak sah"); score += 30
+
+    device = None
+    if school.device_trust_enabled and device_id:
+        trusted_exists = TrustedDevice.objects.filter(user=user, status="DIPERCAYAI").exists()
+        default_status = "DIPERCAYAI" if school.auto_trust_first_device and not trusted_exists else "MENUNGGU"
+        device, created = TrustedDevice.objects.get_or_create(user=user, device_id=device_id, defaults={
+            "device_name": (request.POST.get("device_name") or "Peranti web")[:160],
+            "platform": (request.POST.get("device_platform") or "")[:100],
+            "browser": (request.POST.get("device_browser") or "")[:100],
+            "user_agent": request.META.get("HTTP_USER_AGENT", "")[:2000],
+            "status": default_status, "first_ip": get_client_ip(request), "last_ip": get_client_ip(request),
+            "approved_at": timezone.now() if default_status == "DIPERCAYAI" else None,
+        })
+        if not created:
+            device.last_ip = get_client_ip(request); device.device_name=(request.POST.get("device_name") or device.device_name)[:160]; device.save()
+        if device.status == "DISEKAT": flags.append("Peranti disekat"); score += 70
+        elif device.status != "DIPERCAYAI": flags.append("Peranti belum diluluskan"); score += 35
+
+    previous = Attendance.objects.filter(user=user).exclude(check_in_lat__isnull=True).order_by("-check_in").first()
+    speed_kmh = None
+    if previous and previous.check_in and previous.check_in_lat is not None:
+        elapsed_h = max((timezone.now() - previous.check_in).total_seconds() / 3600, 0.001)
+        moved_km = haversine_m(lat, lng, previous.check_in_lat, previous.check_in_lng) / 1000
+        speed_kmh = moved_km / elapsed_h
+        if speed_kmh > school.max_plausible_speed_kmh:
+            flags.append(f"Pergerakan tidak munasabah ({speed_kmh:.0f} km/j)"); score += 45
+    score = min(score, 100)
+    return {"score": score, "level": _risk_level(score), "flags": flags, "device": device, "age_seconds": age_seconds, "speed_kmh": speed_kmh}
+
 def health(request):
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.005"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.006"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.005"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.006"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -79,7 +132,7 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "kehadiran-v9-2-005";
+const CACHE = "kehadiran-v9-2-006";
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["/", "/login/"])));
@@ -309,6 +362,12 @@ def record_attendance(request, action):
     user_agent = request.META.get("HTTP_USER_AGENT", "")[:2000]
     device = describe_device(user_agent)
     client_ip = get_client_ip(request)
+    device_id = (request.POST.get("device_id") or "").strip()[:64]
+    security = _evaluate_location_security(request, school, request.user, lat, lng, accuracy, device_id)
+    blocked = security["score"] >= school.high_risk_block_threshold or (security["device"] and security["device"].status == "DISEKAT") or (school.block_untrusted_device and security["device"] and security["device"].status != "DIPERCAYAI")
+    if blocked:
+        LocationSecurityEvent.objects.create(user=request.user, event_type="RISIKO", action=action, risk_score=security["score"], risk_level=security["level"], flags=security["flags"], latitude=lat, longitude=lng, accuracy=accuracy, device_id=device_id, ip_address=client_ip, blocked=True, details="Rekod disekat oleh kawalan Anti GPS Spoofing & Device Trust")
+        return JsonResponse({"ok": False, "message": f"Rekod disekat kerana risiko keselamatan {security['level'].lower()} ({security['score']}/100). Hubungi pentadbir.", "risk_score": security["score"], "risk_level": security["level"], "flags": security["flags"]}, status=403)
     challenge = (request.POST.get("liveness_challenge") or "").strip()[:120]
     liveness_confirmed = request.POST.get("liveness_confirmed") == "1"
     face_score = None
@@ -352,6 +411,10 @@ def record_attendance(request, action):
         rec.face_in_status = face_status
         rec.liveness_in_challenge = challenge
         rec.selfie_in_hash = selfie_hash
+        rec.check_in_device_id = device_id
+        rec.check_in_risk_score = security["score"]
+        rec.check_in_risk_level = security["level"]
+        rec.check_in_security_flags = security["flags"]
         target_in, _ = school.times_for_date(today)
         rec.status = "LEWAT" if timezone.localtime(now).time() > target_in else "HADIR"
     else:
@@ -372,15 +435,47 @@ def record_attendance(request, action):
         rec.face_out_status = face_status
         rec.liveness_out_challenge = challenge
         rec.selfie_out_hash = selfie_hash
+        rec.check_out_device_id = device_id
+        rec.check_out_risk_score = security["score"]
+        rec.check_out_risk_level = security["level"]
+        rec.check_out_security_flags = security["flags"]
 
     rec.save()
+    LocationSecurityEvent.objects.create(user=request.user, attendance=rec, event_type="RISIKO", action=action, risk_score=security["score"], risk_level=security["level"], flags=security["flags"], latitude=lat, longitude=lng, accuracy=accuracy, device_id=device_id, ip_address=client_ip, blocked=False, details="; ".join(security["flags"]) or "Semakan keselamatan lulus")
     from .push import send_notification
     local_time = timezone.localtime(now).strftime("%H:%M")
     if action == "masuk":
         send_notification(request.user, "Daftar masuk berjaya", f"Kehadiran anda telah direkodkan pada {local_time}.", "KEHADIRAN", "/")
     else:
         send_notification(request.user, "Daftar keluar berjaya", f"Rekod pulang anda telah disimpan pada {local_time}.", "KEHADIRAN", "/")
-    return JsonResponse({"ok": True, "message": f"Berjaya. Jarak {distance:.1f} m, ketepatan GPS {accuracy:.0f} m."})
+    return JsonResponse({"ok": True, "message": f"Berjaya. Jarak {distance:.1f} m, ketepatan GPS {accuracy:.0f} m, risiko {security['level'].lower()} ({security['score']}/100).", "risk_score": security["score"], "risk_level": security["level"], "flags": security["flags"]})
+
+@user_passes_test(lambda u: u.is_staff)
+def device_security_page(request):
+    devices = TrustedDevice.objects.select_related("user", "approved_by").all()
+    status = request.GET.get("status", "")
+    if status: devices = devices.filter(status=status)
+    events = LocationSecurityEvent.objects.select_related("user", "attendance")[:100]
+    return render(request, "attendance/device_security.html", {
+        "devices": devices, "events": events, "status_filter": status,
+        "pending_count": TrustedDevice.objects.filter(status="MENUNGGU").count(),
+        "trusted_count": TrustedDevice.objects.filter(status="DIPERCAYAI").count(),
+        "blocked_count": TrustedDevice.objects.filter(status="DISEKAT").count(),
+        "high_risk_count": LocationSecurityEvent.objects.filter(risk_level="TINGGI").count(),
+    })
+
+@require_POST
+@user_passes_test(lambda u: u.is_staff)
+def device_update_status(request, pk, status):
+    if status not in {"DIPERCAYAI", "MENUNGGU", "DISEKAT"}:
+        return JsonResponse({"ok": False}, status=400)
+    device = get_object_or_404(TrustedDevice, pk=pk)
+    device.status = status
+    device.approved_by = request.user if status == "DIPERCAYAI" else None
+    device.approved_at = timezone.now() if status == "DIPERCAYAI" else None
+    device.save()
+    messages.success(request, f"Status peranti {device.device_name or device.device_id[:12]} dikemas kini.")
+    return redirect("device_security_page")
 
 @login_required
 def profile_page(request):

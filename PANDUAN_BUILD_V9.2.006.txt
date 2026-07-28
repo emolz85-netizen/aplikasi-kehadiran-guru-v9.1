@@ -1,0 +1,22 @@
+BUILD V9.2.006 - ANTI GPS SPOOFING & DEVICE TRUST
+
+1. Gantikan semua fail repository dengan kandungan build ini.
+2. Commit Summary: Build V9.2.006 - Anti GPS Spoofing Device Trust
+3. Push origin dan tunggu Render Auto Deploy.
+4. Pastikan arahan deploy menjalankan: python manage.py migrate
+5. Pentadbir boleh membuka menu Keselamatan Peranti.
+
+MIGRATION
+0010_build_92006_gps_device_trust.py
+
+CIRI
+- Device fingerprint berasaskan pemasangan pelayar dan peranti.
+- Peranti pertama boleh dipercayai secara automatik.
+- Pentadbir boleh mempercayai atau menyekat peranti.
+- Semakan umur bacaan GPS, ketepatan, ID peranti dan kelajuan pergerakan.
+- Skor risiko 0-100 serta tahap rendah, sederhana dan tinggi.
+- Rekod berisiko tinggi boleh disekat.
+- Log kejadian keselamatan lokasi.
+
+NOTA TEKNIKAL
+Pelayar web biasa tidak menyediakan API yang boleh mengesahkan tetapan Android Mock Location secara mutlak. Build ini menggunakan pertahanan berlapis dan penilaian risiko. Untuk pengesanan Mock Location native yang mutlak, aplikasi Android native diperlukan.

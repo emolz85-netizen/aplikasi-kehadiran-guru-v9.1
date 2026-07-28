@@ -1,6 +1,16 @@
 let selfieBlob = null;
 let currentPosition = null;
 
+async function getDeviceIdentity(){
+  let seed=localStorage.getItem("kehadiran_device_seed");
+  if(!seed){seed=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());localStorage.setItem("kehadiran_device_seed",seed);}
+  const raw=[seed,navigator.userAgent,navigator.platform,screen.width+"x"+screen.height,Intl.DateTimeFormat().resolvedOptions().timeZone].join("|");
+  const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(raw));
+  const id=Array.from(new Uint8Array(bytes)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  return {id,name:(navigator.platform||"Peranti")+" · "+screen.width+"x"+screen.height,platform:navigator.platform||"",browser:navigator.userAgent.includes("Edg")?"Edge":navigator.userAgent.includes("Chrome")?"Chrome":navigator.userAgent.includes("Safari")?"Safari":"Pelayar"};
+}
+
+
 function haversineClient(lat1, lon1, lat2, lon2){
   const r=6371000,toRad=v=>v*Math.PI/180;
   const p1=toRad(lat1),p2=toRad(lat2),dp=toRad(lat2-lat1),dl=toRad(lon2-lon1);
@@ -73,6 +83,12 @@ async function rekod(action){
   form.append("latitude",currentPosition.coords.latitude);
   form.append("longitude",currentPosition.coords.longitude);
   form.append("accuracy",currentPosition.coords.accuracy);
+  form.append("location_timestamp",currentPosition.timestamp||Date.now());
+  const device=await getDeviceIdentity();
+  form.append("device_id",device.id);
+  form.append("device_name",device.name);
+  form.append("device_platform",device.platform);
+  form.append("device_browser",device.browser);
   form.append("selfie",selfieBlob,action+"_selfie.jpg");
   const challenge=document.getElementById("liveness-challenge");
   if(challenge) form.append("liveness_challenge",challenge.textContent.trim());
