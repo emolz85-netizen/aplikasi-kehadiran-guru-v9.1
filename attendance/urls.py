@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("health/", views.health, name="health"),
+    path("version.json", views.version_info, name="version_info"),
     path("manifest.json", views.manifest, name="manifest"),
     path("service-worker.js", views.service_worker, name="service_worker"),
     path("offline/", views.offline_page, name="offline_page"),

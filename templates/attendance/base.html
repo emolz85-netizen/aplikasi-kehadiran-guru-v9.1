@@ -53,22 +53,22 @@
   <div class="app-content">
     <header class="role-header">
       <button type="button" class="sidebar-toggle" onclick="document.getElementById('roleSidebar').classList.toggle('open')">☰</button>
-      <div><strong>{% if user.is_staff %}Dashboard Pentadbir{% else %}Dashboard Guru{% endif %}</strong><small>{{ SCHOOL_NAME }} · V{{ APP_VERSION }}</small></div>
+      <div><strong>{% if user.is_staff %}Dashboard Pentadbir{% else %}Dashboard Guru{% endif %}</strong><small>{{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }}</small></div>
       <a class="header-notification" href="{% url 'notification_center' %}">🔔{% if NOTIFICATION_UNREAD_COUNT %}<span>{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
     </header>
     <main>
 {% else %}
-<header class="public-header"><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru · V{{ APP_VERSION }}</small></header>
+<header class="public-header"><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru · {{ APP_VERSION_LABEL }}</small></header>
 <main>
 {% endif %}
   {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
   {% block content %}{% endblock %}
 </main>
 {% if user.is_authenticated %}
-<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · Versi {{ APP_VERSION }} · © 2026</footer>
+<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }} · © 2026</footer>
   </div>
 </div>
-{% else %}<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · Versi {{ APP_VERSION }} · © 2026</footer>{% endif %}
+{% else %}<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }} · © 2026</footer>{% endif %}
 <script src="{% static 'attendance/app.js' %}"></script>
 <script>window.PWA_SERVICE_WORKER_URL="{% url 'service_worker' %}";</script>
 <script src="{% static 'attendance/pwa.js' %}"></script>

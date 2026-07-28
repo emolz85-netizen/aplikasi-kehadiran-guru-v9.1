@@ -22,6 +22,7 @@ from django.urls import reverse
 
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
 from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent
+from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL, APP_RELEASE_DATE, APP_RELEASE_NAME
 
 LIVENESS_CHALLENGES = [
     "Senyum dan pandang terus ke kamera",
@@ -112,9 +113,19 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.007.1"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": APP_VERSION, "version_label": APP_VERSION_LABEL, "channel": APP_RELEASE_CHANNEL})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.007.1"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": APP_VERSION, "version_label": APP_VERSION_LABEL, "channel": APP_RELEASE_CHANNEL}, status=503)
+
+def version_info(request):
+    return JsonResponse({
+        "name": APP_RELEASE_NAME,
+        "version": APP_VERSION,
+        "label": APP_VERSION_LABEL,
+        "channel": APP_RELEASE_CHANNEL,
+        "release_date": APP_RELEASE_DATE,
+        "update_mode": "PWA automatic update",
+    }, json_dumps_params={"ensure_ascii": False})
 
 def manifest(request):
     return JsonResponse({
@@ -150,7 +161,7 @@ def pwa_install(request):
 
 
 def service_worker(request):
-    script = r'''const VERSION = "9.2.007.1";
+    script = r'''const VERSION = "__APP_VERSION__";
 const STATIC_CACHE = `kehadiran-static-${VERSION}`;
 const PAGE_CACHE = `kehadiran-pages-${VERSION}`;
 const OFFLINE_URL = "/offline/";
@@ -161,6 +172,7 @@ self.addEventListener("message",e=>{if(e.data&&e.data.type==="SKIP_WAITING")self
 self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET")return;const u=new URL(r.url);if(u.origin!==self.location.origin)return;if(r.mode==="navigate"){e.respondWith(fetch(r).catch(async()=>await caches.match(OFFLINE_URL)));return;}if(u.pathname.startsWith("/static/")){e.respondWith(caches.match(r).then(cached=>{const update=fetch(r).then(resp=>{if(resp.ok)caches.open(STATIC_CACHE).then(c=>c.put(r,resp.clone()));return resp;}).catch(()=>cached);return cached||update;}));}});
 self.addEventListener("push",e=>{let d={title:"Sistem Kehadiran Guru",body:"Anda menerima notifikasi baharu.",url:"/notifikasi/"};try{d=Object.assign(d,e.data.json());}catch(x){}e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:"/static/attendance/icon-192.png",badge:"/static/attendance/icon-192.png",data:{url:d.url||"/notifikasi/"},tag:"kehadiran-"+(d.notification_id||Date.now()),renotify:true,vibrate:[150,80,150]}));});
 self.addEventListener("notificationclick",e=>{e.notification.close();const t=e.notification.data&&e.notification.data.url?e.notification.data.url:"/notifikasi/";e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(list=>{for(const c of list){if(c.url.includes(t)&&"focus" in c)return c.focus();}return clients.openWindow?clients.openWindow(t):null;}));});'''
+    script = script.replace("__APP_VERSION__", APP_VERSION)
     response = HttpResponse(script, content_type="application/javascript; charset=utf-8")
     response["Service-Worker-Allowed"] = "/"
     response["Cache-Control"] = "no-cache, no-store, must-revalidate"

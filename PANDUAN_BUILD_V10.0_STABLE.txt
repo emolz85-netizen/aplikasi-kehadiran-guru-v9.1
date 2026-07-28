@@ -1,0 +1,31 @@
+SISTEM KEHADIRAN GURU V10.0 STABLE
+===================================
+
+STATUS
+- Production Stable
+- Single-School Edition
+- Asas: V9.2.007.1
+
+CARA DEPLOY MELALUI GITHUB DESKTOP
+1. Ekstrak ZIP ini.
+2. Buka repository melalui GitHub Desktop > Show in Explorer.
+3. Gantikan kandungan repository dengan semua fail daripada folder ini.
+4. Summary:
+   Build V10.0 Stable - Production Release
+5. Klik Commit to main.
+6. Klik Push origin.
+7. Tunggu Render Auto Deploy selesai.
+
+ARAHAN BUILD RENDER
+python manage.py migrate && python manage.py collectstatic --noinput
+
+SEMAKAN SELEPAS DEPLOY
+- /health/ mesti menunjukkan status ok dan versi 10.0.0.
+- /version.json mesti menunjukkan label V10.0 Stable.
+- Log masuk sebagai guru dan pentadbir.
+- Pastikan dashboard, sidebar dan kawalan akses berasingan.
+- Buka semula PWA dan tekan Kemas Kini apabila notis muncul.
+
+DATA
+Tiada migration baharu dalam keluaran ini. Data pengguna dan tetapan sekolah
+sedia ada dikekalkan. Jangan padam pangkalan data Render.

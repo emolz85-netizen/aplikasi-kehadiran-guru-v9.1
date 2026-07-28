@@ -1,0 +1,19 @@
+V10.0 STABLE
+Tarikh keluaran: 29 Julai 2026
+Saluran: Stable / Production
+
+KANDUNGAN KELUARAN
+- Menetapkan V9.2.007.1 sebagai asas produksi rasmi V10.0 Stable.
+- Nombor versi dipusatkan dalam attendance/version.py.
+- Menambah endpoint /version.json untuk semakan versi aplikasi.
+- Health check kini melaporkan versi dan saluran keluaran.
+- Cache PWA ditukar kepada versi 10.0.0 supaya pengguna menerima fail terkini.
+- Paparan footer, header dan halaman pemasangan menggunakan label V10.0 Stable.
+- Semua fungsi sedia ada dikekalkan: dashboard berasingan, school branding,
+  GPS geofence, visual verification, device trust, cuti, laporan, audit,
+  push notification dan pemasangan PWA.
+
+POLISI KEMAS KINI
+- V10.0.x: pembaikan pepijat dan keselamatan.
+- V10.1.x: penambahbaikan kecil yang serasi.
+- V11.x: perubahan besar atau multi-school.
