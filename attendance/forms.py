@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
-from .models import LeaveRequest, OfficialDuty, SchoolHoliday
+from .models import LeaveRequest, OfficialDuty, SchoolHoliday, TeacherProfile
 
 
 class ProfileForm(forms.ModelForm):
@@ -24,6 +24,20 @@ class ProfileForm(forms.ModelForm):
         if query.exists():
             raise forms.ValidationError("Nama pengguna ini sudah digunakan.")
         return username
+
+
+class FaceReferenceForm(forms.ModelForm):
+    class Meta:
+        model = TeacherProfile
+        fields = ["reference_photo"]
+        labels = {"reference_photo": "Foto rujukan wajah"}
+        help_texts = {"reference_photo": "Gunakan foto hadapan yang jelas, seorang sahaja, tanpa topi atau cermin mata gelap."}
+
+    def clean_reference_photo(self):
+        photo = self.cleaned_data.get("reference_photo")
+        if photo and photo.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("Saiz foto tidak boleh melebihi 5 MB.")
+        return photo
 
 
 class MalayPasswordChangeForm(PasswordChangeForm):

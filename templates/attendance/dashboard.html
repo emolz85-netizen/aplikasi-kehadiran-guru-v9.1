@@ -39,6 +39,16 @@
       <div class="timeline-item {% if record.check_out %}done{% endif %}"><span>Keluar</span><strong>{% if record.check_out %}{{ record.check_out|date:"H:i:s" }}{% else %}Belum{% endif %}</strong></div>
     </div>
 
+    {% if face_settings.face_verification_enabled %}
+    <div class="face-security-banner {% if has_reference_photo %}ready{% else %}warning{% endif %}">
+      <strong>🛡️ Pengesahan Identiti Aktif</strong>
+      {% if has_reference_photo %}<span>Foto rujukan tersedia · Ambang {{ face_settings.face_match_threshold }}%</span>{% else %}<span>Foto rujukan belum tersedia. <a href="{% url 'profile_page' %}">Muat naik sekarang</a></span>{% endif %}
+    </div>
+    <div class="liveness-card">
+      <small>CABARAN HIDUP</small><strong id="liveness-challenge">{{ liveness_challenge }}</strong>
+      <label><input type="checkbox" id="liveness-confirmed"> Saya telah melakukan arahan ini semasa mengambil swafoto.</label>
+    </div>
+    {% endif %}
     <div class="camera-shell">
       <video id="camera" autoplay playsinline muted></video>
       <div id="camera-placeholder"><span>◎</span><b>Kamera belum dibuka</b><small>Swafoto membantu pengesahan rekod</small></div>

@@ -1,0 +1,19 @@
+BUILD V9.2.005 - FACE VERIFICATION & ANTI BUDDY PUNCHING
+
+1. Deploy semua fail ke GitHub dan Render.
+2. Pastikan Render menjalankan: python manage.py migrate
+3. Setiap guru membuka Profil dan memuat naik Foto Rujukan Wajah.
+4. Semasa rekod masuk/keluar, guru wajib:
+   - membuka kamera,
+   - melakukan cabaran hidup,
+   - mengambil swafoto baharu,
+   - mengesahkan cabaran.
+
+Keselamatan:
+- Semakan kualiti imej (resolusi, cahaya dan kontras).
+- Padanan visual asas dengan foto rujukan.
+- Pengesanan penggunaan semula fail swafoto yang sama melalui SHA-256.
+- Skor dan status disimpan untuk semakan pentadbir.
+
+PENTING:
+Padanan dalam build ini ialah pengesahan visual berbantukan sistem, bukan pengecaman biometrik forensik. Pentadbir masih perlu menyemak rekod yang dipertikaikan.

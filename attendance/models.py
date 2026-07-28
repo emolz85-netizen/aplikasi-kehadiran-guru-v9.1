@@ -14,6 +14,9 @@ class SchoolSettings(models.Model):
     weekday_check_out = models.TimeField(default=time(13, 0))
     friday_check_in = models.TimeField(default=time(7, 10))
     friday_check_out = models.TimeField(default=time(11, 40))
+    face_verification_enabled = models.BooleanField(default=True, verbose_name="Aktifkan pengesahan wajah")
+    face_match_threshold = models.PositiveSmallIntegerField(default=62, verbose_name="Ambang padanan visual (%)")
+    require_liveness_challenge = models.BooleanField(default=True, verbose_name="Wajib cabaran hidup")
     logo = models.ImageField(upload_to="school/", null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -60,6 +63,8 @@ class TeacherProfile(models.Model):
     staff_id = models.CharField(max_length=30, blank=True)
     position = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=30, blank=True)
+    reference_photo = models.ImageField(upload_to="face_reference/", null=True, blank=True, verbose_name="Foto rujukan wajah")
+    reference_photo_updated_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
@@ -103,6 +108,14 @@ class Attendance(models.Model):
     check_in_user_agent = models.TextField(blank=True)
     check_out_user_agent = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="HADIR")
+    face_in_score = models.FloatField(null=True, blank=True)
+    face_out_score = models.FloatField(null=True, blank=True)
+    face_in_status = models.CharField(max_length=20, blank=True, default="")
+    face_out_status = models.CharField(max_length=20, blank=True, default="")
+    liveness_in_challenge = models.CharField(max_length=120, blank=True)
+    liveness_out_challenge = models.CharField(max_length=120, blank=True)
+    selfie_in_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    selfie_out_hash = models.CharField(max_length=64, blank=True, db_index=True)
 
     class Meta:
         unique_together = ("user", "date")

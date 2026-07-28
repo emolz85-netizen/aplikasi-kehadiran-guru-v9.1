@@ -9,6 +9,7 @@ class SchoolSettingsAdmin(admin.ModelAdmin):
         ("Sekolah", {"fields": ("school_name", "address", "logo")}),
         ("GPS", {"fields": ("latitude", "longitude", "radius_meters", "max_gps_accuracy_meters")}),
         ("Isnin hingga Khamis", {"fields": ("weekday_check_in", "weekday_check_out")}),
+        ("Pengesahan wajah", {"fields": ("face_verification_enabled", "face_match_threshold", "require_liveness_challenge")}),
         ("Jumaat", {"fields": ("friday_check_in", "friday_check_out")}),
     )
 
@@ -30,7 +31,7 @@ class SchoolHolidayAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "staff_id", "position", "phone")
+    list_display = ("user", "staff_id", "position", "phone", "reference_photo_updated_at")
     search_fields = ("user__username", "user__first_name", "user__last_name", "staff_id")
 
 
@@ -44,11 +45,11 @@ class AccountActivityAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ("user", "date", "check_in", "check_out", "status", "check_in_device", "check_in_ip", "distance_in_m", "gps_link", "selfie_preview")
+    list_display = ("user", "date", "check_in", "check_out", "status", "face_in_status", "face_in_score", "check_in_device", "check_in_ip", "distance_in_m", "gps_link", "selfie_preview")
     list_filter = ("date", "status")
     search_fields = ("user__username", "user__first_name", "user__last_name")
     date_hierarchy = "date"
-    readonly_fields = ("check_in_ip", "check_out_ip", "check_in_device", "check_out_device", "check_in_user_agent", "check_out_user_agent")
+    readonly_fields = ("check_in_ip", "check_out_ip", "check_in_device", "check_out_device", "check_in_user_agent", "check_out_user_agent", "face_in_score", "face_out_score", "face_in_status", "face_out_status", "liveness_in_challenge", "liveness_out_challenge", "selfie_in_hash", "selfie_out_hash")
 
     @admin.display(description="GPS")
     def gps_link(self, obj):

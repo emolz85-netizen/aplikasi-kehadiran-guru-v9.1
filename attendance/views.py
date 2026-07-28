@@ -3,31 +3,65 @@ import io
 import math
 import calendar
 import json
+import hashlib
+import random
 from datetime import time, datetime, timedelta
+from PIL import Image, ImageStat
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db import connection
+from django.db import connection, models
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 
-from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm
+from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
 from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification
+
+LIVENESS_CHALLENGES = [
+    "Senyum dan pandang terus ke kamera",
+    "Pusing kepala sedikit ke kiri",
+    "Pusing kepala sedikit ke kanan",
+    "Angkat kening dan pandang kamera",
+]
+
+def _image_fingerprint(upload):
+    upload.seek(0)
+    raw = upload.read()
+    upload.seek(0)
+    digest = hashlib.sha256(raw).hexdigest()
+    img = Image.open(io.BytesIO(raw)).convert("L")
+    width, height = img.size
+    stat = ImageStat.Stat(img)
+    brightness = stat.mean[0]
+    contrast = stat.stddev[0]
+    small = img.resize((16, 16))
+    pixels = list(small.getdata())
+    avg = sum(pixels) / len(pixels)
+    bits = [1 if px >= avg else 0 for px in pixels]
+    return digest, bits, width, height, brightness, contrast
+
+def _visual_match(reference, selfie):
+    _, ref_bits, _, _, _, _ = _image_fingerprint(reference)
+    digest, live_bits, width, height, brightness, contrast = _image_fingerprint(selfie)
+    same = sum(a == b for a, b in zip(ref_bits, live_bits))
+    score = round((same / len(ref_bits)) * 100, 1)
+    quality_ok = width >= 320 and height >= 240 and 35 <= brightness <= 220 and contrast >= 18
+    return digest, score, quality_ok, {"width": width, "height": height, "brightness": round(brightness,1), "contrast": round(contrast,1)}
 
 def health(request):
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.004"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.005"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.004"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.005"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -45,7 +79,7 @@ def manifest(request):
 
 def service_worker(request):
     script = r'''
-const CACHE = "kehadiran-v9-2-004";
+const CACHE = "kehadiran-v9-2-005";
 self.addEventListener("install", event => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["/", "/login/"])));
@@ -225,6 +259,9 @@ def dashboard(request):
         "week_count": week_records.count(),
         "today_status": today_status,
         "today_status_class": today_status_class,
+        "liveness_challenge": random.choice(LIVENESS_CHALLENGES),
+        "face_settings": school,
+        "has_reference_photo": TeacherProfile.objects.filter(user=request.user, reference_photo__isnull=False).exclude(reference_photo="").exists(),
     })
 
 @login_required
@@ -272,6 +309,32 @@ def record_attendance(request, action):
     user_agent = request.META.get("HTTP_USER_AGENT", "")[:2000]
     device = describe_device(user_agent)
     client_ip = get_client_ip(request)
+    challenge = (request.POST.get("liveness_challenge") or "").strip()[:120]
+    liveness_confirmed = request.POST.get("liveness_confirmed") == "1"
+    face_score = None
+    face_status = "TIDAK_AKTIF"
+    selfie_hash = ""
+
+    if school.face_verification_enabled:
+        profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+        if not profile.reference_photo:
+            return JsonResponse({"ok": False, "message": "Sila muat naik foto rujukan wajah di halaman Profil terlebih dahulu."}, status=400)
+        if not selfie:
+            return JsonResponse({"ok": False, "message": "Swafoto wajib untuk pengesahan identiti."}, status=400)
+        if school.require_liveness_challenge and (not challenge or not liveness_confirmed):
+            return JsonResponse({"ok": False, "message": "Sila lengkapkan dan sahkan cabaran hidup yang dipaparkan."}, status=400)
+        try:
+            selfie_hash, face_score, quality_ok, quality = _visual_match(profile.reference_photo, selfie)
+        except Exception:
+            return JsonResponse({"ok": False, "message": "Imej tidak dapat diproses. Ambil semula swafoto yang jelas."}, status=400)
+        if not quality_ok:
+            return JsonResponse({"ok": False, "message": "Kualiti swafoto tidak mencukupi. Pastikan wajah terang, jelas dan kamera stabil."}, status=400)
+        duplicate = Attendance.objects.filter(models.Q(selfie_in_hash=selfie_hash) | models.Q(selfie_out_hash=selfie_hash)).exclude(pk=rec.pk).exists()
+        if duplicate:
+            return JsonResponse({"ok": False, "message": "Imej yang sama pernah digunakan. Ambil swafoto baharu secara langsung."}, status=403)
+        face_status = "LULUS" if face_score >= school.face_match_threshold else "SEMAKAN"
+        if face_status != "LULUS":
+            return JsonResponse({"ok": False, "message": f"Padanan visual hanya {face_score:.1f}%. Ambil semula dengan wajah menghadap kamera dan pencahayaan yang baik."}, status=403)
 
     if action == "masuk":
         if rec.check_in:
@@ -285,6 +348,10 @@ def record_attendance(request, action):
         rec.check_in_ip = client_ip
         rec.check_in_device = device
         rec.check_in_user_agent = user_agent
+        rec.face_in_score = face_score
+        rec.face_in_status = face_status
+        rec.liveness_in_challenge = challenge
+        rec.selfie_in_hash = selfie_hash
         target_in, _ = school.times_for_date(today)
         rec.status = "LEWAT" if timezone.localtime(now).time() > target_in else "HADIR"
     else:
@@ -301,6 +368,10 @@ def record_attendance(request, action):
         rec.check_out_ip = client_ip
         rec.check_out_device = device
         rec.check_out_user_agent = user_agent
+        rec.face_out_score = face_score
+        rec.face_out_status = face_status
+        rec.liveness_out_challenge = challenge
+        rec.selfie_out_hash = selfie_hash
 
     rec.save()
     from .push import send_notification
@@ -315,6 +386,8 @@ def record_attendance(request, action):
 def profile_page(request):
     profile_form = ProfileForm(instance=request.user, prefix="profile")
     password_form = MalayPasswordChangeForm(request.user, prefix="password")
+    teacher_profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+    face_form = FaceReferenceForm(instance=teacher_profile, prefix="face")
 
     if request.method == "POST":
         if "save_profile" in request.POST:
@@ -328,6 +401,15 @@ def profile_page(request):
                     details=f"Nama pengguna: {old_username} → {user.username}",
                 )
                 messages.success(request, "Profil berjaya dikemas kini.")
+                return redirect("profile_page")
+        elif "save_face" in request.POST:
+            face_form = FaceReferenceForm(request.POST, request.FILES, instance=teacher_profile, prefix="face")
+            if face_form.is_valid():
+                obj = face_form.save(commit=False)
+                obj.reference_photo_updated_at = timezone.now()
+                obj.save()
+                AccountActivity.objects.create(user=request.user, action="Kemas kini foto rujukan wajah")
+                messages.success(request, "Foto rujukan wajah berjaya disimpan.")
                 return redirect("profile_page")
         elif "change_password" in request.POST:
             password_form = MalayPasswordChangeForm(request.user, request.POST, prefix="password")
@@ -343,6 +425,8 @@ def profile_page(request):
         "profile_form": profile_form,
         "password_form": password_form,
         "activities": activities,
+        "face_form": face_form,
+        "teacher_profile": teacher_profile,
     })
 
 

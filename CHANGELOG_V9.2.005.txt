@@ -1,0 +1,8 @@
+V9.2.005
+- Foto rujukan wajah guru
+- Swafoto wajib
+- Cabaran hidup rawak
+- Semakan kualiti imej
+- Padanan visual asas
+- Anti replay menggunakan hash SHA-256
+- Skor/status pengesahan pada rekod kehadiran dan Django Admin

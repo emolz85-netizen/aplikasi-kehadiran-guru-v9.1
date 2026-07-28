@@ -66,11 +66,17 @@ function refreshGPS(){
 async function rekod(action){
   const status=document.getElementById("gps-status");
   if(!currentPosition){refreshGPS();if(status)status.textContent="Sila tunggu lokasi GPS diperoleh, kemudian tekan semula.";return;}
+  if(!selfieBlob){alert("Swafoto baharu wajib diambil sebelum merekod kehadiran.");return;}
+  const liveCheck=document.getElementById("liveness-confirmed");
+  if(liveCheck && !liveCheck.checked){alert("Sila lakukan dan sahkan cabaran hidup terlebih dahulu.");return;}
   const form=new FormData();
   form.append("latitude",currentPosition.coords.latitude);
   form.append("longitude",currentPosition.coords.longitude);
   form.append("accuracy",currentPosition.coords.accuracy);
-  if(selfieBlob) form.append("selfie",selfieBlob,action+"_selfie.jpg");
+  form.append("selfie",selfieBlob,action+"_selfie.jpg");
+  const challenge=document.getElementById("liveness-challenge");
+  if(challenge) form.append("liveness_challenge",challenge.textContent.trim());
+  if(liveCheck && liveCheck.checked) form.append("liveness_confirmed","1");
   if(status)status.textContent="Menghantar rekod...";
   try{
     const res=await fetch(urls[action],{method:"POST",headers:{"X-CSRFToken":csrfToken},body:form});
