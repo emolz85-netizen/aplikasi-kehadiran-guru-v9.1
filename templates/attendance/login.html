@@ -8,6 +8,7 @@
     <label>Nama pengguna</label>{{ form.username }}
     <label>Kata laluan</label>{{ form.password }}
     <button class="primary">Log masuk</button>
+    <a class="forgot-password" href="{% url 'password_reset' %}">Lupa kata laluan?</a>
   </form>
 </section>
 {% endblock %}

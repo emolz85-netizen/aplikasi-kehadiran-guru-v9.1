@@ -57,3 +57,11 @@ BUILD 9.1.005 - PETA KEHADIRAN DAN LIHAT LOKASI
 - Bulatan radius sekolah dan penanda GPS guru.
 - Butang terus ke Google Maps.
 - Tiada migration baharu.
+
+BUILD 9.1.006
+- Menambah reset kata laluan melalui e-mel menggunakan sistem token Django.
+- Menambah halaman permintaan, semak e-mel, kata laluan baharu dan selesai.
+- Token ditetapkan tamat selepas 30 minit melalui PASSWORD_RESET_TIMEOUT.
+- Menambah konfigurasi SMTP berasaskan Environment Variables.
+- Menambah polisi kata laluan kukuh.
+- Tiada migration pangkalan data baharu.

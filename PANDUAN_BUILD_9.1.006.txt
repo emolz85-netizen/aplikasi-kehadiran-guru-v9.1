@@ -1,0 +1,39 @@
+BUILD 9.1.006 — EMAIL PASSWORD RESET
+=====================================
+
+Fungsi baharu:
+1. Pautan "Lupa kata laluan?" pada halaman log masuk.
+2. Permintaan reset menggunakan alamat e-mel pengguna.
+3. E-mel dengan token reset sekali guna.
+4. Token tamat selepas 30 minit.
+5. Halaman kata laluan baharu dan halaman pengesahan berjaya.
+6. Polisi kata laluan: minimum 8 aksara, huruf besar, huruf kecil,
+   nombor dan simbol.
+
+ENVIRONMENT VARIABLES DI RENDER
+--------------------------------
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=<SMTP login Brevo>
+EMAIL_HOST_PASSWORD=<SMTP key Brevo>
+DEFAULT_FROM_EMAIL=Sistem Kehadiran Guru <alamat-email-yang-disahkan>
+PASSWORD_RESET_TIMEOUT=1800
+
+PENTING
+-------
+- Semua akaun guru/admin mesti mempunyai alamat e-mel yang betul dan unik.
+- Jangan masukkan SMTP key ke dalam GitHub.
+- Masukkan SMTP key hanya melalui Render > Environment.
+- Untuk Brevo, alamat penghantar mesti disahkan dalam akaun Brevo.
+- Tiada migration baharu diperlukan.
+
+UJIAN
+-----
+1. Pastikan pengguna mempunyai e-mel dalam Django Admin.
+2. Klik "Lupa kata laluan?" pada halaman log masuk.
+3. Masukkan e-mel tersebut.
+4. Semak Inbox dan Spam/Junk.
+5. Klik pautan dan tetapkan kata laluan baharu.
+6. Cuba gunakan pautan yang sama sekali lagi; ia sepatutnya tidak sah.
