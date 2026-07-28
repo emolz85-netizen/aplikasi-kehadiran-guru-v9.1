@@ -6,7 +6,7 @@ from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, Scho
 @admin.register(SchoolSettings)
 class SchoolSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
-        ("Sekolah", {"fields": ("school_name", "address", "logo")}),
+        ("Sekolah", {"fields": ("school_name", "school_code", "address", "phone", "email", "logo")}),
         ("GPS", {"fields": ("latitude", "longitude", "radius_meters", "max_gps_accuracy_meters")}),
         ("Isnin hingga Khamis", {"fields": ("weekday_check_in", "weekday_check_out")}),
         ("Pengesahan wajah", {"fields": ("face_verification_enabled", "face_match_threshold", "require_liveness_challenge")}),

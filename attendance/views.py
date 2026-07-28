@@ -112,9 +112,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.007"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.007.1"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.007"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.007.1"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -150,7 +150,7 @@ def pwa_install(request):
 
 
 def service_worker(request):
-    script = r'''const VERSION = "9.2.007";
+    script = r'''const VERSION = "9.2.007.1";
 const STATIC_CACHE = `kehadiran-static-${VERSION}`;
 const PAGE_CACHE = `kehadiran-pages-${VERSION}`;
 const OFFLINE_URL = "/offline/";
@@ -214,6 +214,8 @@ def haversine_m(lat1, lon1, lat2, lon2):
 
 @login_required
 def dashboard(request):
+    if request.user.is_staff:
+        return redirect("admin_dashboard")
     today = timezone.localdate()
     today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
     record = Attendance.objects.filter(user=request.user, date=today).first()
@@ -316,6 +318,8 @@ def dashboard(request):
 @login_required
 @require_POST
 def record_attendance(request, action):
+    if request.user.is_staff:
+        return JsonResponse({"ok": False, "message": "Akaun pentadbir tidak dibenarkan merekod kehadiran."}, status=403)
     if action not in {"masuk", "keluar"}:
         return JsonResponse({"ok": False, "message": "Tindakan tidak sah."}, status=400)
 
@@ -583,6 +587,9 @@ def admin_dashboard(request):
 
 @login_required
 def leave_page(request):
+    if request.user.is_staff:
+        messages.info(request, "Akaun pentadbir menggunakan modul Pengurusan Cuti, bukan permohonan cuti peribadi.")
+        return redirect("leave_admin")
     if request.method == "POST":
         form = LeaveRequestForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():

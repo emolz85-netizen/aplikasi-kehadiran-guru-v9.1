@@ -1,0 +1,9 @@
+V9.2.007.1
+- Role separation guru dan pentadbir.
+- Sekatan server-side rekod kehadiran untuk akaun pentadbir.
+- Permohonan cuti peribadi pentadbir dialihkan ke pengurusan cuti.
+- Sidebar khusus mengikut peranan.
+- Tema hijau untuk guru, biru gelap untuk pentadbir.
+- School branding pada login dan dashboard.
+- Medan kod sekolah, telefon dan emel.
+- Versi aplikasi dan cache PWA dinaik taraf.

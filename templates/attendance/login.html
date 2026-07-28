@@ -1,14 +1,24 @@
 {% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Log Masuk · {{ SCHOOL_NAME }}{% endblock %}
 {% block content %}
-<section class="card login">
-  <h1>Log Masuk</h1>
-  <p>{{ SCHOOL_NAME }}</p>
-  {% if form.errors %}<div class="error">Nama pengguna atau kata laluan salah.</div>{% endif %}
-  <form method="post">{% csrf_token %}
-    <label>Nama pengguna</label>{{ form.username }}
-    <label>Kata laluan</label>{{ form.password }}
-    <button class="primary">Log masuk</button>
-    <a class="forgot-password" href="{% url 'password_recovery_request' %}">Lupa kata laluan?</a>
-  </form>
+<section class="branding-login-wrap">
+  <div class="branding-panel">
+    {% if SCHOOL and SCHOOL.logo %}<img class="school-logo-main" src="{{ SCHOOL.logo.url }}" alt="Logo {{ SCHOOL_NAME }}">{% else %}<img class="school-logo-main" src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
+    <span class="eyebrow">SISTEM KEHADIRAN GURU</span>
+    <h1>{{ SCHOOL_NAME }}</h1>
+    {% if SCHOOL.school_code %}<p class="school-code">Kod Sekolah: {{ SCHOOL.school_code }}</p>{% endif %}
+    {% if SCHOOL.address %}<p>{{ SCHOOL.address }}</p>{% else %}<p>Telupid, Sabah</p>{% endif %}
+  </div>
+  <section class="card login branded-login-card">
+    <h2>Log Masuk</h2><p>Sila gunakan akaun yang telah didaftarkan.</p>
+    {% if form.errors %}<div class="error">Nama pengguna atau kata laluan salah.</div>{% endif %}
+    <form method="post">{% csrf_token %}
+      <label>Nama pengguna</label>{{ form.username }}
+      <label>Kata laluan</label>{{ form.password }}
+      <button class="primary">Log masuk</button>
+      <a class="forgot-password" href="{% url 'password_recovery_request' %}">Lupa kata laluan?</a>
+    </form>
+  </section>
 </section>
 {% endblock %}

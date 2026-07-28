@@ -5,7 +5,10 @@ from django.contrib.auth.models import User
 
 class SchoolSettings(models.Model):
     school_name = models.CharField(max_length=200, default="SK Ulu Ansuan")
+    school_code = models.CharField(max_length=30, blank=True, default="", verbose_name="Kod sekolah")
     address = models.TextField(blank=True, default="")
+    phone = models.CharField(max_length=30, blank=True, default="", verbose_name="Telefon sekolah")
+    email = models.EmailField(blank=True, default="", verbose_name="Emel sekolah")
     latitude = models.FloatField(default=5.745697)
     longitude = models.FloatField(default=117.173844)
     radius_meters = models.PositiveIntegerField(default=50)

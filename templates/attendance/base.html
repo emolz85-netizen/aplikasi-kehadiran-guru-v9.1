@@ -3,34 +3,77 @@
 <html lang="ms">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#1f2937"><meta name="application-name" content="Kehadiran Guru"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Kehadiran"><meta name="format-detection" content="telephone=no"><link rel="apple-touch-icon" href="{% static 'attendance/apple-touch-icon.png' %}"><link rel="icon" type="image/png" sizes="192x192" href="{% static 'attendance/icon-192.png' %}">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="{% if user.is_authenticated and user.is_staff %}#0f2747{% else %}#166534{% endif %}">
+  <meta name="application-name" content="Kehadiran Guru">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kehadiran">
+  <link rel="apple-touch-icon" href="{% static 'attendance/apple-touch-icon.png' %}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'attendance/icon-192.png' %}">
   <link rel="manifest" href="{% url 'manifest' %}">
   <link rel="stylesheet" href="{% static 'attendance/style.css' %}">
   <title>{% block title %}Kehadiran Guru{% endblock %}</title>
 </head>
-<body>
-<header>
-  <div><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru Build V9.2.007</small></div>
-  {% if user.is_authenticated %}
-  <nav>
-    <a href="{% url 'dashboard' %}">Utama</a>
-    <a href="{% url 'leave_page' %}">Cuti</a>
-    <a href="{% url 'duty_page' %}">Tugas Rasmi</a>
-    <a href="{% url 'report_page' %}">Laporan</a>
-    <a class="notification-link" href="{% url 'notification_center' %}">🔔 Notifikasi{% if NOTIFICATION_UNREAD_COUNT %}<span class="notification-badge">{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
-    <a href="{% url 'profile_page' %}">Profil Saya</a><a href="{% url 'pwa_install' %}">📲 Pasang Aplikasi</a>
-    {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}">Dashboard Admin</a><a href="{% url 'leave_admin' %}">Pengurusan Cuti</a><a href="{% url 'password_recovery_admin' %}">Reset Kata Laluan</a><a href="{% url 'attendance_map' %}">Peta Kehadiran</a><a href="/admin/attendance/schoolsettings/">Tetapan Sekolah</a><a href="/admin/attendance/schoolholiday/">Hari Kelepasan</a><a href="{% url 'import_teachers' %}">Import Guru</a><a href="{% url 'audit_log_page' %}">Log Audit</a><a href="{% url 'device_security_page' %}">Keselamatan Peranti</a><a href="/admin/">Admin Django</a>{% endif %}
-    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link">Log keluar</button></form>
-  </nav>
-  {% endif %}
-</header>
+<body class="{% if user.is_authenticated %}{% if user.is_staff %}role-admin{% else %}role-teacher{% endif %}{% else %}role-public{% endif %}">
+{% if user.is_authenticated %}
+<div class="app-shell">
+  <aside class="role-sidebar" id="roleSidebar">
+    <div class="sidebar-brand">
+      {% if SCHOOL and SCHOOL.logo %}<img src="{{ SCHOOL.logo.url }}" alt="Logo {{ SCHOOL_NAME }}">{% else %}<img src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
+      <div><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru</small></div>
+    </div>
+    <div class="role-label">{% if user.is_staff %}PENTADBIR{% else %}GURU{% endif %}</div>
+    <nav class="sidebar-nav">
+      {% if user.is_staff %}
+        <a href="{% url 'admin_dashboard' %}">🏠 <span>Dashboard Pentadbir</span></a>
+        <a href="/admin/auth/user/">👨‍🏫 <span>Pengurusan Guru</span></a>
+        <a href="/admin/attendance/attendance/">📊 <span>Kehadiran Guru</span></a>
+        <a href="{% url 'leave_admin' %}">📅 <span>Kelulusan Cuti</span></a>
+        <a href="{% url 'attendance_map' %}">🗺️ <span>Peta Kehadiran</span></a>
+        <a href="{% url 'report_page' %}">📄 <span>Laporan</span></a>
+        <a href="{% url 'audit_log_page' %}">🛡️ <span>Log Audit</span></a>
+        <a href="{% url 'device_security_page' %}">📱 <span>Device Trust</span></a>
+        <a href="/admin/attendance/schoolsettings/">⚙️ <span>Tetapan Sekolah</span></a>
+        <a href="{% url 'password_recovery_admin' %}">🔑 <span>Reset Kata Laluan</span></a>
+      {% else %}
+        <a href="{% url 'dashboard' %}">🏠 <span>Dashboard Guru</span></a>
+        <a href="{% url 'dashboard' %}#rekod-harian">📍 <span>Kehadiran</span></a>
+        <a href="{% url 'leave_page' %}">📝 <span>Permohonan Cuti</span></a>
+        <a href="{% url 'duty_page' %}">🧳 <span>Tugas Rasmi</span></a>
+        <a href="{% url 'report_page' %}">📜 <span>Sejarah & Laporan</span></a>
+        <a href="{% url 'profile_page' %}">👤 <span>Profil</span></a>
+      {% endif %}
+      <a href="{% url 'notification_center' %}">🔔 <span>Notifikasi</span>{% if NOTIFICATION_UNREAD_COUNT %}<b class="notification-badge">{{ NOTIFICATION_UNREAD_COUNT }}</b>{% endif %}</a>
+      <a href="{% url 'pwa_install' %}">📲 <span>Pasang Aplikasi</span></a>
+    </nav>
+    <form class="sidebar-logout" method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">🚪 Log Keluar</button></form>
+  </aside>
+  <div class="app-content">
+    <header class="role-header">
+      <button type="button" class="sidebar-toggle" onclick="document.getElementById('roleSidebar').classList.toggle('open')">☰</button>
+      <div><strong>{% if user.is_staff %}Dashboard Pentadbir{% else %}Dashboard Guru{% endif %}</strong><small>{{ SCHOOL_NAME }} · V{{ APP_VERSION }}</small></div>
+      <a class="header-notification" href="{% url 'notification_center' %}">🔔{% if NOTIFICATION_UNREAD_COUNT %}<span>{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
+    </header>
+    <main>
+{% else %}
+<header class="public-header"><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru · V{{ APP_VERSION }}</small></header>
 <main>
+{% endif %}
   {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
   {% block content %}{% endblock %}
 </main>
-<script src="{% static 'attendance/app.js' %}"></script><script>window.PWA_SERVICE_WORKER_URL="{% url 'service_worker' %}";</script><script src="{% static 'attendance/pwa.js' %}"></script>
-<div id="pwaInstallBanner" class="pwa-install-banner" hidden><div><strong>📲 Pasang sebagai aplikasi</strong><small>Akses lebih pantas dari skrin utama telefon.</small></div><div class="pwa-banner-actions"><button type="button" id="pwaInstallNow">Pasang</button><button type="button" id="pwaInstallDismiss" class="secondary-button">Nanti</button></div></div><div id="pwaUpdateBanner" class="pwa-update-banner" hidden><span>Versi aplikasi baharu tersedia.</span><button type="button" id="pwaUpdateNow">Kemas Kini</button></div>{% block scripts %}{% endblock %}
+{% if user.is_authenticated %}
 <footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · Versi {{ APP_VERSION }} · © 2026</footer>
+  </div>
+</div>
+{% else %}<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · Versi {{ APP_VERSION }} · © 2026</footer>{% endif %}
+<script src="{% static 'attendance/app.js' %}"></script>
+<script>window.PWA_SERVICE_WORKER_URL="{% url 'service_worker' %}";</script>
+<script src="{% static 'attendance/pwa.js' %}"></script>
+<div id="pwaInstallBanner" class="pwa-install-banner" hidden><div><strong>📲 Pasang sebagai aplikasi</strong><small>Akses lebih pantas dari skrin utama telefon.</small></div><div class="pwa-banner-actions"><button type="button" id="pwaInstallNow">Pasang</button><button type="button" id="pwaInstallDismiss" class="secondary-button">Nanti</button></div></div>
+<div id="pwaUpdateBanner" class="pwa-update-banner" hidden><span>Versi aplikasi baharu tersedia.</span><button type="button" id="pwaUpdateNow">Kemas Kini</button></div>
+{% block scripts %}{% endblock %}
 </body>
 </html>

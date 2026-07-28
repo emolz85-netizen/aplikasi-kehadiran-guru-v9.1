@@ -1,9 +1,11 @@
 {% extends "attendance/base.html" %}
 {% block title %}Dashboard Pentadbir{% endblock %}
 {% block content %}
+<section class="dashboard-brand-strip admin-brand">{% if school.logo %}<img src="{{ school.logo.url }}" alt="Logo sekolah">{% endif %}<div><span class="eyebrow">SISTEM KEHADIRAN GURU</span><h2>Dashboard Pentadbir</h2><p>{{ school.school_name }}</p></div></section>
+
 <section class="admin-hero">
   <div>
-    <span class="eyebrow">BUILD V9.2.000 · PUSAT KAWALAN</span>
+    <span class="eyebrow">BUILD V9.2.007.1 · PUSAT KAWALAN</span>
     <h1>Dashboard Pentadbir</h1>
     <p>{{ school.school_name }} · {{ today|date:"l, d F Y" }}</p>
   </div>

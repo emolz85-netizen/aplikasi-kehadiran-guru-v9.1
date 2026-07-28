@@ -1,0 +1,33 @@
+BUILD V9.2.007.1 - ADMIN DASHBOARD ROLE SEPARATION + SCHOOL BRANDING
+
+PERUBAHAN UTAMA
+1. Akaun pentadbir terus dibawa ke Dashboard Pentadbir.
+2. Pentadbir tidak boleh merekod masuk/keluar melalui endpoint kehadiran.
+3. Pentadbir tidak menggunakan borang permohonan cuti peribadi; pautan diarahkan ke Pengurusan Cuti.
+4. Sidebar berbeza mengikut peranan.
+5. Tema guru berwarna hijau dan tema pentadbir berwarna biru gelap.
+6. Tajuk jelas: Dashboard Guru / Dashboard Pentadbir.
+7. Logo sekolah dipaparkan pada halaman log masuk dan dashboard.
+8. Tetapan sekolah ditambah dengan Kod Sekolah, Telefon dan Emel.
+
+MIGRATION
+python manage.py migrate
+
+MIGRATION BAHARU
+0011_build_920071_role_branding.py
+
+DEPLOY GITHUB DESKTOP
+1. Ekstrak ZIP.
+2. Gantikan kandungan repository dengan kandungan build ini.
+3. Summary: Build V9.2.007.1 - Role Separation School Branding
+4. Commit to main.
+5. Push origin.
+6. Tunggu Render Auto Deploy selesai.
+
+LOGO SEKOLAH
+Selepas deploy, buka:
+Admin Django > Attendance > Tetapan sekolah
+Muat naik logo dan isi nama/kod/alamat/telefon/emel sekolah.
+
+CATATAN
+Logo dinamik digunakan pada halaman log masuk dan dashboard. Ikon PWA sedia ada dikekalkan supaya pemasangan aplikasi terus stabil.
