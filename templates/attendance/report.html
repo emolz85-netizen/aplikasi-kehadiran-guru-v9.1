@@ -1,8 +1,55 @@
 {% extends "attendance/base.html" %}
+{% block title %}Laporan Profesional{% endblock %}
 {% block content %}
-<h1>Laporan Kehadiran</h1>
-<div class="actions"><a class="button primary" href="{% url 'export_excel' %}">Excel</a><a class="button" href="{% url 'export_pdf' %}">PDF</a></div>
-<section class="card"><table><tr><th>Tarikh</th><th>Masuk</th><th>Keluar</th><th>Status</th></tr>
-{% for r in records %}<tr><td>{{ r.date }}</td><td>{{ r.check_in|date:"H:i:s"|default:"—" }}</td><td>{{ r.check_out|date:"H:i:s"|default:"—" }}</td><td>{{ r.get_status_display }}</td></tr>
-{% empty %}<tr><td colspan="4">Tiada rekod.</td></tr>{% endfor %}</table></section>
+<section class="report-hero">
+  <div><small>BUILD V9.2.001</small><h1>Sistem Laporan Profesional</h1><p>Kehadiran, kelewatan, cuti dan prestasi guru dalam satu paparan.</p></div>
+  <div class="report-score"><strong>{{ average_pct }}%</strong><small>Purata kehadiran</small></div>
+</section>
+
+<form class="card report-filters" method="get">
+  <div><label>Jenis laporan</label><select name="type"><option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Harian / Senarai Rekod</option><option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Bulanan</option><option value="annual" {% if report_type == 'annual' %}selected{% endif %}>Tahunan</option><option value="leave" {% if report_type == 'leave' %}selected{% endif %}>Laporan Cuti</option></select></div>
+  <div><label>Tahun</label><select name="year">{% for y in years %}<option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>{% endfor %}</select></div>
+  <div><label>Bulan</label><select name="month">{% for no,name in months %}<option value="{{ no }}" {% if no == selected_month %}selected{% endif %}>{{ name }}</option>{% endfor %}</select></div>
+  {% if user.is_staff %}<div><label>Guru</label><select name="teacher"><option value="">Semua guru</option>{% for teacher in teachers %}<option value="{{ teacher.id }}" {% if selected_teacher == teacher.id|stringformat:'s' %}selected{% endif %}>{{ teacher.get_full_name|default:teacher.username }}</option>{% endfor %}</select></div>{% endif %}
+  <div><label>Status</label><select name="status"><option value="">Semua</option><option value="HADIR" {% if selected_status == 'HADIR' %}selected{% endif %}>Hadir</option><option value="LEWAT" {% if selected_status == 'LEWAT' %}selected{% endif %}>Lewat</option></select></div>
+  <button type="submit">Tapis Laporan</button>
+</form>
+
+<div class="report-metrics">
+  <div><b>{{ total_present }}</b><span>Jumlah hadir</span></div>
+  <div class="warning"><b>{{ total_late }}</b><span>Rekod lewat</span></div>
+  <div class="info"><b>{{ total_leave }}</b><span>Hari cuti</span></div>
+  <div class="danger"><b>{{ total_absent }}</b><span>Anggaran tidak hadir</span></div>
+  <div class="purple"><b>{{ working_days }}</b><span>Hari bekerja</span></div>
+</div>
+
+<div class="actions report-actions">
+  <a class="button primary" href="{% url 'export_excel' %}?{{ query_string }}">Eksport Excel</a>
+  <a class="button" href="{% url 'export_pdf' %}?{{ query_string }}">Eksport PDF</a>
+  <button type="button" onclick="window.print()">Cetak</button>
+</div>
+
+{% if report_type == 'leave' %}
+<section class="card">
+  <div class="section-title"><div><small>RINGKASAN</small><h2>Penggunaan Cuti — {{ month_name }} {{ selected_year }}</h2></div></div>
+  <div class="table-scroll"><table class="report-table"><thead><tr><th>Guru</th>{% for code,label in leave_types %}<th>{{ code }}</th>{% endfor %}<th>Jumlah</th></tr></thead><tbody>
+  {% for row in leave_summary %}<tr><td><b>{{ row.teacher.get_full_name|default:row.teacher.username }}</b></td>{% for code,label in leave_types %}<td>{% for key,value in row.counts.items %}{% if key == code %}{{ value }}{% endif %}{% endfor %}</td>{% endfor %}<td><b>{{ row.total }}</b></td></tr>{% empty %}<tr><td colspan="10">Tiada data cuti.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% else %}
+<section class="card">
+  <div class="section-title"><div><small>PRESTASI</small><h2>Ringkasan Guru — {% if report_type == 'annual' %}Tahun {{ selected_year }}{% else %}{{ month_name }} {{ selected_year }}{% endif %}</h2></div></div>
+  <div class="table-scroll"><table class="report-table"><thead><tr><th>Guru</th><th>Hadir</th><th>Lewat</th><th>Cuti</th><th>Tugas Rasmi</th><th>Tidak Hadir</th><th>Peratus</th></tr></thead><tbody>
+  {% for row in summary_rows %}<tr><td><b>{{ row.teacher.get_full_name|default:row.teacher.username }}</b></td><td>{{ row.present }}</td><td>{{ row.late }}</td><td>{{ row.leave }}</td><td>{{ row.duty }}</td><td>{{ row.absent }}</td><td><span class="percentage-pill">{{ row.percentage }}%</span></td></tr>{% empty %}<tr><td colspan="7">Tiada data guru.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="card">
+  <div class="section-title"><div><small>REKOD TERPERINCI</small><h2>Senarai Kehadiran</h2></div><span>{{ records|length }} rekod dipaparkan</span></div>
+  <div class="table-scroll"><table class="report-table detailed"><thead><tr><th>Tarikh</th><th>Guru</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>GPS Masuk</th><th>GPS Keluar</th></tr></thead><tbody>
+  {% for r in records %}<tr><td>{{ r.date|date:"d/m/Y" }}</td><td><b>{{ r.user.get_full_name|default:r.user.username }}</b></td><td>{{ r.check_in|date:"H:i:s"|default:"—" }}</td><td>{{ r.check_out|date:"H:i:s"|default:"—" }}</td><td><span class="status-pill {% if r.status == 'LEWAT' %}late{% else %}present{% endif %}">{{ r.get_status_display }}</span></td><td>{{ r.distance_in_m|floatformat:1|default:"—" }} m</td><td>{{ r.distance_out_m|floatformat:1|default:"—" }} m</td></tr>{% empty %}<tr><td colspan="7">Tiada rekod untuk penapis ini.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+<p class="report-generated">Dijana pada {{ generated_at|date:"d/m/Y H:i" }} oleh {{ user.get_full_name|default:user.username }}.</p>
 {% endblock %}

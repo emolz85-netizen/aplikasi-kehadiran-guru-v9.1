@@ -24,9 +24,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.000"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.001"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.000"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.001"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -477,58 +477,318 @@ def duty_page(request):
 
 @login_required
 def report_page(request):
+    today = timezone.localdate()
+    try:
+        year = int(request.GET.get("year", today.year))
+    except (TypeError, ValueError):
+        year = today.year
+    try:
+        month = int(request.GET.get("month", today.month))
+        if month < 1 or month > 12:
+            raise ValueError
+    except (TypeError, ValueError):
+        month = today.month
+
+    selected_user_id = request.GET.get("teacher", "").strip()
+    status_filter = request.GET.get("status", "").strip().upper()
+    report_type = request.GET.get("type", "monthly").strip().lower()
+    if report_type not in {"daily", "monthly", "annual", "leave"}:
+        report_type = "monthly"
+
+    User = get_user_model()
+    teachers = User.objects.filter(is_active=True, is_staff=False).order_by("first_name", "last_name", "username")
+    if request.user.is_staff:
+        selected_users = teachers
+        if selected_user_id.isdigit():
+            selected_users = selected_users.filter(pk=int(selected_user_id))
+    else:
+        selected_users = User.objects.filter(pk=request.user.pk)
+        selected_user_id = str(request.user.pk)
+
+    selected_ids = list(selected_users.values_list("id", flat=True))
+    records = Attendance.objects.filter(user_id__in=selected_ids, date__year=year).select_related("user")
+    if report_type in {"daily", "monthly"}:
+        records = records.filter(date__month=month)
+    if status_filter in {"HADIR", "LEWAT"}:
+        records = records.filter(status=status_filter)
+    records = records.order_by("-date", "user__first_name", "user__username")
+
+    leaves = LeaveRequest.objects.filter(
+        user_id__in=selected_ids,
+        status="DILULUSKAN",
+        start_date__year__lte=year,
+        end_date__year__gte=year,
+    ).select_related("user")
+    if report_type in {"daily", "monthly", "leave"}:
+        first_day = datetime(year, month, 1).date()
+        last_day = datetime(year, month, calendar.monthrange(year, month)[1]).date()
+        leaves = leaves.filter(start_date__lte=last_day, end_date__gte=first_day)
+
+    school = SchoolSettings.load()
+    month_names = [
+        "", "Januari", "Februari", "Mac", "April", "Mei", "Jun",
+        "Julai", "Ogos", "September", "Oktober", "November", "Disember"
+    ]
+
+    # Ringkasan setiap guru bagi bulan/tahun dipilih.
+    summary_rows = []
+    period_start = datetime(year, 1, 1).date() if report_type == "annual" else datetime(year, month, 1).date()
+    period_end = datetime(year, 12, 31).date() if report_type == "annual" else datetime(year, month, calendar.monthrange(year, month)[1]).date()
+    period_end = min(period_end, today) if year == today.year else period_end
+
+    holiday_dates = set(SchoolHoliday.objects.filter(
+        is_active=True, date__gte=period_start, date__lte=period_end
+    ).values_list("date", flat=True))
+    working_days = 0
+    cursor = period_start
+    while cursor <= period_end:
+        if cursor.weekday() < 5 and cursor not in holiday_dates:
+            working_days += 1
+        cursor += timedelta(days=1)
+
+    for teacher in selected_users:
+        teacher_records = records.filter(user=teacher)
+        present = teacher_records.filter(check_in__isnull=False).count()
+        late = teacher_records.filter(check_in__isnull=False, status="LEWAT").count()
+        approved_leave_days = set()
+        for leave in LeaveRequest.objects.filter(
+            user=teacher, status="DILULUSKAN",
+            start_date__lte=period_end, end_date__gte=period_start,
+        ):
+            day = max(leave.start_date, period_start)
+            last = min(leave.end_date, period_end)
+            while day <= last:
+                if day.weekday() < 5 and day not in holiday_dates:
+                    approved_leave_days.add(day)
+                day += timedelta(days=1)
+        duty_days = set()
+        for duty in OfficialDuty.objects.filter(
+            user=teacher, status="DILULUSKAN",
+            start_date__lte=period_end, end_date__gte=period_start,
+        ):
+            day = max(duty.start_date, period_start)
+            last = min(duty.end_date, period_end)
+            while day <= last:
+                if day.weekday() < 5 and day not in holiday_dates:
+                    duty_days.add(day)
+                day += timedelta(days=1)
+        absent = max(working_days - present - len(approved_leave_days) - len(duty_days), 0)
+        attendance_pct = round((present / working_days * 100), 1) if working_days else 0
+        summary_rows.append({
+            "teacher": teacher,
+            "present": present,
+            "late": late,
+            "leave": len(approved_leave_days),
+            "duty": len(duty_days),
+            "absent": absent,
+            "percentage": attendance_pct,
+        })
+    summary_rows.sort(key=lambda row: (-row["percentage"], row["teacher"].get_full_name() or row["teacher"].username))
+
+    total_present = sum(row["present"] for row in summary_rows)
+    total_late = sum(row["late"] for row in summary_rows)
+    total_leave = sum(row["leave"] for row in summary_rows)
+    total_absent = sum(row["absent"] for row in summary_rows)
+    average_pct = round(sum(row["percentage"] for row in summary_rows) / len(summary_rows), 1) if summary_rows else 0
+
+    leave_summary = []
+    for teacher in selected_users:
+        counts = {code: 0 for code, _ in LeaveRequest.LEAVE_TYPE_CHOICES}
+        teacher_leaves = leaves.filter(user=teacher)
+        for item in teacher_leaves:
+            overlap_start = max(item.start_date, period_start)
+            overlap_end = min(item.end_date, period_end)
+            counts[item.leave_type] += max((overlap_end - overlap_start).days + 1, 0)
+        leave_summary.append({"teacher": teacher, "counts": counts, "total": sum(counts.values())})
+
+    query_string = request.GET.urlencode()
     return render(request, "attendance/report.html", {
-        "records": Attendance.objects.filter(user=request.user)[:100],
+        "school": school,
+        "records": records[:500],
+        "teachers": teachers,
+        "selected_teacher": selected_user_id,
+        "selected_year": year,
+        "selected_month": month,
+        "selected_status": status_filter,
+        "report_type": report_type,
+        "month_name": month_names[month],
+        "years": range(today.year - 4, today.year + 2),
+        "months": [(i, month_names[i]) for i in range(1, 13)],
+        "summary_rows": summary_rows,
+        "leave_summary": leave_summary,
+        "leave_types": LeaveRequest.LEAVE_TYPE_CHOICES,
+        "working_days": working_days,
+        "total_present": total_present,
+        "total_late": total_late,
+        "total_leave": total_leave,
+        "total_absent": total_absent,
+        "average_pct": average_pct,
+        "query_string": query_string,
+        "generated_at": timezone.localtime(),
     })
+
+
+def _report_filters(request):
+    today = timezone.localdate()
+    try:
+        year = int(request.GET.get("year", today.year))
+    except (TypeError, ValueError):
+        year = today.year
+    try:
+        month = int(request.GET.get("month", today.month))
+        if not 1 <= month <= 12:
+            raise ValueError
+    except (TypeError, ValueError):
+        month = today.month
+    teacher_id = request.GET.get("teacher", "").strip()
+    status = request.GET.get("status", "").strip().upper()
+    report_type = request.GET.get("type", "monthly").strip().lower()
+    User = get_user_model()
+    users = User.objects.filter(is_active=True, is_staff=False)
+    if request.user.is_staff:
+        if teacher_id.isdigit():
+            users = users.filter(pk=int(teacher_id))
+    else:
+        users = User.objects.filter(pk=request.user.pk)
+    records = Attendance.objects.filter(user__in=users, date__year=year).select_related("user")
+    if report_type != "annual":
+        records = records.filter(date__month=month)
+    if status in {"HADIR", "LEWAT"}:
+        records = records.filter(status=status)
+    return year, month, report_type, users.order_by("first_name", "username"), records.order_by("date", "user__first_name", "user__username")
+
 
 @login_required
 def export_excel(request):
     from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    year, month, report_type, users, records = _report_filters(request)
+    school = SchoolSettings.load()
     wb = Workbook()
     ws = wb.active
     ws.title = "Kehadiran"
-    ws.append(["Tarikh", "Masuk", "Keluar", "Status", "Jarak Masuk", "Jarak Keluar"])
-    for r in Attendance.objects.filter(user=request.user).order_by("-date"):
+    ws.merge_cells("A1:H1")
+    ws["A1"] = school.school_name
+    ws["A1"].font = Font(size=16, bold=True)
+    ws["A1"].alignment = Alignment(horizontal="center")
+    ws.merge_cells("A2:H2")
+    ws["A2"] = f"Laporan Kehadiran {month:02d}/{year}" if report_type != "annual" else f"Laporan Kehadiran Tahunan {year}"
+    ws["A2"].font = Font(size=12, bold=True)
+    ws["A2"].alignment = Alignment(horizontal="center")
+    headers = ["Bil", "Tarikh", "Nama Guru", "Masuk", "Keluar", "Status", "Lewat (minit)", "Catatan"]
+    ws.append([])
+    ws.append(headers)
+    header_fill = PatternFill("solid", fgColor="D9EAF7")
+    thin = Side(style="thin", color="B8C2CC")
+    for cell in ws[4]:
+        cell.font = Font(bold=True)
+        cell.fill = header_fill
+        cell.border = Border(top=thin, bottom=thin, left=thin, right=thin)
+        cell.alignment = Alignment(horizontal="center")
+    for idx, r in enumerate(records, 1):
+        target_in, _ = school.times_for_date(r.date)
+        late_minutes = ""
+        if r.check_in and r.status == "LEWAT":
+            local_in = timezone.localtime(r.check_in)
+            target_dt = timezone.make_aware(datetime.combine(r.date, target_in), timezone.get_current_timezone())
+            late_minutes = max(int((local_in - target_dt).total_seconds() // 60), 0)
         ws.append([
-            str(r.date),
+            idx, r.date.strftime("%d/%m/%Y"), r.user.get_full_name() or r.user.username,
             timezone.localtime(r.check_in).strftime("%H:%M:%S") if r.check_in else "",
             timezone.localtime(r.check_out).strftime("%H:%M:%S") if r.check_out else "",
-            r.get_status_display(),
-            round(r.distance_in_m or 0, 1),
-            round(r.distance_out_m or 0, 1),
+            r.get_status_display(), late_minutes, "",
         ])
+    ws.auto_filter.ref = f"A4:H{max(ws.max_row, 4)}"
+    ws.freeze_panes = "A5"
+    widths = [7, 14, 30, 13, 13, 13, 15, 24]
+    for i, width in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    # Helaian ringkasan guru.
+    summary = wb.create_sheet("Ringkasan")
+    summary.append([school.school_name])
+    summary.append([f"Ringkasan {month:02d}/{year}" if report_type != "annual" else f"Ringkasan Tahunan {year}"])
+    summary.append([])
+    summary.append(["Bil", "Nama Guru", "Hadir", "Lewat", "Cuti Diluluskan"])
+    for idx, user in enumerate(users, 1):
+        user_records = records.filter(user=user)
+        leave_qs = LeaveRequest.objects.filter(user=user, status="DILULUSKAN")
+        if report_type == "annual":
+            leave_qs = leave_qs.filter(start_date__year__lte=year, end_date__year__gte=year)
+        else:
+            first = datetime(year, month, 1).date()
+            last = datetime(year, month, calendar.monthrange(year, month)[1]).date()
+            leave_qs = leave_qs.filter(start_date__lte=last, end_date__gte=first)
+        summary.append([idx, user.get_full_name() or user.username, user_records.count(), user_records.filter(status="LEWAT").count(), leave_qs.count()])
+    for cell in summary[4]:
+        cell.font = Font(bold=True)
+        cell.fill = header_fill
+    summary.column_dimensions["A"].width = 7
+    summary.column_dimensions["B"].width = 32
+    for col in "CDE":
+        summary.column_dimensions[col].width = 18
+
     output = io.BytesIO()
     wb.save(output)
-    response = HttpResponse(
-        output.getvalue(),
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-    response["Content-Disposition"] = 'attachment; filename="laporan_kehadiran.xlsx"'
+    filename = f"laporan_kehadiran_{year}_{month:02d}.xlsx"
+    response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
 
 @login_required
 def export_pdf(request):
-    from reportlab.lib.pagesizes import A4
-    from reportlab.pdfgen import canvas
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+    year, month, report_type, users, records = _report_filters(request)
+    school = SchoolSettings.load()
     output = io.BytesIO()
-    c = canvas.Canvas(output, pagesize=A4)
-    _, height = A4
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(40, height - 45, f"Laporan Kehadiran - {settings.SCHOOL_NAME}")
-    c.setFont("Helvetica", 9)
-    y = height - 75
-    for r in Attendance.objects.filter(user=request.user).order_by("-date")[:150]:
-        if y < 50:
-            c.showPage()
-            c.setFont("Helvetica", 9)
-            y = height - 50
-        masuk = timezone.localtime(r.check_in).strftime("%H:%M") if r.check_in else "-"
-        keluar = timezone.localtime(r.check_out).strftime("%H:%M") if r.check_out else "-"
-        c.drawString(40, y, f"{r.date}   Masuk: {masuk}   Keluar: {keluar}   {r.get_status_display()}")
-        y -= 16
-    c.save()
+    filename = f"laporan_kehadiran_{year}_{month:02d}.pdf"
+    doc = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=28, leftMargin=28, topMargin=28, bottomMargin=28)
+    styles = getSampleStyleSheet()
+    centered = ParagraphStyle("Centered", parent=styles["Heading1"], alignment=TA_CENTER, fontSize=15, leading=18)
+    story = [
+        Paragraph(school.school_name, centered),
+        Paragraph((f"Laporan Kehadiran {month:02d}/{year}" if report_type != "annual" else f"Laporan Kehadiran Tahunan {year}"), ParagraphStyle("Sub", parent=styles["Normal"], alignment=TA_CENTER, fontSize=10)),
+        Paragraph(f"Dicetak oleh: {request.user.get_full_name() or request.user.username} | {timezone.localtime():%d/%m/%Y %H:%M}", ParagraphStyle("Meta", parent=styles["Normal"], alignment=TA_CENTER, fontSize=8)),
+        Spacer(1, 14),
+    ]
+    data = [["Bil", "Tarikh", "Nama Guru", "Masuk", "Keluar", "Status", "Lewat"]]
+    for idx, r in enumerate(records[:500], 1):
+        target_in, _ = school.times_for_date(r.date)
+        late_text = "-"
+        if r.check_in and r.status == "LEWAT":
+            local_in = timezone.localtime(r.check_in)
+            target_dt = timezone.make_aware(datetime.combine(r.date, target_in), timezone.get_current_timezone())
+            late_text = f"{max(int((local_in-target_dt).total_seconds()//60),0)} min"
+        data.append([
+            idx, r.date.strftime("%d/%m/%Y"), r.user.get_full_name() or r.user.username,
+            timezone.localtime(r.check_in).strftime("%H:%M") if r.check_in else "-",
+            timezone.localtime(r.check_out).strftime("%H:%M") if r.check_out else "-",
+            r.get_status_display(), late_text,
+        ])
+    table = Table(data, repeatRows=1, colWidths=[35, 70, 190, 65, 65, 70, 65])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#dbeafe")),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#1e293b")),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("FONTSIZE", (0,0), (-1,-1), 8),
+        ("GRID", (0,0), (-1,-1), .35, colors.HexColor("#94a3b8")),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#f8fafc")]),
+        ("LEFTPADDING", (0,0), (-1,-1), 5),
+        ("RIGHTPADDING", (0,0), (-1,-1), 5),
+    ]))
+    story.append(table)
+    doc.build(story)
     output.seek(0)
-    return FileResponse(output, as_attachment=True, filename="laporan_kehadiran.pdf")
+    return FileResponse(output, as_attachment=True, filename=filename)
 
 
 @user_passes_test(lambda u: u.is_staff)
