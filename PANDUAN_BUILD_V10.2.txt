@@ -1,0 +1,12 @@
+APLIKASI KEHADIRAN GURU – V10.2 ENTERPRISE UI
+
+GitHub Desktop Summary:
+Build V10.2 - Enterprise UI
+
+Deploy:
+1. Gantikan kandungan repository dengan build ini.
+2. Commit dan Push origin.
+3. Tunggu Render Auto Deploy.
+4. Tekan Kemas Kini pada PWA atau Ctrl+F5 jika cache lama masih kelihatan.
+
+Tiada migration baharu diperlukan.

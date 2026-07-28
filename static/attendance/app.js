@@ -105,3 +105,61 @@ async function rekod(action){
 
 // V10.0.1: sidebar responsif dan keadaan collapse disimpan.
 (()=>{const shell=document.querySelector('.app-shell'),sidebar=document.getElementById('roleSidebar'),toggle=document.getElementById('sidebarToggle');if(!shell||!sidebar||!toggle)return;const desktop=()=>window.matchMedia('(min-width:901px)').matches;const sync=()=>toggle.setAttribute('aria-expanded',desktop()?String(!shell.classList.contains('sidebar-collapsed')):String(sidebar.classList.contains('open')));if(desktop()&&localStorage.getItem('attendance_sidebar_collapsed')==='1')shell.classList.add('sidebar-collapsed');toggle.addEventListener('click',()=>{if(desktop()){shell.classList.toggle('sidebar-collapsed');localStorage.setItem('attendance_sidebar_collapsed',shell.classList.contains('sidebar-collapsed')?'1':'0')}else sidebar.classList.toggle('open');sync()});document.addEventListener('click',e=>{if(!desktop()&&sidebar.classList.contains('open')&&!sidebar.contains(e.target)&&!toggle.contains(e.target)){sidebar.classList.remove('open');sync()}});window.addEventListener('resize',()=>{if(desktop())sidebar.classList.remove('open');sync()});sync()})();
+
+
+// V10.2 — Enterprise UI: tema, paparan padat, carian/pagination jadual dan transisi.
+(()=>{
+  const body=document.body;
+  const themeToggle=document.getElementById('themeToggle');
+  const densityToggle=document.getElementById('densityToggle');
+  const progress=document.getElementById('pageProgress');
+  const backToTop=document.getElementById('backToTop');
+
+  const preferredTheme=localStorage.getItem('attendance_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  if(preferredTheme==='dark') body.classList.add('theme-dark');
+  if(localStorage.getItem('attendance_density')==='compact') body.classList.add('density-compact');
+  const syncButtons=()=>{
+    if(themeToggle){themeToggle.textContent=body.classList.contains('theme-dark')?'☀':'☾';themeToggle.title=body.classList.contains('theme-dark')?'Mod cerah':'Mod gelap'}
+    if(densityToggle){densityToggle.classList.toggle('active',body.classList.contains('density-compact'));densityToggle.title=body.classList.contains('density-compact')?'Paparan selesa':'Paparan padat'}
+  };
+  themeToggle?.addEventListener('click',()=>{body.classList.toggle('theme-dark');localStorage.setItem('attendance_theme',body.classList.contains('theme-dark')?'dark':'light');syncButtons()});
+  densityToggle?.addEventListener('click',()=>{body.classList.toggle('density-compact');localStorage.setItem('attendance_density',body.classList.contains('density-compact')?'compact':'comfortable');syncButtons()});
+  syncButtons();
+
+  document.addEventListener('click',e=>{
+    const link=e.target.closest('a[href]');
+    if(!link||link.target==='_blank'||link.hasAttribute('download')||link.href.startsWith('mailto:')||link.href.startsWith('tel:')||link.origin!==location.origin||link.hash&&link.pathname===location.pathname)return;
+    progress?.classList.add('active');body.classList.add('page-leaving');
+  });
+  window.addEventListener('pageshow',()=>{progress?.classList.remove('active');body.classList.remove('page-leaving')});
+
+  const tables=[...document.querySelectorAll('main table')];
+  tables.forEach((table,index)=>{
+    if(table.closest('.enterprise-table-wrap'))return;
+    const rows=[...table.tBodies].flatMap(t=>[...t.rows]);
+    if(rows.length<4)return;
+    const wrap=document.createElement('div');wrap.className='enterprise-table-wrap';
+    table.parentNode.insertBefore(wrap,table);wrap.appendChild(table);
+    const tools=document.createElement('div');tools.className='enterprise-table-tools';
+    tools.innerHTML=`<label class="enterprise-search"><span>⌕</span><input type="search" placeholder="Cari dalam jadual…" aria-label="Cari dalam jadual"></label><div class="enterprise-table-meta"></div>`;
+    wrap.insertBefore(tools,table);
+    const pager=document.createElement('div');pager.className='enterprise-pager';wrap.appendChild(pager);
+    const input=tools.querySelector('input'),meta=tools.querySelector('.enterprise-table-meta');
+    let page=1;const size=10;
+    const render=()=>{
+      const q=input.value.trim().toLowerCase();
+      const matches=rows.filter(r=>r.textContent.toLowerCase().includes(q));
+      const pages=Math.max(1,Math.ceil(matches.length/size));page=Math.min(page,pages);
+      rows.forEach(r=>r.hidden=true);matches.slice((page-1)*size,page*size).forEach(r=>r.hidden=false);
+      meta.textContent=`${matches.length} rekod`;
+      pager.innerHTML=`<button type="button" ${page<=1?'disabled':''}>← Sebelum</button><span>Halaman ${page} / ${pages}</span><button type="button" ${page>=pages?'disabled':''}>Seterusnya →</button>`;
+      const btn=[...pager.querySelectorAll('button')];btn[0].onclick=()=>{page--;render()};btn[1].onclick=()=>{page++;render()};
+    };
+    input.addEventListener('input',()=>{page=1;render()});render();
+  });
+
+  const updateTop=()=>backToTop?.classList.toggle('show',scrollY>420);
+  addEventListener('scroll',updateTop,{passive:true});backToTop?.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));updateTop();
+
+  document.querySelectorAll('.card,.pro-panel,.pro-stat,.metric-card').forEach((el,i)=>{el.style.setProperty('--enter-delay',`${Math.min(i,12)*35}ms`);el.classList.add('enterprise-enter')});
+})();

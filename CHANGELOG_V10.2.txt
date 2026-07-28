@@ -1,0 +1,11 @@
+V10.2 – Enterprise UI
+
+- Mod gelap dengan pilihan disimpan pada peranti.
+- Pilihan paparan padat/selesa.
+- Transisi halaman dan animasi kad yang ringan.
+- Carian serta pagination automatik untuk jadual yang panjang.
+- Butang kembali ke atas.
+- Header sticky dan kemasan responsif.
+- Sokongan reduced-motion untuk aksesibiliti.
+- Cache PWA dinaik taraf melalui APP_VERSION 10.2.0.
+- Tiada migration pangkalan data baharu.
