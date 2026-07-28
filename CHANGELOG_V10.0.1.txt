@@ -1,0 +1,10 @@
+V10.0.1 – UI & UX Enhancement
+
+1. Sidebar disusun mengikut kumpulan: Utama, Pengurusan, Kehadiran & Keselamatan, Laporan & Sistem, dan Aplikasi.
+2. Menu aktif ditandakan secara automatik.
+3. Ikon dan teks menu diseragamkan.
+4. Scroll mendatar sidebar dibuang.
+5. Sidebar desktop boleh dikecilkan kepada ikon sahaja dan pilihan disimpan.
+6. Sidebar telefon lebih responsif dan mudah ditutup.
+7. Nombor versi PWA/cache dinaikkan kepada 10.0.1.
+8. Tiada perubahan pangkalan data dan tiada migration baharu.

@@ -75,3 +75,32 @@ body.role-admin{--role-primary:var(--admin);--role-dark:var(--admin-dark)}
 .branding-login-wrap{max-width:950px;margin:42px auto;display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:stretch;padding:0 18px}.branding-panel{border-radius:24px;background:linear-gradient(145deg,#14532d,#166534);color:#fff;padding:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;box-shadow:0 20px 50px rgba(20,83,45,.2)}.school-logo-main{width:145px;height:145px;object-fit:contain;background:#fff;border-radius:28px;padding:12px;margin-bottom:22px}.branding-panel h1{font-size:34px;margin:8px 0}.branding-panel p{opacity:.85;margin:5px}.school-code{font-weight:700}.branded-login-card{margin:0!important;display:flex;flex-direction:column;justify-content:center;padding:36px!important}.public-header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:#14532d;color:#fff}.public-header small{opacity:.8}
 body.role-admin .admin-metric,body.role-admin .attendance-score{border-color:rgba(22,52,95,.18)}body.role-admin button.primary,body.role-admin .primary{background:var(--admin)}body.role-teacher button.primary,body.role-teacher .primary{background:var(--teacher)}
 @media(max-width:900px){.role-sidebar{transform:translateX(-100%);transition:.25s}.role-sidebar.open{transform:translateX(0)}.app-content{margin-left:0;width:100%}.sidebar-toggle{display:inline-block}.app-content main{padding:16px}.branding-login-wrap{grid-template-columns:1fr;margin:20px auto}.branding-panel{padding:30px}.school-logo-main{width:110px;height:110px}.public-header{flex-direction:column;gap:3px}.dashboard-brand-strip img{width:58px;height:58px}}
+
+
+/* V10.0.1 — UI & UX Enhancement: sidebar tersusun */
+html,body{overflow-x:hidden}
+.role-sidebar{overflow:hidden}
+.sidebar-brand{min-width:0}
+.sidebar-brand>div{min-width:0}.sidebar-brand strong,.sidebar-brand small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-nav{gap:0;padding:0 12px 16px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent}
+.sidebar-nav::-webkit-scrollbar{width:6px}.sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.24);border-radius:20px}
+.nav-group{display:block;margin:0 0 10px;padding:0}.nav-group-title{padding:10px 10px 6px;font-size:10px;line-height:1.2;font-weight:800;letter-spacing:1.45px;color:rgba(255,255,255,.58);white-space:nowrap}
+.sidebar-nav a{position:relative;min-width:0;width:100%;gap:12px;margin:3px 0;padding:11px 12px;border-radius:11px;font-size:14px;line-height:1.25;transition:background .18s ease,transform .18s ease,box-shadow .18s ease}
+.sidebar-nav a:hover{background:rgba(255,255,255,.12);transform:translateX(2px)}
+.sidebar-nav a.active{background:rgba(255,255,255,.20);box-shadow:inset 4px 0 0 #fff,0 5px 14px rgba(0,0,0,.10)}
+.nav-icon{flex:0 0 24px;width:24px;text-align:center;font-size:17px;line-height:1}.nav-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notification-badge{flex:0 0 auto;display:grid;place-items:center;min-width:21px;height:21px;margin-left:auto;padding:0 6px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;box-shadow:0 3px 10px rgba(239,68,68,.35)}
+.sidebar-logout{padding:12px 14px 16px;border-top:1px solid rgba(255,255,255,.10)}.sidebar-logout button{white-space:nowrap}
+.sidebar-toggle{display:inline-grid;place-items:center;flex:0 0 auto;width:38px;height:38px;padding:0;font-size:18px}
+@media(min-width:901px){
+  .app-shell.sidebar-collapsed .role-sidebar{width:82px}
+  .app-shell.sidebar-collapsed .app-content{margin-left:82px;width:calc(100% - 82px)}
+  .role-sidebar,.app-content{transition:width .22s ease,margin-left .22s ease}
+  .app-shell.sidebar-collapsed .sidebar-brand{justify-content:center;padding-left:12px;padding-right:12px}.app-shell.sidebar-collapsed .sidebar-brand img{width:48px;height:48px}.app-shell.sidebar-collapsed .sidebar-brand>div,.app-shell.sidebar-collapsed .role-label,.app-shell.sidebar-collapsed .nav-group-title,.app-shell.sidebar-collapsed .nav-text,.app-shell.sidebar-collapsed .notification-badge{display:none}
+  .app-shell.sidebar-collapsed .sidebar-nav{padding-left:10px;padding-right:10px}.app-shell.sidebar-collapsed .sidebar-nav a{justify-content:center;padding-left:10px;padding-right:10px}.app-shell.sidebar-collapsed .nav-icon{flex-basis:28px;width:28px;font-size:19px}
+  .app-shell.sidebar-collapsed .sidebar-logout button{font-size:0}.app-shell.sidebar-collapsed .sidebar-logout button::before{content:"🚪";font-size:18px}
+}
+@media(max-width:900px){
+  .role-sidebar{width:min(310px,88vw)}.sidebar-toggle{display:inline-grid}.sidebar-nav a{font-size:14px;padding:12px}.nav-group-title{padding-top:12px}
+  .role-sidebar.open::after{content:"";position:fixed;inset:0;left:min(310px,88vw);background:rgba(15,23,42,.35);pointer-events:none}
+}

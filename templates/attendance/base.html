@@ -24,35 +24,58 @@
       {% if SCHOOL and SCHOOL.logo %}<img src="{{ SCHOOL.logo.url }}" alt="Logo {{ SCHOOL_NAME }}">{% else %}<img src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
       <div><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru</small></div>
     </div>
-    <div class="role-label">{% if user.is_staff %}PENTADBIR{% else %}GURU{% endif %}</div>
-    <nav class="sidebar-nav">
+    <div class="role-label">{% if user.is_staff %}MENU PENTADBIR{% else %}MENU GURU{% endif %}</div>
+    <nav class="sidebar-nav" aria-label="Menu utama">
+      {% with current=request.resolver_match.url_name %}
       {% if user.is_staff %}
-        <a href="{% url 'admin_dashboard' %}">🏠 <span>Dashboard Pentadbir</span></a>
-        <a href="/admin/auth/user/">👨‍🏫 <span>Pengurusan Guru</span></a>
-        <a href="/admin/attendance/attendance/">📊 <span>Kehadiran Guru</span></a>
-        <a href="{% url 'leave_admin' %}">📅 <span>Kelulusan Cuti</span></a>
-        <a href="{% url 'attendance_map' %}">🗺️ <span>Peta Kehadiran</span></a>
-        <a href="{% url 'report_page' %}">📄 <span>Laporan</span></a>
-        <a href="{% url 'audit_log_page' %}">🛡️ <span>Log Audit</span></a>
-        <a href="{% url 'device_security_page' %}">📱 <span>Device Trust</span></a>
-        <a href="/admin/attendance/schoolsettings/">⚙️ <span>Tetapan Sekolah</span></a>
-        <a href="{% url 'password_recovery_admin' %}">🔑 <span>Reset Kata Laluan</span></a>
+        <section class="nav-group">
+          <div class="nav-group-title">UTAMA</div>
+          <a class="{% if current == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}"><span class="nav-icon">🏠</span><span class="nav-text">Dashboard Pentadbir</span></a>
+        </section>
+        <section class="nav-group">
+          <div class="nav-group-title">PENGURUSAN</div>
+          <a href="/admin/auth/user/"><span class="nav-icon">👨‍🏫</span><span class="nav-text">Pengurusan Guru</span></a>
+          <a class="{% if current == 'leave_admin' or current == 'leave_review' %}active{% endif %}" href="{% url 'leave_admin' %}"><span class="nav-icon">📅</span><span class="nav-text">Kelulusan Cuti</span></a>
+          <a class="{% if current == 'password_recovery_admin' %}active{% endif %}" href="{% url 'password_recovery_admin' %}"><span class="nav-icon">🔑</span><span class="nav-text">Pengurusan Akaun</span></a>
+        </section>
+        <section class="nav-group">
+          <div class="nav-group-title">KEHADIRAN & KESELAMATAN</div>
+          <a href="/admin/attendance/attendance/"><span class="nav-icon">📊</span><span class="nav-text">Kehadiran Guru</span></a>
+          <a class="{% if current == 'attendance_map' %}active{% endif %}" href="{% url 'attendance_map' %}"><span class="nav-icon">🗺️</span><span class="nav-text">Peta Kehadiran</span></a>
+          <a class="{% if current == 'device_security_page' %}active{% endif %}" href="{% url 'device_security_page' %}"><span class="nav-icon">🛡️</span><span class="nav-text">Device Trust & GPS</span></a>
+        </section>
+        <section class="nav-group">
+          <div class="nav-group-title">LAPORAN & SISTEM</div>
+          <a class="{% if current == 'report_page' %}active{% endif %}" href="{% url 'report_page' %}"><span class="nav-icon">📄</span><span class="nav-text">Laporan</span></a>
+          <a class="{% if current == 'audit_log_page' %}active{% endif %}" href="{% url 'audit_log_page' %}"><span class="nav-icon">📋</span><span class="nav-text">Log Audit</span></a>
+          <a href="/admin/attendance/schoolsettings/"><span class="nav-icon">⚙️</span><span class="nav-text">Tetapan Sekolah</span></a>
+        </section>
       {% else %}
-        <a href="{% url 'dashboard' %}">🏠 <span>Dashboard Guru</span></a>
-        <a href="{% url 'dashboard' %}#rekod-harian">📍 <span>Kehadiran</span></a>
-        <a href="{% url 'leave_page' %}">📝 <span>Permohonan Cuti</span></a>
-        <a href="{% url 'duty_page' %}">🧳 <span>Tugas Rasmi</span></a>
-        <a href="{% url 'report_page' %}">📜 <span>Sejarah & Laporan</span></a>
-        <a href="{% url 'profile_page' %}">👤 <span>Profil</span></a>
+        <section class="nav-group">
+          <div class="nav-group-title">UTAMA</div>
+          <a class="{% if current == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><span class="nav-icon">🏠</span><span class="nav-text">Dashboard Guru</span></a>
+          <a href="{% url 'dashboard' %}#rekod-harian"><span class="nav-icon">📍</span><span class="nav-text">Kehadiran</span></a>
+        </section>
+        <section class="nav-group">
+          <div class="nav-group-title">URUSAN GURU</div>
+          <a class="{% if current == 'leave_page' %}active{% endif %}" href="{% url 'leave_page' %}"><span class="nav-icon">📝</span><span class="nav-text">Permohonan Cuti</span></a>
+          <a class="{% if current == 'duty_page' %}active{% endif %}" href="{% url 'duty_page' %}"><span class="nav-icon">🧳</span><span class="nav-text">Tugas Rasmi</span></a>
+          <a class="{% if current == 'report_page' %}active{% endif %}" href="{% url 'report_page' %}"><span class="nav-icon">📜</span><span class="nav-text">Sejarah & Laporan</span></a>
+          <a class="{% if current == 'profile_page' %}active{% endif %}" href="{% url 'profile_page' %}"><span class="nav-icon">👤</span><span class="nav-text">Profil</span></a>
+        </section>
       {% endif %}
-      <a href="{% url 'notification_center' %}">🔔 <span>Notifikasi</span>{% if NOTIFICATION_UNREAD_COUNT %}<b class="notification-badge">{{ NOTIFICATION_UNREAD_COUNT }}</b>{% endif %}</a>
-      <a href="{% url 'pwa_install' %}">📲 <span>Pasang Aplikasi</span></a>
+      <section class="nav-group">
+        <div class="nav-group-title">APLIKASI</div>
+        <a class="{% if current == 'notification_center' %}active{% endif %}" href="{% url 'notification_center' %}"><span class="nav-icon">🔔</span><span class="nav-text">Notifikasi</span>{% if NOTIFICATION_UNREAD_COUNT %}<b class="notification-badge">{{ NOTIFICATION_UNREAD_COUNT }}</b>{% endif %}</a>
+        <a class="{% if current == 'pwa_install' %}active{% endif %}" href="{% url 'pwa_install' %}"><span class="nav-icon">📲</span><span class="nav-text">Pasang Aplikasi</span></a>
+      </section>
+      {% endwith %}
     </nav>
     <form class="sidebar-logout" method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">🚪 Log Keluar</button></form>
   </aside>
   <div class="app-content">
     <header class="role-header">
-      <button type="button" class="sidebar-toggle" onclick="document.getElementById('roleSidebar').classList.toggle('open')">☰</button>
+      <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Buka atau kecilkan menu" aria-expanded="true">☰</button>
       <div><strong>{% if user.is_staff %}Dashboard Pentadbir{% else %}Dashboard Guru{% endif %}</strong><small>{{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }}</small></div>
       <a class="header-notification" href="{% url 'notification_center' %}">🔔{% if NOTIFICATION_UNREAD_COUNT %}<span>{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
     </header>

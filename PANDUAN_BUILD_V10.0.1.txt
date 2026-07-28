@@ -1,0 +1,14 @@
+SISTEM KEHADIRAN GURU – BUILD V10.0.1
+
+Nama: UI & UX Enhancement
+Asas: V10.0 Stable
+Migration baharu: Tiada
+
+CARA DEPLOY
+1. Gantikan kandungan repository dengan kandungan ZIP ini.
+2. Commit: Build V10.0.1 - UI UX Enhancement
+3. Push origin melalui GitHub Desktop.
+4. Tunggu Render Auto Deploy.
+5. Buka aplikasi dan tekan Kemas Kini jika notis PWA muncul.
+
+Nota: Data guru, kehadiran, cuti dan tetapan sekolah tidak berubah.
