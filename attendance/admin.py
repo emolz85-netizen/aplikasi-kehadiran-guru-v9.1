@@ -66,8 +66,15 @@ class AttendanceAdmin(admin.ModelAdmin):
 
 @admin.register(LeaveRequest)
 class LeaveRequestAdmin(admin.ModelAdmin):
-    list_display = ("user", "start_date", "end_date", "status")
-    list_filter = ("status",)
+    list_display = ("user", "leave_type", "start_date", "end_date", "total_days_display", "status", "reviewed_by", "reviewed_at")
+    list_filter = ("status", "leave_type", "start_date")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "reason", "admin_note")
+    readonly_fields = ("created_at", "updated_at", "reviewed_at")
+    date_hierarchy = "start_date"
+
+    @admin.display(description="Hari")
+    def total_days_display(self, obj):
+        return obj.total_days
 
 
 @admin.register(OfficialDuty)

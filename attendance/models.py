@@ -110,16 +110,44 @@ class Attendance(models.Model):
 
 
 class LeaveRequest(models.Model):
-    STATUS_CHOICES = [("MENUNGGU", "Menunggu"), ("DILULUSKAN", "Diluluskan"), ("DITOLAK", "Ditolak")]
+    LEAVE_TYPE_CHOICES = [
+        ("CRK", "Cuti Rehat Khas (CRK)"),
+        ("SAKIT", "Cuti Sakit"),
+        ("TANPA_REKOD", "Cuti Tanpa Rekod"),
+        ("TANPA_GAJI", "Cuti Tanpa Gaji"),
+        ("KECEMASAN", "Cuti Kecemasan"),
+        ("BERSALIN", "Cuti Bersalin"),
+        ("ISTERI_BERSALIN", "Cuti Isteri Bersalin"),
+        ("LAIN", "Lain-lain"),
+    ]
+    STATUS_CHOICES = [
+        ("MENUNGGU", "Menunggu"),
+        ("DILULUSKAN", "Diluluskan"),
+        ("DITOLAK", "Ditolak"),
+        ("DIBATALKAN", "Dibatalkan"),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    leave_type = models.CharField(max_length=30, choices=LEAVE_TYPE_CHOICES, default="CRK")
     start_date = models.DateField()
     end_date = models.DateField()
     reason = models.TextField()
+    attachment = models.FileField(upload_to="leave_documents/%Y/%m/", null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="MENUNGGU")
+    admin_note = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="reviewed_leave_requests")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} - {self.get_leave_type_display()} ({self.start_date} hingga {self.end_date})"
+
+    @property
+    def total_days(self):
+        return (self.end_date - self.start_date).days + 1
 
 
 class OfficialDuty(models.Model):

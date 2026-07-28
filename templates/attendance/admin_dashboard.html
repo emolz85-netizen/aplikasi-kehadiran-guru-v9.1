@@ -3,7 +3,7 @@
 {% block content %}
 <section class="admin-hero">
   <div>
-    <span class="eyebrow">BUILD 9.1.005 · PUSAT KAWALAN</span>
+    <span class="eyebrow">BUILD V9.2.000 · PUSAT KAWALAN</span>
     <h1>Dashboard Pentadbir</h1>
     <p>{{ school.school_name }} · {{ today|date:"l, d F Y" }}</p>
   </div>
@@ -46,7 +46,7 @@
 
   <section class="card admin-alerts">
     <span class="eyebrow">TINDAKAN PENTADBIR</span><h2>Permohonan Menunggu</h2>
-    <a href="/admin/attendance/leaverequest/?status__exact=MENUNGGU"><span>Permohonan cuti</span><b>{{ pending_leave }}</b></a>
+    <a href="{% url 'leave_admin' %}?status=MENUNGGU"><span>Permohonan cuti</span><b>{{ pending_leave }}</b></a>
     <a href="/admin/attendance/officialduty/?status__exact=MENUNGGU"><span>Tugas rasmi</span><b>{{ pending_duty }}</b></a>
     <a href="{% url 'attendance_map' %}"><span>Peta kehadiran</span><b>→</b></a>
     <a href="/admin/attendance/attendance/"><span>Semua rekod kehadiran</span><b>→</b></a>

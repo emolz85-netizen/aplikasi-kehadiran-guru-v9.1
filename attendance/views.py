@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 
-from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm
+from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm
 from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest
 
 def health(request):
@@ -24,9 +24,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.006QR"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.000"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.006QR"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.000"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -40,7 +40,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-1-006qr";
+const CACHE = "kehadiran-v9-2-000";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -359,25 +359,104 @@ def admin_dashboard(request):
         "weekly_stats": weekly_stats,
         "pending_leave": LeaveRequest.objects.filter(status="MENUNGGU").count(),
         "pending_duty": OfficialDuty.objects.filter(status="MENUNGGU").count(),
+        "recent_leave_requests": LeaveRequest.objects.select_related("user").filter(status="MENUNGGU")[:5],
     })
 
 
 @login_required
 def leave_page(request):
     if request.method == "POST":
-        form = LeaveRequestForm(request.POST)
+        form = LeaveRequestForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             item = form.save(commit=False)
             item.user = request.user
             item.save()
-            messages.success(request, "Permohonan cuti dihantar.")
+            AccountActivity.objects.create(
+                user=request.user,
+                action="Mohon cuti",
+                details=f"{item.get_leave_type_display()}: {item.start_date:%d/%m/%Y} - {item.end_date:%d/%m/%Y}",
+            )
+            messages.success(request, "Permohonan cuti berjaya dihantar kepada pentadbir.")
             return redirect("leave_page")
     else:
-        form = LeaveRequestForm()
+        form = LeaveRequestForm(user=request.user)
+
+    items = LeaveRequest.objects.filter(user=request.user)
+    current_year = timezone.localdate().year
+    approved_crk = sum(
+        x.total_days for x in items.filter(
+            leave_type="CRK", status="DILULUSKAN", start_date__year=current_year
+        )
+    )
     return render(request, "attendance/leave.html", {
         "form": form,
-        "items": LeaveRequest.objects.filter(user=request.user),
+        "items": items,
+        "pending_count": items.filter(status="MENUNGGU").count(),
+        "approved_count": items.filter(status="DILULUSKAN").count(),
+        "rejected_count": items.filter(status="DITOLAK").count(),
+        "approved_crk_days": approved_crk,
+        "current_year": current_year,
     })
+
+
+@login_required
+@require_POST
+def leave_cancel(request, pk):
+    item = get_object_or_404(LeaveRequest, pk=pk, user=request.user)
+    if item.status != "MENUNGGU":
+        messages.error(request, "Hanya permohonan yang masih menunggu boleh dibatalkan.")
+    else:
+        item.status = "DIBATALKAN"
+        item.save(update_fields=["status", "updated_at"])
+        AccountActivity.objects.create(user=request.user, action="Batal permohonan cuti", details=f"Permohonan #{item.pk}")
+        messages.success(request, "Permohonan cuti telah dibatalkan.")
+    return redirect("leave_page")
+
+
+@user_passes_test(lambda u: u.is_staff)
+def leave_admin(request):
+    status = request.GET.get("status", "MENUNGGU").upper()
+    valid_status = {x[0] for x in LeaveRequest.STATUS_CHOICES}
+    items = LeaveRequest.objects.select_related("user", "reviewed_by").all()
+    if status in valid_status:
+        items = items.filter(status=status)
+    else:
+        status = "SEMUA"
+    return render(request, "attendance/leave_admin.html", {
+        "items": items,
+        "selected_status": status,
+        "counts": {
+            "MENUNGGU": LeaveRequest.objects.filter(status="MENUNGGU").count(),
+            "DILULUSKAN": LeaveRequest.objects.filter(status="DILULUSKAN").count(),
+            "DITOLAK": LeaveRequest.objects.filter(status="DITOLAK").count(),
+        },
+    })
+
+
+@user_passes_test(lambda u: u.is_staff)
+def leave_review(request, pk, decision):
+    item = get_object_or_404(LeaveRequest.objects.select_related("user"), pk=pk)
+    if item.status != "MENUNGGU":
+        messages.warning(request, "Permohonan ini sudah diproses.")
+        return redirect("leave_admin")
+    form = LeaveReviewForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        if decision not in {"lulus", "tolak"}:
+            messages.error(request, "Tindakan tidak sah.")
+            return redirect("leave_admin")
+        item.status = "DILULUSKAN" if decision == "lulus" else "DITOLAK"
+        item.admin_note = form.cleaned_data["admin_note"]
+        item.reviewed_by = request.user
+        item.reviewed_at = timezone.now()
+        item.save(update_fields=["status", "admin_note", "reviewed_by", "reviewed_at", "updated_at"])
+        AccountActivity.objects.create(
+            user=item.user,
+            action="Permohonan cuti " + ("diluluskan" if decision == "lulus" else "ditolak"),
+            details=f"Oleh {request.user.get_full_name() or request.user.username}; permohonan #{item.pk}",
+        )
+        messages.success(request, f"Permohonan {item.user.get_full_name() or item.user.username} telah {item.get_status_display().lower()}.")
+        return redirect("leave_admin")
+    return render(request, "attendance/leave_review.html", {"item": item, "form": form, "decision": decision})
 
 @login_required
 def duty_page(request):

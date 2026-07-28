@@ -1,0 +1,14 @@
+BUILD V9.2.000 - LEAVE MANAGEMENT SYSTEM
+
+Ciri baharu:
+- Jenis cuti lengkap
+- Dokumen sokongan
+- Semakan status guru
+- Pembatalan permohonan yang masih menunggu
+- Dashboard pengurusan cuti pentadbir
+- Lulus/tolak dengan ulasan
+- Integrasi automatik dengan status kehadiran
+- Migration: 0006_build_92000_leave_management.py
+
+GitHub Desktop Summary:
+Build V9.2.000 - Leave Management System

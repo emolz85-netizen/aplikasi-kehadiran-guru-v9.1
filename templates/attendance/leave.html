@@ -1,8 +1,19 @@
 {% extends "attendance/base.html" %}
+{% block title %}Pengurusan Cuti{% endblock %}
 {% block content %}
-<h1>Permohonan Cuti</h1>
-<section class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="primary">Hantar</button></form></section>
-<section class="card"><table><tr><th>Tarikh</th><th>Sebab</th><th>Status</th></tr>
-{% for x in items %}<tr><td>{{ x.start_date }} – {{ x.end_date }}</td><td>{{ x.reason }}</td><td>{{ x.get_status_display }}</td></tr>
-{% empty %}<tr><td colspan="3">Tiada rekod.</td></tr>{% endfor %}</table></section>
+<section class="leave-hero"><div><span class="eyebrow">BUILD V9.2.000</span><h1>Permohonan Cuti</h1><p>Mohon, semak dan jejak status cuti anda.</p></div><div class="leave-year">{{ current_year }}</div></section>
+<section class="leave-metrics">
+ <div class="leave-metric"><b>{{ pending_count }}</b><span>Menunggu</span></div>
+ <div class="leave-metric success"><b>{{ approved_count }}</b><span>Diluluskan</span></div>
+ <div class="leave-metric danger"><b>{{ rejected_count }}</b><span>Ditolak</span></div>
+ <div class="leave-metric info"><b>{{ approved_crk_days }}</b><span>Hari CRK diluluskan</span></div>
+</section>
+<div class="leave-layout">
+<section class="card leave-form-card"><div class="section-heading"><div><span class="eyebrow">PERMOHONAN BAHARU</span><h2>Butiran Cuti</h2></div></div>
+<form method="post" enctype="multipart/form-data" class="modern-form">{% csrf_token %}{{ form.as_p }}<button class="primary">Hantar Permohonan</button></form></section>
+<section class="card"><div class="section-heading"><div><span class="eyebrow">SEJARAH</span><h2>Permohonan Saya</h2></div><span class="count-badge">{{ items|length }}</span></div>
+<div class="leave-list">{% for x in items %}<article class="leave-item">
+<div><span class="status-pill {% if x.status == 'DILULUSKAN' %}present{% elif x.status == 'DITOLAK' %}late{% else %}pending{% endif %}">{{ x.get_status_display }}</span><h3>{{ x.get_leave_type_display }}</h3><p>{{ x.start_date|date:"d/m/Y" }} – {{ x.end_date|date:"d/m/Y" }} · {{ x.total_days }} hari</p><small>{{ x.reason }}</small>{% if x.admin_note %}<div class="admin-note"><b>Ulasan pentadbir:</b> {{ x.admin_note }}</div>{% endif %}</div>
+<div class="leave-actions">{% if x.attachment %}<a href="{{ x.attachment.url }}" target="_blank">Dokumen</a>{% endif %}{% if x.status == 'MENUNGGU' %}<form method="post" action="{% url 'leave_cancel' x.pk %}" onsubmit="return confirm('Batalkan permohonan ini?')">{% csrf_token %}<button class="danger-button">Batal</button></form>{% endif %}</div>
+</article>{% empty %}<p class="empty-state">Belum ada permohonan cuti.</p>{% endfor %}</div></section></div>
 {% endblock %}

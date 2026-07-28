@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
-from .models import LeaveRequest, OfficialDuty
+from .models import LeaveRequest, OfficialDuty, SchoolHoliday
 
 
 class ProfileForm(forms.ModelForm):
@@ -41,8 +41,50 @@ class MalayPasswordChangeForm(PasswordChangeForm):
 class LeaveRequestForm(forms.ModelForm):
     class Meta:
         model = LeaveRequest
-        fields = ["start_date", "end_date", "reason"]
-        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "reason": forms.Textarea(attrs={"rows": 4})}
+        fields = ["leave_type", "start_date", "end_date", "reason", "attachment"]
+        labels = {
+            "leave_type": "Jenis cuti",
+            "start_date": "Tarikh mula",
+            "end_date": "Tarikh akhir",
+            "reason": "Sebab / catatan",
+            "attachment": "Dokumen sokongan (pilihan)",
+        }
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "end_date": forms.DateInput(attrs={"type": "date"}),
+            "reason": forms.Textarea(attrs={"rows": 4, "placeholder": "Nyatakan sebab permohonan cuti"}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        self.fields["attachment"].help_text = "PDF atau gambar surat/dokumen sokongan."
+
+    def clean(self):
+        data = super().clean()
+        start, end = data.get("start_date"), data.get("end_date")
+        if start and end and end < start:
+            self.add_error("end_date", "Tarikh akhir tidak boleh lebih awal daripada tarikh mula.")
+        if self.user and start and end:
+            overlap = LeaveRequest.objects.filter(
+                user=self.user,
+                status__in=["MENUNGGU", "DILULUSKAN"],
+                start_date__lte=end,
+                end_date__gte=start,
+            )
+            if self.instance.pk:
+                overlap = overlap.exclude(pk=self.instance.pk)
+            if overlap.exists():
+                raise forms.ValidationError("Anda sudah mempunyai permohonan cuti bagi tarikh yang bertindih.")
+        return data
+
+
+class LeaveReviewForm(forms.Form):
+    admin_note = forms.CharField(
+        label="Ulasan pentadbir",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Catatan kelulusan atau sebab penolakan"}),
+    )
 
 
 class OfficialDutyForm(forms.ModelForm):
