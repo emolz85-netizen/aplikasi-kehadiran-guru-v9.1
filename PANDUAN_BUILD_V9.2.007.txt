@@ -1,0 +1,17 @@
+APLIKASI KEHADIRAN GURU SK ULU ANSUAN
+BUILD V9.2.007 - INSTALLABLE PROGRESSIVE WEB APP
+
+FUNGSI BAHARU
+1. Pemasangan Android, iPhone/iPad dan komputer.
+2. Manifest PWA lengkap, ikon maskable dan Apple Touch Icon.
+3. Paparan standalone dan app shortcuts.
+4. Offline fallback asas.
+5. Install prompt dan panduan pemasangan.
+6. Kemas kini Service Worker secara automatik.
+
+DEPLOY
+Commit Summary: Build V9.2.007 - Installable Progressive Web App
+Migration baharu tidak diperlukan.
+
+NOTA
+Rekod masuk/keluar masih memerlukan Internet untuk menghantar GPS, swafoto dan masa sebenar.

@@ -112,62 +112,58 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.006"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.007"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.006"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.007"}, status=503)
 
 def manifest(request):
     return JsonResponse({
+        "id": "/?source=pwa",
         "name": f"Sistem Kehadiran Guru {settings.SCHOOL_NAME}",
         "short_name": "Kehadiran",
-        "start_url": "/",
-        "display": "standalone",
-        "background_color": "#e5e7eb",
-        "theme_color": "#4b5563",
+        "description": f"Aplikasi kehadiran guru {settings.SCHOOL_NAME} dengan GPS, swafoto, cuti dan notifikasi.",
+        "lang": "ms-MY", "dir": "ltr", "start_url": "/?source=pwa", "scope": "/",
+        "display": "standalone", "display_override": ["standalone", "minimal-ui"],
+        "orientation": "portrait-primary", "background_color": "#f5f6f7", "theme_color": "#1f2937",
+        "categories": ["productivity", "education", "utilities"],
         "icons": [
-            {"src": "/static/attendance/icon-192.png", "sizes": "192x192", "type": "image/png"},
-            {"src": "/static/attendance/icon-512.png", "sizes": "512x512", "type": "image/png"},
+            {"src": "/static/attendance/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": "/static/attendance/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+            {"src": "/static/attendance/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": "/static/attendance/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
         ],
-    })
+        "shortcuts": [
+            {"name": "Rekod Kehadiran", "short_name": "Kehadiran", "url": "/?source=shortcut", "icons": [{"src": "/static/attendance/icon-192.png", "sizes": "192x192"}]},
+            {"name": "Permohonan Cuti", "short_name": "Cuti", "url": "/cuti/?source=shortcut", "icons": [{"src": "/static/attendance/icon-192.png", "sizes": "192x192"}]},
+            {"name": "Notifikasi", "short_name": "Notifikasi", "url": "/notifikasi/?source=shortcut", "icons": [{"src": "/static/attendance/icon-192.png", "sizes": "192x192"}]}
+        ],
+        "prefer_related_applications": False
+    }, json_dumps_params={"ensure_ascii": False})
+
+
+def offline_page(request):
+    return render(request, "attendance/offline.html")
+
+
+def pwa_install(request):
+    return render(request, "attendance/pwa_install.html")
+
 
 def service_worker(request):
-    script = r'''
-const CACHE = "kehadiran-v9-2-006";
-self.addEventListener("install", event => {
-  self.skipWaiting();
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(["/", "/login/"])));
-});
-self.addEventListener("activate", event => event.waitUntil(self.clients.claim()));
-self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
-});
-self.addEventListener("push", event => {
-  let data = {title: "Sistem Kehadiran Guru", body: "Anda menerima notifikasi baharu.", url: "/notifikasi/"};
-  try { data = Object.assign(data, event.data.json()); } catch (e) {}
-  event.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: "/static/attendance/icon-192.png",
-    badge: "/static/attendance/icon-192.png",
-    data: {url: data.url || "/notifikasi/"},
-    tag: "kehadiran-" + (data.notification_id || Date.now()),
-    renotify: true
-  }));
-});
-self.addEventListener("notificationclick", event => {
-  event.notification.close();
-  const target = event.notification.data && event.notification.data.url ? event.notification.data.url : "/notifikasi/";
-  event.waitUntil(clients.matchAll({type: "window", includeUncontrolled: true}).then(list => {
-    for (const client of list) {
-      if (client.url.includes(target) && "focus" in client) return client.focus();
-    }
-    return clients.openWindow ? clients.openWindow(target) : null;
-  }));
-});
-'''
-    response = HttpResponse(script, content_type="application/javascript")
+    script = r'''const VERSION = "9.2.007";
+const STATIC_CACHE = `kehadiran-static-${VERSION}`;
+const PAGE_CACHE = `kehadiran-pages-${VERSION}`;
+const OFFLINE_URL = "/offline/";
+const PRECACHE = [OFFLINE_URL,"/login/","/pwa/pasang/","/manifest.json","/static/attendance/style.css","/static/attendance/app.js","/static/attendance/pwa.js","/static/attendance/push.js","/static/attendance/icon-192.png","/static/attendance/icon-512.png","/static/attendance/icon-maskable-192.png","/static/attendance/icon-maskable-512.png","/static/attendance/apple-touch-icon.png"];
+self.addEventListener("install",e=>e.waitUntil(caches.open(STATIC_CACHE).then(c=>c.addAll(PRECACHE)).then(()=>self.skipWaiting())));
+self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>![STATIC_CACHE,PAGE_CACHE].includes(k)).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener("message",e=>{if(e.data&&e.data.type==="SKIP_WAITING")self.skipWaiting();});
+self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET")return;const u=new URL(r.url);if(u.origin!==self.location.origin)return;if(r.mode==="navigate"){e.respondWith(fetch(r).catch(async()=>await caches.match(OFFLINE_URL)));return;}if(u.pathname.startsWith("/static/")){e.respondWith(caches.match(r).then(cached=>{const update=fetch(r).then(resp=>{if(resp.ok)caches.open(STATIC_CACHE).then(c=>c.put(r,resp.clone()));return resp;}).catch(()=>cached);return cached||update;}));}});
+self.addEventListener("push",e=>{let d={title:"Sistem Kehadiran Guru",body:"Anda menerima notifikasi baharu.",url:"/notifikasi/"};try{d=Object.assign(d,e.data.json());}catch(x){}e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:"/static/attendance/icon-192.png",badge:"/static/attendance/icon-192.png",data:{url:d.url||"/notifikasi/"},tag:"kehadiran-"+(d.notification_id||Date.now()),renotify:true,vibrate:[150,80,150]}));});
+self.addEventListener("notificationclick",e=>{e.notification.close();const t=e.notification.data&&e.notification.data.url?e.notification.data.url:"/notifikasi/";e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(list=>{for(const c of list){if(c.url.includes(t)&&"focus" in c)return c.focus();}return clients.openWindow?clients.openWindow(t):null;}));});'''
+    response = HttpResponse(script, content_type="application/javascript; charset=utf-8")
     response["Service-Worker-Allowed"] = "/"
-    response["Cache-Control"] = "no-cache"
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
 
 

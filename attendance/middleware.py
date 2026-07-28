@@ -3,7 +3,7 @@ from .audit import write_audit
 
 class ProfessionalAuditMiddleware:
     """Records authenticated data-changing requests without storing passwords or form contents."""
-    EXCLUDED_PREFIXES = ("/static/", "/media/", "/health/", "/service-worker.js", "/manifest.json")
+    EXCLUDED_PREFIXES = ("/static/", "/media/", "/health/", "/service-worker.js", "/manifest.json", "/offline/", "/pwa/pasang/")
 
     def __init__(self, get_response):
         self.get_response = get_response
