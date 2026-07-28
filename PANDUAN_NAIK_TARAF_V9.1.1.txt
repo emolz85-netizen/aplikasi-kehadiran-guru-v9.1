@@ -1,0 +1,10 @@
+APLIKASI KEHADIRAN GURU V9.1.1
+
+Selepas fail dimuat naik ke GitHub dan Render selesai deploy:
+1. Pastikan arahan build menjalankan: python manage.py migrate
+2. Buka /health/ dan pastikan versi 9.1.1 serta database connected.
+3. Uji satu rekod masuk menggunakan telefon.
+4. Dalam Django Admin > Kehadiran, semak medan Peranti dan IP.
+5. Pada dashboard guru, semak Kalendar Kehadiran bulan semasa.
+
+Data lama tidak dipadam. Medan audit baharu boleh kosong untuk rekod lama.

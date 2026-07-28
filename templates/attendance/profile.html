@@ -1,0 +1,25 @@
+{% extends "attendance/base.html" %}
+{% block title %}Profil Saya{% endblock %}
+{% block content %}
+<div class="hero"><div><h1>Profil Saya</h1><p>Urus nama pengguna, e-mel dan kata laluan anda.</p></div></div>
+<div class="grid-two">
+<section class="card">
+  <h2>Maklumat Akaun</h2>
+  <form method="post">{% csrf_token %}
+    {{ profile_form.as_p }}
+    <button class="primary" name="save_profile" type="submit">Simpan Profil</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Tukar Kata Laluan</h2>
+  <form method="post">{% csrf_token %}
+    {{ password_form.as_p }}
+    <button class="primary" name="change_password" type="submit">Tukar Kata Laluan</button>
+  </form>
+</section>
+</div>
+<section class="card">
+  <h2>Aktiviti Akaun Terkini</h2>
+  {% for item in activities %}<p><b>{{ item.created_at|date:"d/m/Y H:i" }}</b> — {{ item.action }}{% if item.details %}: {{ item.details }}{% endif %}</p>{% empty %}<p>Belum ada aktiviti.</p>{% endfor %}
+</section>
+{% endblock %}

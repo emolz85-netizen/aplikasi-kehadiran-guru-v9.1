@@ -1,0 +1,23 @@
+APLIKASI KEHADIRAN GURU V9.1 STABLE
+
+Ciri baharu:
+- Guru boleh mengubah nama pengguna, e-mel dan kata laluan sendiri melalui Profil Saya.
+- Kata laluan lama wajib disahkan dan sesi kekal aktif selepas pertukaran.
+- Log aktiviti akaun untuk semakan pentadbir.
+- Tetapan sekolah boleh diubah melalui Admin Django: koordinat, radius, ketepatan GPS dan waktu bekerja.
+- Waktu Isnin-Khamis: masuk 07:10, balik 13:00.
+- Waktu Jumaat: masuk 07:10, balik 11:40.
+- Ketepatan GPS disimpan untuk rekod masuk dan keluar.
+- Butang Segarkan GPS dan pautan Google Maps.
+- Dashboard pentadbir ringkas dengan statistik hadir, lewat dan belum hadir.
+- Paparan swafoto dan pautan GPS dalam senarai admin.
+- Versi aplikasi ditukar kepada 9.1 Stable.
+
+Selepas deploy, jalankan migrasi Django seperti biasa: python manage.py migrate
+
+BUILD 9.1.1
+- Menyimpan IP, jenis peranti/pelayar dan user-agent semasa rekod masuk dan keluar.
+- Maklumat audit peranti dipaparkan dalam Django Admin.
+- Menambah kalendar kehadiran bulanan pada dashboard guru.
+- Kalendar membezakan Hadir, Lewat, Tiada Rekod, Cuti dan Tugas Rasmi.
+- Cache PWA dinaik taraf kepada kehadiran-v9-1-1.

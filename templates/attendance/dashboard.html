@@ -1,0 +1,57 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<div class="hero">
+  <div><h1>Selamat datang, {{ user.get_full_name|default:user.username }}</h1><p>{{ today }} · <span id="digital-clock"></span></p></div>
+  <span>{{ school.radius_meters }} m GPS</span>
+</div>
+<div class="stats four">
+  <div class="card"><b>{{ month_count }}</b><small>Rekod bulan ini</small></div>
+  <div class="card"><b>{{ late_count }}</b><small>Lewat</small></div>
+  <div class="card"><b>{{ target_in|time:"H:i" }}</b><small>Masa masuk</small></div>
+  <div class="card"><b>{{ target_out|time:"H:i" }}</b><small>Masa balik</small></div>
+</div>
+<section class="card">
+  <h2>Kehadiran Hari Ini</h2>
+  <p>Masuk: {% if record.check_in %}{{ record.check_in|date:"H:i:s" }}{% else %}Belum{% endif %}</p>
+  <p>Keluar: {% if record.check_out %}{{ record.check_out|date:"H:i:s" }}{% else %}Belum{% endif %}</p>
+  <p>Status: {% if record %}{{ record.get_status_display }}{% else %}—{% endif %}</p>
+  <video id="camera" autoplay playsinline muted></video>
+  <div class="actions"><button onclick="startCamera()">Buka Kamera</button><button onclick="captureSelfie()">Ambil Swafoto</button></div>
+  <div id="gps-details" class="gps-box">
+    <div id="gps-status">Tekan Segarkan GPS untuk mendapatkan lokasi.</div>
+    <small>Koordinat sekolah: {{ school.latitude }}, {{ school.longitude }} · Ketepatan maksimum: {{ school.max_gps_accuracy_meters }} m</small>
+  </div>
+  <div class="actions"><button onclick="refreshGPS()">Segarkan GPS</button><a id="map-link" class="button-link" target="_blank" hidden>Lihat di Google Maps</a></div>
+  <div class="actions">
+    <button class="primary" onclick="rekod('masuk')" {% if record.check_in %}disabled{% endif %}>Rekod Masuk</button>
+    <button onclick="rekod('keluar')" {% if not record.check_in or record.check_out %}disabled{% endif %}>Rekod Keluar</button>
+  </div>
+  <canvas id="snapshot" hidden></canvas>
+</section>
+
+<section class="card">
+  <div class="calendar-title"><h2>Kalendar Kehadiran</h2><strong>{{ month_name }}</strong></div>
+  <div class="calendar-legend">
+    <span class="legend present">Hadir</span><span class="legend late">Lewat</span>
+    <span class="legend absent">Tiada rekod</span><span class="legend leave">Cuti</span>
+    <span class="legend duty">Tugas rasmi</span>
+  </div>
+  <div class="attendance-calendar">
+    <div class="weekday">Isn</div><div class="weekday">Sel</div><div class="weekday">Rab</div><div class="weekday">Kha</div><div class="weekday">Jum</div><div class="weekday">Sab</div><div class="weekday">Ahd</div>
+    {% for week in month_calendar %}
+      {% for cell in week %}
+      <div class="calendar-day {{ cell.state }}" title="{{ cell.label }}">
+        <b>{{ cell.day }}</b>{% if cell.label %}<small>{{ cell.label }}</small>{% endif %}
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const csrfToken="{{ csrf_token }}";
+const urls={masuk:"{% url 'record_attendance' 'masuk' %}",keluar:"{% url 'record_attendance' 'keluar' %}"};
+setInterval(()=>{document.getElementById('digital-clock').textContent=new Date().toLocaleTimeString('ms-MY')},1000);
+</script>
+{% endblock %}

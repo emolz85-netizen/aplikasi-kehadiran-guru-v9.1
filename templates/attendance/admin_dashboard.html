@@ -1,0 +1,15 @@
+{% extends "attendance/base.html" %}
+{% block title %}Dashboard Pentadbir{% endblock %}
+{% block content %}
+<div class="hero"><div><h1>Kehadiran Hari Ini</h1><p>{{ today }}</p></div><span>{{ percentage }}%</span></div>
+<div class="stats four">
+  <div class="card"><b>{{ total }}</b><small>Jumlah guru</small></div>
+  <div class="card"><b>{{ attended }}</b><small>Sudah hadir</small></div>
+  <div class="card"><b>{{ late }}</b><small>Lewat</small></div>
+  <div class="card"><b>{{ absent|length }}</b><small>Belum hadir</small></div>
+</div>
+<div class="grid-two">
+<section class="card"><h2>Guru Belum Hadir</h2>{% for teacher in absent %}<p>{{ teacher.get_full_name|default:teacher.username }}</p>{% empty %}<p>Semua guru sudah hadir.</p>{% endfor %}</section>
+<section class="card"><h2>Rekod Hari Ini</h2>{% for r in records %}<p><b>{{ r.user.get_full_name|default:r.user.username }}</b> — {{ r.check_in|date:"H:i"|default:"—" }} ({{ r.get_status_display }})</p>{% empty %}<p>Belum ada rekod.</p>{% endfor %}</section>
+</div>
+{% endblock %}

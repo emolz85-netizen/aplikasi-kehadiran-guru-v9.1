@@ -1,0 +1,7 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<h1>Import Guru</h1>
+<section class="card"><p>Gunakan lajur: Nama pengguna, Nama penuh, Emel, No. staf, Jawatan.</p>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="primary">Import</button></form></section>
+{% if result %}<section class="card"><p>Baharu: {{ result.created }} · Dikemas kini: {{ result.updated }}</p></section>{% endif %}
+{% endblock %}

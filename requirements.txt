@@ -1,0 +1,10 @@
+Django>=5.1,<6.0
+gunicorn>=23,<24
+whitenoise>=6.9,<7
+dj-database-url>=2.2,<3
+psycopg[binary]>=3.2,<4
+python-dotenv>=1.0,<2
+Pillow>=11.3,<13
+openpyxl>=3.1,<4
+reportlab>=4.2,<5
+qrcode[pil]>=8,<9

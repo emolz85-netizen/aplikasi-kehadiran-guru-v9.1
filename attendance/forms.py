@@ -1,0 +1,57 @@
+from django import forms
+from django.contrib.auth import password_validation
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.models import User
+from .models import LeaveRequest, OfficialDuty
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["username", "email"]
+        labels = {"username": "Nama pengguna", "email": "E-mel"}
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.get("instance")
+        super().__init__(*args, **kwargs)
+        self.fields["username"].help_text = "Mesti unik. Huruf, nombor dan simbol @/./+/-/_ dibenarkan."
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        query = User.objects.filter(username__iexact=username)
+        if self.user:
+            query = query.exclude(pk=self.user.pk)
+        if query.exists():
+            raise forms.ValidationError("Nama pengguna ini sudah digunakan.")
+        return username
+
+
+class MalayPasswordChangeForm(PasswordChangeForm):
+    old_password = forms.CharField(label="Kata laluan lama", widget=forms.PasswordInput)
+    new_password1 = forms.CharField(label="Kata laluan baharu", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(label="Sahkan kata laluan baharu", widget=forms.PasswordInput)
+
+    def clean_new_password1(self):
+        value = self.cleaned_data.get("new_password1")
+        if value:
+            password_validation.validate_password(value, self.user)
+        return value
+
+
+class LeaveRequestForm(forms.ModelForm):
+    class Meta:
+        model = LeaveRequest
+        fields = ["start_date", "end_date", "reason"]
+        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "reason": forms.Textarea(attrs={"rows": 4})}
+
+
+class OfficialDutyForm(forms.ModelForm):
+    class Meta:
+        model = OfficialDuty
+        fields = ["title", "location", "start_date", "end_date", "description"]
+        widgets = {"start_date": forms.DateInput(attrs={"type": "date"}), "end_date": forms.DateInput(attrs={"type": "date"}), "description": forms.Textarea(attrs={"rows": 4})}
+
+
+class TeacherImportForm(forms.Form):
+    file = forms.FileField(label="Fail Excel (.xlsx)")
+    default_password = forms.CharField(label="Kata laluan awal", min_length=8, widget=forms.PasswordInput)

@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: kehadiran-guru-v9-1-stable
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    startCommand: "python manage.py migrate --noinput && python manage.py seed_users && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health/
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: SCHOOL_NAME
+        value: "SK Ulu Ansuan"
+      - key: SCHOOL_LATITUDE
+        sync: false
+      - key: SCHOOL_LONGITUDE
+        sync: false
+      - key: SCHOOL_RADIUS_METERS
+        value: "50"
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: TEACHER_USERNAME
+        sync: false
+      - key: TEACHER_PASSWORD
+        sync: false
+      - key: TEACHER_EMAIL
+        sync: false

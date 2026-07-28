@@ -1,0 +1,22 @@
+PANDUAN NAIK TARAF KE V9.1 STABLE
+
+1. Simpan salinan repositori V9 Final sebagai sandaran.
+2. Gantikan fail projek dengan kandungan V9.1 ini.
+3. Commit dan Push menggunakan GitHub Desktop.
+4. Render akan memasang dependencies, mengumpul static files dan menjalankan migration secara automatik.
+5. Selepas deploy berjaya, log masuk sebagai admin.
+6. Buka Admin Django > Tetapan sekolah.
+7. Pastikan tetapan berikut:
+   - Nama: SK Ulu Ansuan
+   - Latitude: 5.745697
+   - Longitude: 117.173844
+   - Radius: 50 meter
+   - Isnin-Khamis: 07:10 hingga 13:00
+   - Jumaat: 07:10 hingga 11:40
+   - Ketepatan GPS maksimum: 50 meter
+8. Guru boleh membuka menu Profil Saya untuk menukar nama pengguna, e-mel dan kata laluan.
+
+Nota:
+- Data pengguna dan rekod lama tidak dipadam.
+- Migration hanya menambah jadual tetapan/log dan medan ketepatan GPS.
+- Uji rekod masuk dan keluar menggunakan telefon selepas deploy.

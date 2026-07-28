@@ -1,0 +1,8 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<h1>Laporan Kehadiran</h1>
+<div class="actions"><a class="button primary" href="{% url 'export_excel' %}">Excel</a><a class="button" href="{% url 'export_pdf' %}">PDF</a></div>
+<section class="card"><table><tr><th>Tarikh</th><th>Masuk</th><th>Keluar</th><th>Status</th></tr>
+{% for r in records %}<tr><td>{{ r.date }}</td><td>{{ r.check_in|date:"H:i:s"|default:"—" }}</td><td>{{ r.check_out|date:"H:i:s"|default:"—" }}</td><td>{{ r.get_status_display }}</td></tr>
+{% empty %}<tr><td colspan="4">Tiada rekod.</td></tr>{% endfor %}</table></section>
+{% endblock %}

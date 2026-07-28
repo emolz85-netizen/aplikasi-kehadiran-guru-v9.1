@@ -1,0 +1,13 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<section class="card login">
+  <h1>Log Masuk</h1>
+  <p>{{ SCHOOL_NAME }}</p>
+  {% if form.errors %}<div class="error">Nama pengguna atau kata laluan salah.</div>{% endif %}
+  <form method="post">{% csrf_token %}
+    <label>Nama pengguna</label>{{ form.username }}
+    <label>Kata laluan</label>{{ form.password }}
+    <button class="primary">Log masuk</button>
+  </form>
+</section>
+{% endblock %}

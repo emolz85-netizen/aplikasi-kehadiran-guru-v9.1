@@ -1,0 +1,36 @@
+{% load static %}
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#4b5563">
+  <link rel="manifest" href="{% url 'manifest' %}">
+  <link rel="stylesheet" href="{% static 'attendance/style.css' %}">
+  <title>{% block title %}Kehadiran Guru{% endblock %}</title>
+</head>
+<body>
+<header>
+  <div><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru V9.1.1</small></div>
+  {% if user.is_authenticated %}
+  <nav>
+    <a href="{% url 'dashboard' %}">Utama</a>
+    <a href="{% url 'leave_page' %}">Cuti</a>
+    <a href="{% url 'duty_page' %}">Tugas Rasmi</a>
+    <a href="{% url 'report_page' %}">Laporan</a>
+    <a href="{% url 'profile_page' %}">Profil Saya</a>
+    {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}">Dashboard Admin</a><a href="{% url 'import_teachers' %}">Import Guru</a><a href="/admin/">Admin Django</a>{% endif %}
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link">Log keluar</button></form>
+  </nav>
+  {% endif %}
+</header>
+<main>
+  {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<script src="{% static 'attendance/app.js' %}"></script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("{% url 'service_worker' %}");}</script>
+{% block scripts %}{% endblock %}
+<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · Versi {{ APP_VERSION }} · © 2026</footer>
+</body>
+</html>

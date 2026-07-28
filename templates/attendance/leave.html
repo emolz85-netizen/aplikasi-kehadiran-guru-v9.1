@@ -1,0 +1,8 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+<h1>Permohonan Cuti</h1>
+<section class="card"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="primary">Hantar</button></form></section>
+<section class="card"><table><tr><th>Tarikh</th><th>Sebab</th><th>Status</th></tr>
+{% for x in items %}<tr><td>{{ x.start_date }} – {{ x.end_date }}</td><td>{{ x.reason }}</td><td>{{ x.get_status_display }}</td></tr>
+{% empty %}<tr><td colspan="3">Tiada rekod.</td></tr>{% endfor %}</table></section>
+{% endblock %}
