@@ -1,0 +1,21 @@
+BUILD V9.2.003 — PROFESSIONAL AUDIT LOG
+
+Fungsi:
+- Merekod log masuk, log keluar dan percubaan log masuk gagal.
+- Merekod semua tindakan POST/PUT/PATCH/DELETE pengguna yang telah log masuk.
+- Menyimpan pengguna, tarikh/masa, kategori, tahap, IP, peranti, pelayar, laluan dan status HTTP.
+- Penapis mengikut carian, kategori, tahap, pengguna dan julat tarikh.
+- Statistik aktiviti hari ini, amaran dan log masuk gagal.
+- Eksport CSV berformat UTF-8.
+- Hanya pentadbir boleh membuka halaman Log Audit.
+- Data borang sensitif dan kata laluan tidak disimpan dalam log.
+
+MIGRATION:
+0007_build_92003_professional_audit.py
+
+DEPLOY:
+1. Ekstrak ZIP dan salin semua fail ke repository.
+2. GitHub Desktop Summary: Build V9.2.003 - Professional Audit Log
+3. Commit to main dan Push origin.
+4. Tunggu Render selesai deploy dan migration.
+5. Log masuk sebagai pentadbir dan buka menu Log Audit.

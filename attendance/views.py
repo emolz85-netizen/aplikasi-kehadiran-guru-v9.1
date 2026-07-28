@@ -24,9 +24,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.001"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.2.003"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.001"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.2.003"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -40,7 +40,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-2-000";
+const CACHE = "kehadiran-v9-2-003";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -1042,3 +1042,91 @@ def password_recovery_reject(request, pk):
     item.status="DITOLAK"; item.code_display=""; item.save(update_fields=["status","code_display"])
     messages.success(request, "Permintaan ditolak.")
     return redirect("password_recovery_admin")
+
+@user_passes_test(lambda u: u.is_staff)
+def audit_log_page(request):
+    from django.core.paginator import Paginator
+    from django.db.models import Q, Count
+    from .models import SystemAuditLog
+
+    logs = SystemAuditLog.objects.select_related("user").all()
+    q = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "").strip()
+    severity = request.GET.get("severity", "").strip()
+    user_id = request.GET.get("user", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+
+    if q:
+        logs = logs.filter(Q(username_snapshot__icontains=q) | Q(action__icontains=q) | Q(description__icontains=q) | Q(ip_address__icontains=q) | Q(path__icontains=q))
+    if category:
+        logs = logs.filter(category=category)
+    if severity:
+        logs = logs.filter(severity=severity)
+    if user_id:
+        logs = logs.filter(user_id=user_id)
+    if date_from:
+        logs = logs.filter(created_at__date__gte=date_from)
+    if date_to:
+        logs = logs.filter(created_at__date__lte=date_to)
+
+    filtered_count = logs.count()
+    today = timezone.localdate()
+    stats = {
+        "total": SystemAuditLog.objects.count(),
+        "today": SystemAuditLog.objects.filter(created_at__date=today).count(),
+        "warnings": SystemAuditLog.objects.filter(severity__in=["AMARAN", "KRITIKAL"]).count(),
+        "login_failed": SystemAuditLog.objects.filter(action="Percubaan log masuk gagal").count(),
+    }
+    category_stats = list(SystemAuditLog.objects.values("category").annotate(total=Count("id")).order_by("-total"))
+    User = get_user_model()
+    users = User.objects.filter(is_active=True).order_by("first_name", "username")
+    page_obj = Paginator(logs, 40).get_page(request.GET.get("page"))
+
+    return render(request, "attendance/audit_log.html", {
+        "page_obj": page_obj,
+        "filtered_count": filtered_count,
+        "stats": stats,
+        "category_stats": category_stats,
+        "users": users,
+        "categories": SystemAuditLog.CATEGORY_CHOICES,
+        "severities": SystemAuditLog.SEVERITY_CHOICES,
+        "filters": {"q": q, "category": category, "severity": severity, "user": user_id, "date_from": date_from, "date_to": date_to},
+    })
+
+
+@user_passes_test(lambda u: u.is_staff)
+def audit_log_export_csv(request):
+    import csv
+    from django.db.models import Q
+    from .models import SystemAuditLog
+    from .audit import write_audit
+
+    logs = SystemAuditLog.objects.select_related("user").all()
+    q = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "").strip()
+    severity = request.GET.get("severity", "").strip()
+    user_id = request.GET.get("user", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    if q:
+        logs = logs.filter(Q(username_snapshot__icontains=q) | Q(action__icontains=q) | Q(description__icontains=q) | Q(ip_address__icontains=q) | Q(path__icontains=q))
+    if category: logs = logs.filter(category=category)
+    if severity: logs = logs.filter(severity=severity)
+    if user_id: logs = logs.filter(user_id=user_id)
+    if date_from: logs = logs.filter(created_at__date__gte=date_from)
+    if date_to: logs = logs.filter(created_at__date__lte=date_to)
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="audit_log_{timezone.localdate():%Y%m%d}.csv"'
+    response.write("\ufeff")
+    writer = csv.writer(response)
+    writer.writerow(["Tarikh/Masa", "Pengguna", "Kategori", "Tahap", "Tindakan", "Keterangan", "IP", "Peranti", "Kaedah", "Laluan", "Status HTTP"])
+    for item in logs.iterator():
+        writer.writerow([
+            timezone.localtime(item.created_at).strftime("%d/%m/%Y %H:%M:%S"), item.username_snapshot,
+            item.get_category_display(), item.get_severity_display(), item.action, item.description,
+            item.ip_address or "", item.device, item.method, item.path, item.status_code or "",
+        ])
+    write_audit(request=request, category="LAPORAN", action="Eksport log audit CSV", description=f"{logs.count()} rekod dieksport.", status_code=200)
+    return response

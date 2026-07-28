@@ -30,4 +30,6 @@ urlpatterns = [
     path("laporan/excel/", views.export_excel, name="export_excel"),
     path("laporan/pdf/", views.export_pdf, name="export_pdf"),
     path("import-guru/", views.import_teachers, name="import_teachers"),
+    path("log-audit/", views.audit_log_page, name="audit_log_page"),
+    path("log-audit/export-csv/", views.audit_log_export_csv, name="audit_log_export_csv"),
 ]

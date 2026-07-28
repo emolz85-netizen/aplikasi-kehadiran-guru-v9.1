@@ -1,0 +1,42 @@
+{% extends "attendance/base.html" %}
+{% block title %}Log Audit Profesional{% endblock %}
+{% block content %}
+<style>
+.audit-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.audit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.audit-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 16px rgba(0,0,0,.07)}.audit-card b{display:block;font-size:1.7rem;margin-top:5px}.audit-filter{background:#fff;padding:16px;border-radius:14px;margin-bottom:16px;display:grid;grid-template-columns:2fr repeat(5,1fr);gap:10px;align-items:end}.audit-filter label{display:block;font-size:.82rem;font-weight:700;margin-bottom:5px}.audit-filter input,.audit-filter select{width:100%;box-sizing:border-box}.audit-table-wrap{overflow:auto;background:#fff;border-radius:14px;box-shadow:0 3px 16px rgba(0,0,0,.07)}.audit-table{width:100%;border-collapse:collapse;min-width:1100px}.audit-table th,.audit-table td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}.audit-table th{background:#f8fafc;position:sticky;top:0}.badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.75rem;font-weight:700}.badge.INFO{background:#dbeafe;color:#1e40af}.badge.AMARAN{background:#fef3c7;color:#92400e}.badge.KRITIKAL{background:#fee2e2;color:#991b1b}.muted{color:#64748b;font-size:.82rem}.pagination{display:flex;justify-content:center;gap:8px;margin-top:16px;align-items:center}@media(max-width:900px){.audit-grid{grid-template-columns:repeat(2,1fr)}.audit-filter{grid-template-columns:1fr 1fr}.audit-hero{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.audit-grid,.audit-filter{grid-template-columns:1fr}}
+</style>
+<div class="audit-hero">
+  <div><small>BUILD V9.2.003</small><h1>Log Audit Profesional</h1><p>Jejak tindakan, keselamatan, IP dan peranti pengguna secara tersusun.</p></div>
+  <a class="button" href="{% url 'audit_log_export_csv' %}?{{ request.GET.urlencode }}">Eksport CSV</a>
+</div>
+<div class="audit-grid">
+  <div class="audit-card"><span>Semua rekod</span><b>{{ stats.total }}</b></div>
+  <div class="audit-card"><span>Aktiviti hari ini</span><b>{{ stats.today }}</b></div>
+  <div class="audit-card"><span>Amaran / kritikal</span><b>{{ stats.warnings }}</b></div>
+  <div class="audit-card"><span>Log masuk gagal</span><b>{{ stats.login_failed }}</b></div>
+</div>
+<form class="audit-filter" method="get">
+  <div><label>Carian</label><input name="q" value="{{ filters.q }}" placeholder="Pengguna, tindakan, IP atau laluan"></div>
+  <div><label>Kategori</label><select name="category"><option value="">Semua</option>{% for value,label in categories %}<option value="{{ value }}" {% if filters.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label>Tahap</label><select name="severity"><option value="">Semua</option>{% for value,label in severities %}<option value="{{ value }}" {% if filters.severity == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label>Pengguna</label><select name="user"><option value="">Semua</option>{% for item in users %}<option value="{{ item.id }}" {% if filters.user == item.id|stringformat:'s' %}selected{% endif %}>{{ item.get_full_name|default:item.username }}</option>{% endfor %}</select></div>
+  <div><label>Dari</label><input type="date" name="date_from" value="{{ filters.date_from }}"></div>
+  <div><label>Hingga</label><input type="date" name="date_to" value="{{ filters.date_to }}"></div>
+  <div><button type="submit">Tapis</button> <a href="{% url 'audit_log_page' %}">Set semula</a></div>
+</form>
+<p><strong>{{ filtered_count }}</strong> rekod ditemui.</p>
+<div class="audit-table-wrap"><table class="audit-table">
+<thead><tr><th>Tarikh/Masa</th><th>Pengguna</th><th>Kategori</th><th>Tahap</th><th>Tindakan</th><th>Maklumat teknikal</th></tr></thead>
+<tbody>
+{% for item in page_obj %}
+<tr>
+  <td>{{ item.created_at|date:"d/m/Y H:i:s" }}</td>
+  <td><strong>{{ item.user.get_full_name|default:item.username_snapshot }}</strong><div class="muted">{{ item.username_snapshot }}</div></td>
+  <td>{{ item.get_category_display }}</td>
+  <td><span class="badge {{ item.severity }}">{{ item.get_severity_display }}</span></td>
+  <td><strong>{{ item.action }}</strong><div class="muted">{{ item.description }}</div></td>
+  <td><div>{{ item.ip_address|default:"—" }} · {{ item.device }}</div><div class="muted">{{ item.method }} {{ item.path }}{% if item.status_code %} · HTTP {{ item.status_code }}{% endif %}</div></td>
+</tr>
+{% empty %}<tr><td colspan="6">Tiada log audit untuk penapis ini.</td></tr>{% endfor %}
+</tbody></table></div>
+{% if page_obj.paginator.num_pages > 1 %}<div class="pagination">{% if page_obj.has_previous %}<a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">← Sebelum</a>{% endif %}<span>Halaman {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Seterusnya →</a>{% endif %}</div>{% endif %}
+{% endblock %}

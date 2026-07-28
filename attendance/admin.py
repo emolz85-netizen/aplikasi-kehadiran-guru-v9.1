@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest
+from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog
 
 
 @admin.register(SchoolSettings)
@@ -89,3 +89,19 @@ class PasswordRecoveryRequestAdmin(admin.ModelAdmin):
     list_filter = ("status", "requested_at")
     search_fields = ("user__username", "user__first_name", "user__last_name")
     readonly_fields = ("code_hash", "code_display", "requested_at", "approved_at", "used_at")
+
+
+@admin.register(SystemAuditLog)
+class SystemAuditLogAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "username_snapshot", "category", "severity", "action", "ip_address", "status_code")
+    list_filter = ("category", "severity", "created_at")
+    search_fields = ("username_snapshot", "action", "description", "ip_address", "path")
+    readonly_fields = tuple(field.name for field in SystemAuditLog._meta.fields)
+    date_hierarchy = "created_at"
+    ordering = ("-created_at",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser

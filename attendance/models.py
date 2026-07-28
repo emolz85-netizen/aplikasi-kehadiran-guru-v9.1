@@ -184,3 +184,49 @@ class PasswordRecoveryRequest(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.get_status_display()}"
+
+class SystemAuditLog(models.Model):
+    CATEGORY_CHOICES = [
+        ("AUTH", "Log masuk & keselamatan"),
+        ("KEHADIRAN", "Kehadiran"),
+        ("CUTI", "Cuti"),
+        ("TUGAS", "Tugas rasmi"),
+        ("LAPORAN", "Laporan"),
+        ("PENTADBIRAN", "Pentadbiran"),
+        ("SISTEM", "Sistem"),
+    ]
+    SEVERITY_CHOICES = [
+        ("INFO", "Maklumat"),
+        ("AMARAN", "Amaran"),
+        ("KRITIKAL", "Kritikal"),
+    ]
+
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="system_audit_logs")
+    username_snapshot = models.CharField(max_length=150, blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="SISTEM")
+    severity = models.CharField(max_length=10, choices=SEVERITY_CHOICES, default="INFO")
+    action = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    method = models.CharField(max_length=10, blank=True)
+    path = models.CharField(max_length=500, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    device = models.CharField(max_length=255, blank=True)
+    user_agent = models.TextField(blank=True)
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    object_type = models.CharField(max_length=100, blank=True)
+    object_id = models.CharField(max_length=100, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["category", "created_at"], name="audit_category_date_idx"),
+            models.Index(fields=["user", "created_at"], name="audit_user_date_idx"),
+            models.Index(fields=["severity", "created_at"], name="audit_severity_date_idx"),
+        ]
+        verbose_name = "Log audit sistem"
+        verbose_name_plural = "Log audit sistem"
+
+    def __str__(self):
+        return f"{self.created_at:%d/%m/%Y %H:%M} - {self.username_snapshot or 'Sistem'} - {self.action}"

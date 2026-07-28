@@ -11,7 +11,7 @@
 </head>
 <body>
 <header>
-  <div><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru Build V9.2.001</small></div>
+  <div><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru Build V9.2.003</small></div>
   {% if user.is_authenticated %}
   <nav>
     <a href="{% url 'dashboard' %}">Utama</a>
@@ -19,7 +19,7 @@
     <a href="{% url 'duty_page' %}">Tugas Rasmi</a>
     <a href="{% url 'report_page' %}">Laporan</a>
     <a href="{% url 'profile_page' %}">Profil Saya</a>
-    {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}">Dashboard Admin</a><a href="{% url 'leave_admin' %}">Pengurusan Cuti</a><a href="{% url 'password_recovery_admin' %}">Reset Kata Laluan</a><a href="{% url 'attendance_map' %}">Peta Kehadiran</a><a href="/admin/attendance/schoolsettings/">Tetapan Sekolah</a><a href="/admin/attendance/schoolholiday/">Hari Kelepasan</a><a href="{% url 'import_teachers' %}">Import Guru</a><a href="/admin/">Admin Django</a>{% endif %}
+    {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}">Dashboard Admin</a><a href="{% url 'leave_admin' %}">Pengurusan Cuti</a><a href="{% url 'password_recovery_admin' %}">Reset Kata Laluan</a><a href="{% url 'attendance_map' %}">Peta Kehadiran</a><a href="/admin/attendance/schoolsettings/">Tetapan Sekolah</a><a href="/admin/attendance/schoolholiday/">Hari Kelepasan</a><a href="{% url 'import_teachers' %}">Import Guru</a><a href="{% url 'audit_log_page' %}">Log Audit</a><a href="/admin/">Admin Django</a>{% endif %}
     <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link">Log keluar</button></form>
   </nav>
   {% endif %}
