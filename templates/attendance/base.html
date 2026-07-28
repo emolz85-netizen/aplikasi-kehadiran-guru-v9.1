@@ -99,6 +99,22 @@
   {% block content %}{% endblock %}
 </main>
 {% if user.is_authenticated %}
+<nav class="mobile-bottom-nav" aria-label="Navigasi mudah alih">
+  {% if user.is_staff %}
+  <a href="{% url 'admin_dashboard' %}"><span>🏠</span><small>Utama</small></a>
+  <a href="{% url 'attendance_map' %}"><span>🗺️</span><small>Peta</small></a>
+  <a class="mobile-main-action" href="{% url 'report_page' %}"><span>📊</span><small>Laporan</small></a>
+  <a href="{% url 'notification_center' %}"><span>🔔</span><small>Notis</small>{% if NOTIFICATION_UNREAD_COUNT %}<b>{{ NOTIFICATION_UNREAD_COUNT }}</b>{% endif %}</a>
+  <a href="{% url 'profile_page' %}"><span>👤</span><small>Profil</small></a>
+  {% else %}
+  <a href="{% url 'dashboard' %}"><span>🏠</span><small>Utama</small></a>
+  <a href="{% url 'leave_page' %}"><span>📝</span><small>Cuti</small></a>
+  <a class="mobile-main-action" href="{% url 'dashboard' %}#rekod-harian"><span>📍</span><small>Rekod</small></a>
+  <a href="{% url 'notification_center' %}"><span>🔔</span><small>Notis</small>{% if NOTIFICATION_UNREAD_COUNT %}<b>{{ NOTIFICATION_UNREAD_COUNT }}</b>{% endif %}</a>
+  <a href="{% url 'profile_page' %}"><span>👤</span><small>Profil</small></a>
+  {% endif %}
+</nav>
+<div class="mobile-offline-indicator" id="mobileOfflineIndicator" hidden>📡 Anda sedang luar talian</div>
 <footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }} · © 2026</footer>
   </div>
 </div>
@@ -106,6 +122,7 @@
 <script src="{% static 'attendance/app.js' %}"></script>
 <script>window.PWA_SERVICE_WORKER_URL="{% url 'service_worker' %}";</script>
 <script src="{% static 'attendance/pwa.js' %}"></script>
+{% if user.is_authenticated %}<script src="{% static 'attendance/mobile.js' %}"></script>{% endif %}
 <div id="pwaInstallBanner" class="pwa-install-banner" hidden><div><strong>📲 Pasang sebagai aplikasi</strong><small>Akses lebih pantas dari skrin utama telefon.</small></div><div class="pwa-banner-actions"><button type="button" id="pwaInstallNow">Pasang</button><button type="button" id="pwaInstallDismiss" class="secondary-button">Nanti</button></div></div>
 <div id="pwaUpdateBanner" class="pwa-update-banner" hidden><div><strong>Versi baharu tersedia</strong><small>Kemas kini untuk menggunakan ciri terkini.</small></div><button type="button" id="pwaUpdateNow">Kemas Kini Sekarang</button></div>
 {% block scripts %}{% endblock %}

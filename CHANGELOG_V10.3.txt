@@ -1,0 +1,11 @@
+SISTEM KEHADIRAN GURU V10.3 – MOBILE PWA
+
+- Navigasi bawah khusus telefon seperti aplikasi Android/iPhone.
+- Butang tindakan utama terapung untuk Rekod Kehadiran/Laporan.
+- Penunjuk luar talian dan pemulihan sambungan.
+- Tarik ke bawah untuk muat semula pada telefon.
+- App badge untuk jumlah notifikasi belum dibaca apabila disokong.
+- Push Notification dipertingkat dengan tindakan Buka/Tutup, getaran, kategori dan requireInteraction untuk keselamatan.
+- Safe-area iPhone/iPad untuk notch dan home indicator.
+- Service Worker V10.3 dan cache mobile.js.
+- Tiada migration pangkalan data baharu.

@@ -1,0 +1,12 @@
+BUILD V10.3 – MOBILE PWA
+
+GitHub Desktop Summary:
+Build V10.3 - Mobile PWA dan Push Notification
+
+Selepas Render selesai:
+1. Buka aplikasi dan tekan Ctrl+F5 pada komputer.
+2. Pada PWA telefon, tekan Kemas Kini Sekarang jika notis muncul.
+3. Buka menu Pasang Aplikasi dan pasang ke skrin utama.
+4. Buka Notifikasi dan aktifkan Push Notification pada setiap peranti.
+
+Nota iPhone/iPad: Web Push memerlukan pemasangan melalui Safari dan iOS/iPadOS yang menyokong Web Push.
