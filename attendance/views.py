@@ -22,9 +22,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.003"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.004"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.003"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.004"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -38,7 +38,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-1-003";
+const CACHE = "kehadiran-v9-1-004";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -305,17 +305,58 @@ def profile_page(request):
 def admin_dashboard(request):
     today = timezone.localdate()
     User = get_user_model()
-    teachers = User.objects.filter(is_active=True, is_staff=False)
-    records = Attendance.objects.filter(date=today).select_related("user")
-    attended_ids = records.filter(check_in__isnull=False).values_list("user_id", flat=True)
+    teachers = User.objects.filter(is_active=True, is_staff=False).order_by("first_name", "username")
+    records = Attendance.objects.filter(date=today).select_related("user").order_by("check_in")
+
+    attended_ids = set(records.filter(check_in__isnull=False).values_list("user_id", flat=True))
+    leave_ids = set(LeaveRequest.objects.filter(
+        status="DILULUSKAN", start_date__lte=today, end_date__gte=today
+    ).values_list("user_id", flat=True))
+    duty_ids = set(OfficialDuty.objects.filter(
+        status="DILULUSKAN", start_date__lte=today, end_date__gte=today
+    ).values_list("user_id", flat=True))
+
     total = teachers.count()
-    attended = records.filter(check_in__isnull=False).count()
-    late = records.filter(status="LEWAT").count()
-    absent = teachers.exclude(id__in=attended_ids)
+    attended = len(attended_ids)
+    late = records.filter(check_in__isnull=False, status="LEWAT").count()
+    on_leave = teachers.filter(id__in=leave_ids).count()
+    on_duty = teachers.filter(id__in=duty_ids).count()
+    excused_ids = leave_ids | duty_ids
+    absent = teachers.exclude(id__in=attended_ids | excused_ids)
     percentage = round((attended / total * 100), 1) if total else 0
+
+    # Statistik tujuh hari terakhir untuk graf ringkas tanpa pustaka luaran.
+    weekly_stats = []
+    max_week_count = 1
+    for offset in range(6, -1, -1):
+        day = today - timezone.timedelta(days=offset)
+        count = Attendance.objects.filter(date=day, check_in__isnull=False).count()
+        max_week_count = max(max_week_count, count)
+        weekly_stats.append({"date": day, "count": count})
+    for item in weekly_stats:
+        item["height"] = round((item["count"] / max_week_count) * 100)
+
+    school = SchoolSettings.load()
+    today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
+    target_in, target_out = school.times_for_date(today)
+
     return render(request, "attendance/admin_dashboard.html", {
-        "today": today, "total": total, "attended": attended, "late": late,
-        "absent": absent, "percentage": percentage, "records": records,
+        "today": today,
+        "school": school,
+        "target_in": target_in,
+        "target_out": target_out,
+        "today_holiday": today_holiday,
+        "total": total,
+        "attended": attended,
+        "late": late,
+        "on_leave": on_leave,
+        "on_duty": on_duty,
+        "absent": absent,
+        "percentage": percentage,
+        "records": records,
+        "weekly_stats": weekly_stats,
+        "pending_leave": LeaveRequest.objects.filter(status="MENUNGGU").count(),
+        "pending_duty": OfficialDuty.objects.filter(status="MENUNGGU").count(),
     })
 
 

@@ -40,3 +40,12 @@ BUILD 9.1.003
 - Paparan kamera dan status swafoto dipertingkat.
 - Susun atur responsif untuk telefon dan komputer.
 - Tiada migration pangkalan data baharu diperlukan.
+
+
+BUILD 9.1.004 - DASHBOARD PENTADBIR
+- Statistik jumlah guru, hadir, lewat, belum hadir, cuti dan tugas rasmi.
+- Graf kehadiran tujuh hari terakhir.
+- Senarai guru belum hadir dengan pengecualian cuti/tugas rasmi diluluskan.
+- Paparan permohonan cuti dan tugas rasmi yang menunggu.
+- Jadual langsung rekod hari ini dengan GPS, peranti dan pautan Lihat Lokasi.
+- Tiada migration pangkalan data baharu diperlukan.

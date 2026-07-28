@@ -1,15 +1,89 @@
 {% extends "attendance/base.html" %}
 {% block title %}Dashboard Pentadbir{% endblock %}
 {% block content %}
-<div class="hero"><div><h1>Kehadiran Hari Ini</h1><p>{{ today }}</p></div><span>{{ percentage }}%</span></div>
-<div class="stats four">
-  <div class="card"><b>{{ total }}</b><small>Jumlah guru</small></div>
-  <div class="card"><b>{{ attended }}</b><small>Sudah hadir</small></div>
-  <div class="card"><b>{{ late }}</b><small>Lewat</small></div>
-  <div class="card"><b>{{ absent|length }}</b><small>Belum hadir</small></div>
+<section class="admin-hero">
+  <div>
+    <span class="eyebrow">BUILD 9.1.004 · PUSAT KAWALAN</span>
+    <h1>Dashboard Pentadbir</h1>
+    <p>{{ school.school_name }} · {{ today|date:"l, d F Y" }}</p>
+  </div>
+  <div class="attendance-score">
+    <strong>{{ percentage }}%</strong>
+    <small>Kehadiran hari ini</small>
+  </div>
+</section>
+
+{% if today_holiday %}
+<div class="card holiday-notice"><b>Hari kelepasan: {{ today_holiday.name }}</b><br><small>{{ today_holiday.description }}</small></div>
+{% endif %}
+
+<section class="admin-metrics">
+  <div class="admin-metric"><span>👥</span><div><b>{{ total }}</b><small>Jumlah guru</small></div></div>
+  <div class="admin-metric success"><span>✓</span><div><b>{{ attended }}</b><small>Hadir hari ini</small></div></div>
+  <div class="admin-metric warning"><span>!</span><div><b>{{ late }}</b><small>Lewat</small></div></div>
+  <div class="admin-metric danger"><span>×</span><div><b>{{ absent|length }}</b><small>Belum hadir</small></div></div>
+  <div class="admin-metric info"><span>☂</span><div><b>{{ on_leave }}</b><small>Cuti diluluskan</small></div></div>
+  <div class="admin-metric purple"><span>↗</span><div><b>{{ on_duty }}</b><small>Tugas rasmi</small></div></div>
+</section>
+
+<div class="admin-grid">
+  <section class="card admin-chart-card">
+    <div class="section-heading">
+      <div><span class="eyebrow">TREND 7 HARI</span><h2>Graf Kehadiran</h2></div>
+      <span class="schedule-chip">Sasaran masuk {{ target_in|time:"H:i" }}</span>
+    </div>
+    <div class="weekly-chart">
+      {% for item in weekly_stats %}
+      <div class="chart-column">
+        <b>{{ item.count }}</b>
+        <div class="chart-track"><span style="height:{{ item.height }}%"></span></div>
+        <small>{{ item.date|date:"D" }}</small>
+        <em>{{ item.date|date:"d/m" }}</em>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card admin-alerts">
+    <span class="eyebrow">TINDAKAN PENTADBIR</span><h2>Permohonan Menunggu</h2>
+    <a href="/admin/attendance/leaverequest/?status__exact=MENUNGGU"><span>Permohonan cuti</span><b>{{ pending_leave }}</b></a>
+    <a href="/admin/attendance/officialduty/?status__exact=MENUNGGU"><span>Tugas rasmi</span><b>{{ pending_duty }}</b></a>
+    <a href="/admin/attendance/attendance/"><span>Semua rekod kehadiran</span><b>→</b></a>
+    <a href="/admin/attendance/schoolsettings/"><span>Tetapan sekolah</span><b>→</b></a>
+  </section>
 </div>
-<div class="grid-two">
-<section class="card"><h2>Guru Belum Hadir</h2>{% for teacher in absent %}<p>{{ teacher.get_full_name|default:teacher.username }}</p>{% empty %}<p>Semua guru sudah hadir.</p>{% endfor %}</section>
-<section class="card"><h2>Rekod Hari Ini</h2>{% for r in records %}<p><b>{{ r.user.get_full_name|default:r.user.username }}</b> — {{ r.check_in|date:"H:i"|default:"—" }} ({{ r.get_status_display }})</p>{% empty %}<p>Belum ada rekod.</p>{% endfor %}</section>
+
+<div class="admin-grid lower-grid">
+  <section class="card">
+    <div class="section-heading"><div><span class="eyebrow">PERLU PERHATIAN</span><h2>Guru Belum Hadir</h2></div><span class="count-badge">{{ absent|length }}</span></div>
+    <div class="absent-list">
+      {% for teacher in absent %}
+      <div><span class="avatar-mini">{{ teacher.get_full_name|default:teacher.username|first|upper }}</span><b>{{ teacher.get_full_name|default:teacher.username }}</b></div>
+      {% empty %}<p class="empty-state">Semua guru telah hadir atau mempunyai kelulusan rasmi.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-heading"><div><span class="eyebrow">JADUAL LANGSUNG</span><h2>Rekod Hari Ini</h2></div><span class="count-badge">{{ attended }}</span></div>
+    <div class="table-scroll">
+      <table class="admin-table">
+        <thead><tr><th>Guru</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>GPS</th><th>Lokasi</th></tr></thead>
+        <tbody>
+        {% for r in records %}
+          {% if r.check_in %}
+          <tr>
+            <td><b>{{ r.user.get_full_name|default:r.user.username }}</b><small>{{ r.check_in_device|default:"Peranti tidak direkod" }}</small></td>
+            <td>{{ r.check_in|date:"H:i" }}</td>
+            <td>{{ r.check_out|date:"H:i"|default:"—" }}</td>
+            <td><span class="status-pill {% if r.status == 'LEWAT' %}late{% else %}present{% endif %}">{{ r.get_status_display }}</span></td>
+            <td>{{ r.check_in_accuracy|floatformat:0|default:"—" }} m<small>Jarak {{ r.distance_in_m|floatformat:1|default:"—" }} m</small></td>
+            <td>{% if r.check_in_lat and r.check_in_lng %}<a class="map-link" target="_blank" rel="noopener" href="https://www.google.com/maps?q={{ r.check_in_lat }},{{ r.check_in_lng }}">Lihat lokasi</a>{% else %}—{% endif %}</td>
+          </tr>
+          {% endif %}
+        {% empty %}<tr><td colspan="6" class="empty-state">Belum ada rekod kehadiran hari ini.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 {% endblock %}

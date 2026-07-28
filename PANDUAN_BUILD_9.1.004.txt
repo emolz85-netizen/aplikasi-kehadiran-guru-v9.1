@@ -1,0 +1,11 @@
+BUILD 9.1.004 - DASHBOARD PENTADBIR
+
+1. Ekstrak ZIP ini.
+2. Salin semua kandungan ke folder repository GitHub Desktop.
+3. Pilih Replace files in destination.
+4. Summary: Build 9.1.004 - Dashboard Pentadbir
+5. Klik Commit to main dan Push origin.
+6. Tunggu Render menunjukkan Your service is live.
+7. Log masuk sebagai pentadbir dan buka Dashboard Admin.
+
+Tiada migration baharu diperlukan untuk build ini.
