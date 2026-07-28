@@ -107,59 +107,44 @@ async function rekod(action){
 (()=>{const shell=document.querySelector('.app-shell'),sidebar=document.getElementById('roleSidebar'),toggle=document.getElementById('sidebarToggle');if(!shell||!sidebar||!toggle)return;const desktop=()=>window.matchMedia('(min-width:901px)').matches;const sync=()=>toggle.setAttribute('aria-expanded',desktop()?String(!shell.classList.contains('sidebar-collapsed')):String(sidebar.classList.contains('open')));if(desktop()&&localStorage.getItem('attendance_sidebar_collapsed')==='1')shell.classList.add('sidebar-collapsed');toggle.addEventListener('click',()=>{if(desktop()){shell.classList.toggle('sidebar-collapsed');localStorage.setItem('attendance_sidebar_collapsed',shell.classList.contains('sidebar-collapsed')?'1':'0')}else sidebar.classList.toggle('open');sync()});document.addEventListener('click',e=>{if(!desktop()&&sidebar.classList.contains('open')&&!sidebar.contains(e.target)&&!toggle.contains(e.target)){sidebar.classList.remove('open');sync()}});window.addEventListener('resize',()=>{if(desktop())sidebar.classList.remove('open');sync()});sync()})();
 
 
-// V10.2 — Enterprise UI: tema, paparan padat, carian/pagination jadual dan transisi.
+// V10.2 Enterprise UI sebenar
 (()=>{
-  const body=document.body;
-  const themeToggle=document.getElementById('themeToggle');
-  const densityToggle=document.getElementById('densityToggle');
-  const progress=document.getElementById('pageProgress');
-  const backToTop=document.getElementById('backToTop');
+  const html=document.documentElement,body=document.body;
+  const themeBtn=document.getElementById('themeToggle'),themeIcon=document.getElementById('themeIcon');
+  const profileTheme=document.getElementById('profileThemeToggle');
+  const densityBtn=document.getElementById('densityToggle'),profileDensity=document.getElementById('profileDensityToggle');
+  const profileButton=document.getElementById('profileMenuButton'),profileMenu=document.getElementById('profileMenu');
+  const systemDark=()=>window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const savedTheme=localStorage.getItem('attendance_theme')||'system';
+  function resolvedTheme(value){return value==='system'?(systemDark()?'dark':'light'):value}
+  function applyTheme(value){const resolved=resolvedTheme(value);html.dataset.theme=resolved;localStorage.setItem('attendance_theme',value);if(themeIcon)themeIcon.textContent=resolved==='dark'?'☀️':'🌙';if(themeBtn)themeBtn.title=resolved==='dark'?'Tukar ke mod cerah':'Tukar ke mod gelap';if(profileTheme)profileTheme.innerHTML=resolved==='dark'?'☀️ Mod Cerah':'🌙 Mod Gelap';const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=resolved==='dark'?'#0b1220':(body.classList.contains('role-admin')?'#0f2747':'#166534')}
+  applyTheme(savedTheme);
+  const toggleTheme=()=>applyTheme(html.dataset.theme==='dark'?'light':'dark');
+  themeBtn?.addEventListener('click',toggleTheme);profileTheme?.addEventListener('click',()=>{toggleTheme();closeProfile()});
+  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(localStorage.getItem('attendance_theme')==='system')applyTheme('system')});
+  function applyDensity(compact){body.classList.toggle('ui-compact',compact);localStorage.setItem('attendance_density',compact?'compact':'comfortable');if(profileDensity)profileDensity.innerHTML=compact?'↕️ Paparan Selesa':'↕️ Paparan Padat'}
+  applyDensity(localStorage.getItem('attendance_density')==='compact');
+  const toggleDensity=()=>applyDensity(!body.classList.contains('ui-compact'));
+  densityBtn?.addEventListener('click',toggleDensity);profileDensity?.addEventListener('click',()=>{toggleDensity();closeProfile()});
+  function closeProfile(){if(profileMenu)profileMenu.hidden=true;if(profileButton)profileButton.setAttribute('aria-expanded','false')}
+  profileButton?.addEventListener('click',e=>{e.stopPropagation();const open=profileMenu.hidden;profileMenu.hidden=!open;profileButton.setAttribute('aria-expanded',String(open))});
+  document.addEventListener('click',e=>{if(profileMenu&&!profileMenu.hidden&&!profileMenu.contains(e.target)&&!profileButton.contains(e.target))closeProfile()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProfile()});
 
-  const preferredTheme=localStorage.getItem('attendance_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
-  if(preferredTheme==='dark') body.classList.add('theme-dark');
-  if(localStorage.getItem('attendance_density')==='compact') body.classList.add('density-compact');
-  const syncButtons=()=>{
-    if(themeToggle){themeToggle.textContent=body.classList.contains('theme-dark')?'☀':'☾';themeToggle.title=body.classList.contains('theme-dark')?'Mod cerah':'Mod gelap'}
-    if(densityToggle){densityToggle.classList.toggle('active',body.classList.contains('density-compact'));densityToggle.title=body.classList.contains('density-compact')?'Paparan selesa':'Paparan padat'}
-  };
-  themeToggle?.addEventListener('click',()=>{body.classList.toggle('theme-dark');localStorage.setItem('attendance_theme',body.classList.contains('theme-dark')?'dark':'light');syncButtons()});
-  densityToggle?.addEventListener('click',()=>{body.classList.toggle('density-compact');localStorage.setItem('attendance_density',body.classList.contains('density-compact')?'compact':'comfortable');syncButtons()});
-  syncButtons();
-
-  document.addEventListener('click',e=>{
-    const link=e.target.closest('a[href]');
-    if(!link||link.target==='_blank'||link.hasAttribute('download')||link.href.startsWith('mailto:')||link.href.startsWith('tel:')||link.origin!==location.origin||link.hash&&link.pathname===location.pathname)return;
-    progress?.classList.add('active');body.classList.add('page-leaving');
+  // Jadual enterprise: carian segera + pagination 10 rekod.
+  document.querySelectorAll('table').forEach((table,index)=>{
+    if(table.dataset.enterpriseReady==='1'||table.closest('.no-enterprise-table'))return;
+    const tbody=table.tBodies[0];if(!tbody||tbody.rows.length<6)return;
+    table.dataset.enterpriseReady='1';
+    const parent=table.parentElement;
+    const scroll=document.createElement('div');scroll.className='table-scroll';parent.insertBefore(scroll,table);scroll.appendChild(table);
+    const toolbar=document.createElement('div');toolbar.className='enterprise-toolbar';
+    const wrap=document.createElement('div');wrap.className='enterprise-search-wrap';
+    const search=document.createElement('input');search.type='search';search.className='enterprise-search';search.placeholder='Cari dalam jadual…';search.setAttribute('aria-label','Cari dalam jadual');wrap.appendChild(search);toolbar.appendChild(wrap);parent.insertBefore(toolbar,scroll);
+    const pager=document.createElement('div');pager.className='enterprise-pagination';const prev=document.createElement('button'),next=document.createElement('button'),info=document.createElement('span');prev.textContent='‹ Sebelum';next.textContent='Seterusnya ›';info.className='enterprise-page-info';pager.append(prev,info,next);parent.insertBefore(pager,scroll.nextSibling);
+    const rows=[...tbody.rows];let page=1;const perPage=10;
+    function render(){const q=search.value.trim().toLocaleLowerCase('ms');const filtered=rows.filter(r=>r.innerText.toLocaleLowerCase('ms').includes(q));const pages=Math.max(1,Math.ceil(filtered.length/perPage));page=Math.min(page,pages);rows.forEach(r=>r.hidden=true);filtered.slice((page-1)*perPage,page*perPage).forEach(r=>r.hidden=false);info.textContent=`Halaman ${page} / ${pages} · ${filtered.length} rekod`;prev.disabled=page<=1;next.disabled=page>=pages;pager.hidden=filtered.length<=perPage}
+    search.addEventListener('input',()=>{page=1;render()});prev.addEventListener('click',()=>{page--;render()});next.addEventListener('click',()=>{page++;render()});render();
   });
-  window.addEventListener('pageshow',()=>{progress?.classList.remove('active');body.classList.remove('page-leaving')});
-
-  const tables=[...document.querySelectorAll('main table')];
-  tables.forEach((table,index)=>{
-    if(table.closest('.enterprise-table-wrap'))return;
-    const rows=[...table.tBodies].flatMap(t=>[...t.rows]);
-    if(rows.length<4)return;
-    const wrap=document.createElement('div');wrap.className='enterprise-table-wrap';
-    table.parentNode.insertBefore(wrap,table);wrap.appendChild(table);
-    const tools=document.createElement('div');tools.className='enterprise-table-tools';
-    tools.innerHTML=`<label class="enterprise-search"><span>⌕</span><input type="search" placeholder="Cari dalam jadual…" aria-label="Cari dalam jadual"></label><div class="enterprise-table-meta"></div>`;
-    wrap.insertBefore(tools,table);
-    const pager=document.createElement('div');pager.className='enterprise-pager';wrap.appendChild(pager);
-    const input=tools.querySelector('input'),meta=tools.querySelector('.enterprise-table-meta');
-    let page=1;const size=10;
-    const render=()=>{
-      const q=input.value.trim().toLowerCase();
-      const matches=rows.filter(r=>r.textContent.toLowerCase().includes(q));
-      const pages=Math.max(1,Math.ceil(matches.length/size));page=Math.min(page,pages);
-      rows.forEach(r=>r.hidden=true);matches.slice((page-1)*size,page*size).forEach(r=>r.hidden=false);
-      meta.textContent=`${matches.length} rekod`;
-      pager.innerHTML=`<button type="button" ${page<=1?'disabled':''}>← Sebelum</button><span>Halaman ${page} / ${pages}</span><button type="button" ${page>=pages?'disabled':''}>Seterusnya →</button>`;
-      const btn=[...pager.querySelectorAll('button')];btn[0].onclick=()=>{page--;render()};btn[1].onclick=()=>{page++;render()};
-    };
-    input.addEventListener('input',()=>{page=1;render()});render();
-  });
-
-  const updateTop=()=>backToTop?.classList.toggle('show',scrollY>420);
-  addEventListener('scroll',updateTop,{passive:true});backToTop?.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));updateTop();
-
-  document.querySelectorAll('.card,.pro-panel,.pro-stat,.metric-card').forEach((el,i)=>{el.style.setProperty('--enter-delay',`${Math.min(i,12)*35}ms`);el.classList.add('enterprise-enter')});
+  const top=document.createElement('button');top.id='backToTop';top.type='button';top.textContent='↑';top.title='Kembali ke atas';top.setAttribute('aria-label','Kembali ke atas');document.body.appendChild(top);addEventListener('scroll',()=>top.classList.toggle('show',scrollY>450),{passive:true});top.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
 })();

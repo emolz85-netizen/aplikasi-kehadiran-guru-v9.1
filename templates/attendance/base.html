@@ -16,8 +16,7 @@
   <link rel="stylesheet" href="{% static 'attendance/style.css' %}">
   <title>{% block title %}Kehadiran Guru{% endblock %}</title>
 </head>
-<body class="{% if user.is_authenticated %}{% if user.is_staff %}role-admin{% else %}role-teacher{% endif %}{% else %}role-public{% endif %}" data-app-version="{{ APP_VERSION }}">
-<div class="page-progress" id="pageProgress" aria-hidden="true"></div>
+<body class="{% if user.is_authenticated %}{% if user.is_staff %}role-admin{% else %}role-teacher{% endif %}{% else %}role-public{% endif %}">
 {% if user.is_authenticated %}
 <div class="app-shell">
   <aside class="role-sidebar" id="roleSidebar">
@@ -78,10 +77,18 @@
     <header class="role-header professional-header">
       <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Buka atau kecilkan menu" aria-expanded="true">☰</button>
       <div class="header-spacer"></div>
-      <button type="button" class="enterprise-icon-button" id="densityToggle" aria-label="Tukar kepadatan paparan" title="Paparan padat">▦</button>
-      <button type="button" class="enterprise-icon-button" id="themeToggle" aria-label="Tukar tema" title="Mod gelap">☾</button>
+      <button type="button" class="header-action theme-toggle" id="themeToggle" aria-label="Tukar mod gelap atau cerah" title="Mod gelap / cerah"><span id="themeIcon">🌙</span></button>
+      <button type="button" class="header-action density-toggle" id="densityToggle" aria-label="Tukar kepadatan paparan" title="Paparan padat / selesa">↕️</button>
       <a class="header-notification" href="{% url 'notification_center' %}" aria-label="Notifikasi">🔔{% if NOTIFICATION_UNREAD_COUNT %}<span>{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
-      <div class="header-profile"><span class="header-avatar">👤</span><div><strong>{% if user.is_staff %}Pentadbir{% else %}Guru{% endif %}</strong><small>{{ user.get_full_name|default:user.username }}</small></div></div>
+      <div class="profile-menu-wrap">
+        <button type="button" class="header-profile profile-menu-button" id="profileMenuButton" aria-expanded="false" aria-controls="profileMenu"><span class="header-avatar">👤</span><div><strong>{% if user.is_staff %}Pentadbir{% else %}Guru{% endif %}</strong><small>{{ user.get_full_name|default:user.username }}</small></div><span class="profile-chevron">⌄</span></button>
+        <div class="profile-menu" id="profileMenu" hidden>
+          <a href="{% url 'profile_page' %}">👤 Profil</a>
+          <button type="button" id="profileThemeToggle">🌙 Mod Gelap</button>
+          <button type="button" id="profileDensityToggle">↕️ Paparan Padat</button>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="profile-logout">🚪 Log Keluar</button></form>
+        </div>
+      </div>
     </header>
     <main>
 {% else %}
@@ -96,12 +103,11 @@
   </div>
 </div>
 {% else %}<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }} · © 2026</footer>{% endif %}
-<button type="button" id="backToTop" class="back-to-top" aria-label="Kembali ke atas">↑</button>
 <script src="{% static 'attendance/app.js' %}"></script>
 <script>window.PWA_SERVICE_WORKER_URL="{% url 'service_worker' %}";</script>
 <script src="{% static 'attendance/pwa.js' %}"></script>
 <div id="pwaInstallBanner" class="pwa-install-banner" hidden><div><strong>📲 Pasang sebagai aplikasi</strong><small>Akses lebih pantas dari skrin utama telefon.</small></div><div class="pwa-banner-actions"><button type="button" id="pwaInstallNow">Pasang</button><button type="button" id="pwaInstallDismiss" class="secondary-button">Nanti</button></div></div>
-<div id="pwaUpdateBanner" class="pwa-update-banner" hidden><span>Versi aplikasi baharu tersedia.</span><button type="button" id="pwaUpdateNow">Kemas Kini</button></div>
+<div id="pwaUpdateBanner" class="pwa-update-banner" hidden><div><strong>Versi baharu tersedia</strong><small>Kemas kini untuk menggunakan ciri terkini.</small></div><button type="button" id="pwaUpdateNow">Kemas Kini Sekarang</button></div>
 {% block scripts %}{% endblock %}
 </body>
 </html>

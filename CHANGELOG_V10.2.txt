@@ -1,11 +1,12 @@
-V10.2 – Enterprise UI
+APLIKASI KEHADIRAN GURU — V10.2 ENTERPRISE UI
 
-- Mod gelap dengan pilihan disimpan pada peranti.
-- Pilihan paparan padat/selesa.
-- Transisi halaman dan animasi kad yang ringan.
-- Carian serta pagination automatik untuk jadual yang panjang.
-- Butang kembali ke atas.
-- Header sticky dan kemasan responsif.
-- Sokongan reduced-motion untuk aksesibiliti.
-- Cache PWA dinaik taraf melalui APP_VERSION 10.2.0.
+Perubahan sebenar:
+- Suis mod gelap/cerah pada header dan menu profil.
+- Pilihan tema disimpan dalam localStorage.
+- Menu profil interaktif.
+- Paparan padat/selesa.
+- Carian dan pagination automatik untuk jadual panjang.
+- Header sticky, table header sticky dan butang kembali ke atas.
+- PWA update banner sebenar: service worker baharu menunggu tindakan pengguna.
+- Responsif telefon/tablet dan sokongan reduced-motion.
 - Tiada migration pangkalan data baharu.
