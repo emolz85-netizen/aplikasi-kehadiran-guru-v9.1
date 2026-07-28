@@ -49,3 +49,11 @@ BUILD 9.1.004 - DASHBOARD PENTADBIR
 - Paparan permohonan cuti dan tugas rasmi yang menunggu.
 - Jadual langsung rekod hari ini dengan GPS, peranti dan pautan Lihat Lokasi.
 - Tiada migration pangkalan data baharu diperlukan.
+
+
+BUILD 9.1.005 - PETA KEHADIRAN DAN LIHAT LOKASI
+- Peta Leaflet dan OpenStreetMap untuk rekod masuk/keluar.
+- Penapis tarikh, guru dan status.
+- Bulatan radius sekolah dan penanda GPS guru.
+- Butang terus ke Google Maps.
+- Tiada migration baharu.

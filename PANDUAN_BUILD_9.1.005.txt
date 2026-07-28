@@ -1,0 +1,14 @@
+BUILD 9.1.005 — PETA KEHADIRAN DAN LIHAT LOKASI
+
+Ciri baharu:
+1. Peta interaktif lokasi daftar masuk dan daftar keluar.
+2. Lokasi sekolah serta bulatan radius GPS.
+3. Penapis mengikut tarikh, guru dan status.
+4. Maklumat nama, masa, status, jarak, ketepatan GPS dan peranti pada penanda.
+5. Butang Lihat lokasi yang membuka Google Maps.
+6. Pautan Peta Kehadiran dalam menu pentadbir dan Dashboard Admin.
+
+Tiada migration pangkalan data diperlukan.
+
+Summary GitHub Desktop:
+Build 9.1.005 - Peta Kehadiran dan Lihat Lokasi

@@ -1,0 +1,62 @@
+{% extends "attendance/base.html" %}
+{% block title %}Peta Kehadiran{% endblock %}
+{% block content %}
+<section class="map-hero">
+  <div><span class="eyebrow">BUILD 9.1.005 · LOKASI GPS</span><h1>Peta Kehadiran</h1><p>{{ school.school_name }} · {{ selected_date|date:"d F Y" }}</p></div>
+  <div class="map-summary"><strong>{{ records|length }}</strong><small>Rekod guru</small><b>{{ markers|length }} titik GPS</b></div>
+</section>
+
+<section class="card map-filter-card">
+  <form method="get" class="map-filters">
+    <label>Tarikh<input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}"></label>
+    <label>Guru<select name="teacher"><option value="">Semua guru</option>{% for teacher in teachers %}<option value="{{ teacher.id }}" {% if selected_teacher == teacher.id|stringformat:'s' %}selected{% endif %}>{{ teacher.get_full_name|default:teacher.username }}</option>{% endfor %}</select></label>
+    <label>Status<select name="status"><option value="">Semua status</option><option value="HADIR" {% if selected_status == 'HADIR' %}selected{% endif %}>Hadir</option><option value="LEWAT" {% if selected_status == 'LEWAT' %}selected{% endif %}>Lewat</option></select></label>
+    <button type="submit">Tapis Peta</button>
+    <a class="button-link" href="{% url 'attendance_map' %}">Tetapkan semula</a>
+  </form>
+</section>
+
+<section class="card map-card">
+  <div id="attendance-map" aria-label="Peta lokasi kehadiran"></div>
+  <div class="map-legend"><span><i class="legend-school"></i>Sekolah</span><span><i class="legend-in"></i>Daftar masuk</span><span><i class="legend-out"></i>Daftar keluar</span><span>Radius {{ school.radius_meters }} m</span></div>
+</section>
+
+<section class="card">
+  <div class="section-heading"><div><span class="eyebrow">BUTIRAN REKOD</span><h2>Lokasi Guru</h2></div><span class="count-badge">{{ records|length }}</span></div>
+  <div class="table-scroll"><table class="admin-table map-table"><thead><tr><th>Guru</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>Lokasi masuk</th><th>Lokasi keluar</th></tr></thead><tbody>
+  {% for r in records %}<tr>
+    <td><b>{{ r.user.get_full_name|default:r.user.username }}</b><small>{{ r.check_in_device|default:"Peranti tidak direkod" }}</small></td>
+    <td>{{ r.check_in|date:"H:i:s" }}</td><td>{{ r.check_out|date:"H:i:s"|default:"—" }}</td>
+    <td><span class="status-pill {% if r.status == 'LEWAT' %}late{% else %}present{% endif %}">{{ r.get_status_display }}</span></td>
+    <td>{% if r.check_in_lat != None and r.check_in_lng != None %}<a class="map-link" target="_blank" rel="noopener" href="https://www.google.com/maps?q={{ r.check_in_lat }},{{ r.check_in_lng }}">Lihat lokasi</a><small>{{ r.distance_in_m|floatformat:1 }} m · ±{{ r.check_in_accuracy|floatformat:0 }} m</small>{% else %}—{% endif %}</td>
+    <td>{% if r.check_out_lat != None and r.check_out_lng != None %}<a class="map-link" target="_blank" rel="noopener" href="https://www.google.com/maps?q={{ r.check_out_lat }},{{ r.check_out_lng }}">Lihat lokasi</a><small>{{ r.distance_out_m|floatformat:1 }} m · ±{{ r.check_out_accuracy|floatformat:0 }} m</small>{% else %}—{% endif %}</td>
+  </tr>{% empty %}<tr><td colspan="6" class="empty-state">Tiada rekod untuk pilihan ini.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{{ markers|json_script:"attendance-markers" }}
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  const school=[{{ school.latitude }},{{ school.longitude }}];
+  const markers=JSON.parse(document.getElementById('attendance-markers').textContent);
+  const map=L.map('attendance-map').setView(school,19);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:21,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+  L.circle(school,{radius:{{ school.radius_meters }},color:'#2563eb',fillColor:'#60a5fa',fillOpacity:.12,weight:2}).addTo(map);
+  L.marker(school).addTo(map).bindPopup('<b>{{ school.school_name|escapejs }}</b><br>Lokasi sekolah<br>Radius {{ school.radius_meters }} m');
+  const bounds=L.latLngBounds([school]);
+  markers.forEach(item=>{
+    const isOut=item.type==='Keluar';
+    const marker=L.circleMarker([item.lat,item.lng],{radius:9,color:isOut?'#b45309':'#166534',fillColor:isOut?'#f59e0b':'#22c55e',fillOpacity:.95,weight:3}).addTo(map);
+    const accuracy=item.accuracy===null?'—':item.accuracy+' m';
+    const distance=item.distance===null?'—':item.distance+' m';
+    marker.bindPopup(`<div class="map-popup"><b>${item.name}</b><span>${item.type} · ${item.time}</span><span>Status: ${item.status}</span><span>Jarak: ${distance}</span><span>Ketepatan: ±${accuracy}</span><span>${item.device}</span><a target="_blank" rel="noopener" href="${item.google_url}">Buka Google Maps</a></div>`);
+    bounds.extend([item.lat,item.lng]);
+  });
+  if(markers.length){map.fitBounds(bounds.pad(.25),{maxZoom:20});}
+  setTimeout(()=>map.invalidateSize(),200);
+})();
+</script>
+{% endblock %}

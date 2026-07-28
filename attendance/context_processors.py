@@ -11,7 +11,7 @@ def school_context(request):
             "SCHOOL_LATITUDE": school.latitude,
             "SCHOOL_LONGITUDE": school.longitude,
             "SCHOOL_RADIUS_METERS": school.radius_meters,
-            "APP_VERSION": "9.1.004",
+            "APP_VERSION": "9.1.005",
         }
     except Exception:
         return {
@@ -20,5 +20,5 @@ def school_context(request):
             "SCHOOL_LATITUDE": settings.SCHOOL_LATITUDE,
             "SCHOOL_LONGITUDE": settings.SCHOOL_LONGITUDE,
             "SCHOOL_RADIUS_METERS": settings.SCHOOL_RADIUS_METERS,
-            "APP_VERSION": "9.1.004",
+            "APP_VERSION": "9.1.005",
         }

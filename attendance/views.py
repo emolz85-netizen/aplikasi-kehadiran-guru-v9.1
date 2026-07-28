@@ -2,7 +2,7 @@ import base64
 import io
 import math
 import calendar
-from datetime import time
+from datetime import time, datetime
 
 from django.conf import settings
 from django.contrib import messages
@@ -22,9 +22,9 @@ def health(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.004"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.005"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.004"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.005"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -38,7 +38,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-1-004";
+const CACHE = "kehadiran-v9-1-005";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -448,6 +448,72 @@ def export_pdf(request):
     c.save()
     output.seek(0)
     return FileResponse(output, as_attachment=True, filename="laporan_kehadiran.pdf")
+
+
+@user_passes_test(lambda u: u.is_staff)
+def attendance_map(request):
+    today = timezone.localdate()
+    selected_date = today
+    raw_date = request.GET.get("date", "").strip()
+    if raw_date:
+        try:
+            selected_date = datetime.strptime(raw_date, "%Y-%m-%d").date()
+        except ValueError:
+            messages.warning(request, "Format tarikh tidak sah. Tarikh hari ini digunakan.")
+
+    teacher_id = request.GET.get("teacher", "").strip()
+    status = request.GET.get("status", "").strip().upper()
+    records = Attendance.objects.filter(
+        date=selected_date, check_in__isnull=False
+    ).select_related("user").order_by("check_in")
+
+    if teacher_id.isdigit():
+        records = records.filter(user_id=int(teacher_id))
+    if status in {"HADIR", "LEWAT"}:
+        records = records.filter(status=status)
+
+    markers = []
+    for rec in records:
+        name = rec.user.get_full_name() or rec.user.username
+        if rec.check_in_lat is not None and rec.check_in_lng is not None:
+            markers.append({
+                "type": "Masuk",
+                "name": name,
+                "lat": rec.check_in_lat,
+                "lng": rec.check_in_lng,
+                "time": timezone.localtime(rec.check_in).strftime("%H:%M:%S") if rec.check_in else "—",
+                "status": rec.get_status_display(),
+                "accuracy": round(rec.check_in_accuracy, 1) if rec.check_in_accuracy is not None else None,
+                "distance": round(rec.distance_in_m, 1) if rec.distance_in_m is not None else None,
+                "device": rec.check_in_device or "Peranti tidak direkod",
+                "google_url": f"https://www.google.com/maps?q={rec.check_in_lat},{rec.check_in_lng}",
+            })
+        if rec.check_out_lat is not None and rec.check_out_lng is not None:
+            markers.append({
+                "type": "Keluar",
+                "name": name,
+                "lat": rec.check_out_lat,
+                "lng": rec.check_out_lng,
+                "time": timezone.localtime(rec.check_out).strftime("%H:%M:%S") if rec.check_out else "—",
+                "status": rec.get_status_display(),
+                "accuracy": round(rec.check_out_accuracy, 1) if rec.check_out_accuracy is not None else None,
+                "distance": round(rec.distance_out_m, 1) if rec.distance_out_m is not None else None,
+                "device": rec.check_out_device or "Peranti tidak direkod",
+                "google_url": f"https://www.google.com/maps?q={rec.check_out_lat},{rec.check_out_lng}",
+            })
+
+    User = get_user_model()
+    teachers = User.objects.filter(is_active=True, is_staff=False).order_by("first_name", "username")
+    school = SchoolSettings.load()
+    return render(request, "attendance/attendance_map.html", {
+        "school": school,
+        "selected_date": selected_date,
+        "selected_teacher": teacher_id,
+        "selected_status": status,
+        "teachers": teachers,
+        "records": records,
+        "markers": markers,
+    })
 
 @user_passes_test(lambda u: u.is_staff)
 def import_teachers(request):

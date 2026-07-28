@@ -11,6 +11,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("profil/", views.profile_page, name="profile_page"),
     path("dashboard-admin/", views.admin_dashboard, name="admin_dashboard"),
+    path("peta-kehadiran/", views.attendance_map, name="attendance_map"),
     path("rekod/<str:action>/", views.record_attendance, name="record_attendance"),
     path("cuti/", views.leave_page, name="leave_page"),
     path("tugas-rasmi/", views.duty_page, name="duty_page"),
