@@ -37,3 +37,6 @@ UJIAN
 4. Semak Inbox dan Spam/Junk.
 5. Klik pautan dan tetapkan kata laluan baharu.
 6. Cuba gunakan pautan yang sama sekali lagi; ia sepatutnya tidak sah.
+
+
+Build 9.1.006.1 hotfix: lihat PANDUAN_BUILD_9.1.006.1.txt

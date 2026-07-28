@@ -1,0 +1,40 @@
+BUILD 9.1.006.1 — HOTFIX EMAIL PASSWORD RESET
+================================================
+
+PUNCA MASALAH
+Render Free menyekat sambungan keluar SMTP pada port 25, 465 dan 587.
+Oleh itu Gmail SMTP akan berhenti pada socket.create_connection dan akhirnya
+menghasilkan WORKER TIMEOUT / Internal Server Error.
+
+PENYELESAIAN HOTFIX
+1. Menambah penghantaran e-mel melalui Brevo Transactional Email API (HTTPS).
+2. Menambah EMAIL_TIMEOUT=15 untuk SMTP pada persekitaran yang menyokongnya.
+3. Membuang ruang App Password Gmail secara automatik.
+4. Menggantikan halaman Internal Server Error dengan mesej penghantaran yang jelas.
+5. Tiada migration pangkalan data diperlukan.
+
+TETAPAN RENDER FREE YANG DISYORKAN
+BREVO_API_KEY=<API key sebenar daripada Brevo>
+DEFAULT_FROM_EMAIL=SK Ulu Ansuan Attendance <alamat-penghantar-disahkan>
+PASSWORD_RESET_TIMEOUT=1800
+EMAIL_TIMEOUT=15
+
+PENTING
+- Alamat dalam DEFAULT_FROM_EMAIL mesti menjadi sender yang telah disahkan dalam Brevo.
+- EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_USE_SSL, EMAIL_HOST_USER dan
+  EMAIL_HOST_PASSWORD tidak diperlukan apabila BREVO_API_KEY digunakan.
+- Gmail SMTP hanya boleh digunakan pada komputer tempatan atau Render berbayar.
+
+CARA DEPLOY
+1. Salin semua kandungan build ini ke repository menggunakan GitHub Desktop.
+2. Summary: Build 9.1.006.1 - Hotfix Email Password Reset
+3. Commit to main dan Push origin.
+4. Tambah Environment Variables di Render seperti di atas.
+5. Klik Save, rebuild, and deploy.
+
+UJIAN
+1. Pastikan akaun pengguna aktif dan mempunyai alamat e-mel yang betul.
+2. Klik Lupa Kata Laluan.
+3. Masukkan e-mel pengguna.
+4. Semak Inbox, Spam dan Promotions.
+5. Klik pautan dan tetapkan kata laluan baharu.

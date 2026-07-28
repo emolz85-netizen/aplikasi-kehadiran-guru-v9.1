@@ -1,0 +1,16 @@
+BUILD 9.1.006R - SMART PASSWORD RECOVERY
+
+1. Salin semua fail ke repository GitHub.
+2. Commit: Build 9.1.006R - Smart Password Recovery
+3. Push origin dan tunggu Render deploy.
+4. Migration dijalankan automatik oleh render.yaml/start command.
+
+ALIRAN:
+- Guru klik Lupa kata laluan dan masukkan username.
+- Admin buka Reset Kata Laluan pada menu.
+- Admin klik Lulus & Jana Kod.
+- Admin beri kod 6 digit kepada guru.
+- Guru klik Saya sudah mendapat kod dan cipta kata laluan baharu.
+- Kod sah 15 minit dan sekali guna.
+
+Tidak memerlukan Gmail, SMTP, Brevo atau API.

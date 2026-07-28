@@ -93,20 +93,27 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
-# Build 9.1.006 — Email Password Reset
-# Gunakan SMTP apabila EMAIL_HOST ditetapkan. Dalam pembangunan tempatan,
-# e-mel dipaparkan di terminal supaya aliran reset masih boleh diuji.
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend" if os.getenv("EMAIL_HOST")
-    else "django.core.mail.backends.console.EmailBackend",
-)
+# Build 9.1.006.1 — Hotfix Email Password Reset
+# Render Free menyekat sambungan keluar SMTP pada port 25, 465 dan 587.
+# Jika BREVO_API_KEY tersedia, e-mel dihantar melalui Brevo HTTPS API.
+# SMTP kekal disokong untuk komputer tempatan atau pelan Render berbayar.
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
+
+if BREVO_API_KEY:
+    EMAIL_BACKEND = "attendance.email_backends.BrevoAPIEmailBackend"
+elif os.getenv("EMAIL_HOST"):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+# Google App Password boleh disalin dengan ruang; buang ruang secara automatik.
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").replace(" ", "")
 DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
     f"Sistem Kehadiran Guru <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "webmaster@localhost",

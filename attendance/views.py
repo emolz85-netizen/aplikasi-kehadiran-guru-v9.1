@@ -2,29 +2,31 @@ import base64
 import io
 import math
 import calendar
-from datetime import time, datetime
+from datetime import time, datetime, timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import connection
 from django.http import JsonResponse, HttpResponse, FileResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.urls import reverse
 
-from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm
-from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity
+from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm
+from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest
 
 def health(request):
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
-        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.005"})
+        return JsonResponse({"status": "ok", "database": "connected", "version": "9.1.006QR"})
     except Exception:
-        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.005"}, status=503)
+        return JsonResponse({"status": "error", "database": "unavailable", "version": "9.1.006QR"}, status=503)
 
 def manifest(request):
     return JsonResponse({
@@ -38,7 +40,7 @@ def manifest(request):
 
 def service_worker(request):
     script = '''
-const CACHE = "kehadiran-v9-1-005";
+const CACHE = "kehadiran-v9-1-006qr";
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/","/login/"]))));
 self.addEventListener("fetch", e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
 '''
@@ -557,3 +559,147 @@ def import_teachers(request):
     else:
         form = TeacherImportForm()
     return render(request, "attendance/import_teachers.html", {"form": form, "result": result})
+
+
+def password_recovery_request(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    form = PasswordRecoveryRequestForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        username = form.cleaned_data["username"].strip()
+        User = get_user_model()
+        user = User.objects.filter(username__iexact=username, is_active=True).first()
+        if user:
+            existing = PasswordRecoveryRequest.objects.filter(user=user, status__in=["MENUNGGU", "DILULUSKAN"]).first()
+            if not existing:
+                PasswordRecoveryRequest.objects.create(user=user)
+                AccountActivity.objects.create(user=user, action="Minta reset kata laluan", details="Permintaan dihantar kepada pentadbir")
+        messages.success(request, "Permintaan telah dihantar. Hubungi pentadbir sekolah untuk mengimbas QR reset.")
+        return redirect("password_recovery_status")
+    return render(request, "attendance/password_recovery_request.html", {"form": form})
+
+
+def password_recovery_status(request):
+    return render(request, "attendance/password_recovery_status.html")
+
+
+def password_recovery_confirm(request):
+    """Fallback manual-code recovery for devices that cannot scan QR."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    form = PasswordRecoveryConfirmForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        username = form.cleaned_data["username"].strip()
+        User = get_user_model()
+        user = User.objects.filter(username__iexact=username, is_active=True).first()
+        recovery = None
+        if user:
+            recovery = PasswordRecoveryRequest.objects.filter(user=user, status="DILULUSKAN").order_by("-approved_at").first()
+        valid = bool(recovery and recovery.expires_at and recovery.expires_at > timezone.now() and check_password(form.cleaned_data["code"], recovery.code_hash))
+        if not valid:
+            messages.error(request, "Kod tidak sah, telah tamat tempoh atau belum diluluskan.")
+        else:
+            user.set_password(form.cleaned_data["new_password1"])
+            user.save()
+            recovery.status = "SELESAI"
+            recovery.used_at = timezone.now()
+            recovery.code_display = ""
+            recovery.save(update_fields=["status", "used_at", "code_display"])
+            AccountActivity.objects.create(user=user, action="Reset kata laluan", details="Kata laluan dipulihkan menggunakan kod pentadbir")
+            messages.success(request, "Kata laluan berjaya ditukar. Sila log masuk.")
+            return redirect("login")
+    return render(request, "attendance/password_recovery_confirm.html", {"form": form})
+
+
+def password_recovery_qr_scan(request, pk, code):
+    """Validate the short-lived QR and authorize a one-time password change."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    recovery = get_object_or_404(PasswordRecoveryRequest.objects.select_related("user"), pk=pk)
+    valid = (
+        recovery.status == "DILULUSKAN"
+        and recovery.expires_at
+        and recovery.expires_at > timezone.now()
+        and check_password(code, recovery.code_hash)
+    )
+    if not valid:
+        return render(request, "attendance/password_recovery_qr_invalid.html", status=400)
+    request.session["password_recovery_qr_id"] = recovery.pk
+    request.session.set_expiry(15 * 60)
+    return redirect("password_recovery_qr_set")
+
+
+def password_recovery_qr_set(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    recovery_id = request.session.get("password_recovery_qr_id")
+    recovery = PasswordRecoveryRequest.objects.select_related("user").filter(pk=recovery_id).first()
+    valid = bool(recovery and recovery.status == "DILULUSKAN" and recovery.expires_at and recovery.expires_at > timezone.now())
+    if not valid:
+        request.session.pop("password_recovery_qr_id", None)
+        return render(request, "attendance/password_recovery_qr_invalid.html", status=400)
+
+    form = QRPasswordSetForm(request.POST or None, user=recovery.user)
+    if request.method == "POST" and form.is_valid():
+        recovery.user.set_password(form.cleaned_data["new_password1"])
+        recovery.user.save()
+        recovery.status = "SELESAI"
+        recovery.used_at = timezone.now()
+        recovery.code_display = ""
+        recovery.save(update_fields=["status", "used_at", "code_display"])
+        AccountActivity.objects.create(
+            user=recovery.user,
+            action="Reset kata laluan QR",
+            details="Kata laluan dipulihkan melalui QR pentadbir",
+        )
+        request.session.pop("password_recovery_qr_id", None)
+        messages.success(request, "Kata laluan berjaya ditukar. Sila log masuk.")
+        return redirect("login")
+    return render(request, "attendance/password_recovery_qr_set.html", {"form": form, "recovery": recovery})
+
+
+@user_passes_test(lambda u: u.is_staff)
+def password_recovery_admin(request):
+    import qrcode
+    items = list(PasswordRecoveryRequest.objects.select_related("user", "approved_by")[:100])
+    now = timezone.now()
+    for item in items:
+        item.qr_data_uri = ""
+        item.qr_url = ""
+        if item.status == "DILULUSKAN" and item.code_display and item.expires_at and item.expires_at > now:
+            item.qr_url = request.build_absolute_uri(
+                reverse("password_recovery_qr_scan", args=[item.pk, item.code_display])
+            )
+            image = qrcode.make(item.qr_url)
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            item.qr_data_uri = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+    return render(request, "attendance/password_recovery_admin.html", {"items": items})
+
+
+@require_POST
+@user_passes_test(lambda u: u.is_staff)
+def password_recovery_approve(request, pk):
+    import secrets
+    item = get_object_or_404(PasswordRecoveryRequest.objects.select_related("user"), pk=pk)
+    code = f"{secrets.randbelow(1000000):06d}"
+    item.status = "DILULUSKAN"
+    item.code_hash = make_password(code)
+    item.code_display = code
+    item.expires_at = timezone.now() + timedelta(minutes=15)
+    item.approved_at = timezone.now()
+    item.approved_by = request.user
+    item.used_at = None
+    item.save()
+    AccountActivity.objects.create(user=item.user, action="QR reset diluluskan", details=f"Diluluskan oleh {request.user.username}")
+    messages.success(request, f"QR reset untuk {item.user.username} telah dijana dan sah selama 15 minit.")
+    return redirect("password_recovery_admin")
+
+
+@require_POST
+@user_passes_test(lambda u: u.is_staff)
+def password_recovery_reject(request, pk):
+    item = PasswordRecoveryRequest.objects.get(pk=pk)
+    item.status="DITOLAK"; item.code_display=""; item.save(update_fields=["status","code_display"])
+    messages.success(request, "Permintaan ditolak.")
+    return redirect("password_recovery_admin")

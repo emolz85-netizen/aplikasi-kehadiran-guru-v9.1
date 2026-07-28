@@ -1,0 +1,18 @@
+BUILD 9.1.006QR - QR PASSWORD RESET
+
+ALIRAN:
+1. Guru klik Lupa Kata Laluan dan masukkan nama pengguna.
+2. Admin buka menu Reset Kata Laluan.
+3. Admin klik Lulus & Jana QR.
+4. Guru imbas QR pada skrin admin menggunakan kamera telefon.
+5. Guru menetapkan kata laluan baharu.
+
+KESELAMATAN:
+- QR sah 15 minit.
+- QR hanya boleh digunakan sekali.
+- Jana QR baharu membatalkan QR lama.
+- Pentadbir sahaja boleh menjana QR.
+- Kaedah kod 6 digit masih tersedia sebagai pilihan kecemasan.
+
+TIADA MIGRATION BAHARU.
+Migration 0005 daripada Build 9.1.006R masih diperlukan.

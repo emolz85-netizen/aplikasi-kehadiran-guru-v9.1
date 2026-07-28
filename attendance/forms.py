@@ -55,3 +55,41 @@ class OfficialDutyForm(forms.ModelForm):
 class TeacherImportForm(forms.Form):
     file = forms.FileField(label="Fail Excel (.xlsx)")
     default_password = forms.CharField(label="Kata laluan awal", min_length=8, widget=forms.PasswordInput)
+
+
+class PasswordRecoveryRequestForm(forms.Form):
+    username = forms.CharField(label="Nama pengguna", max_length=150)
+
+
+class QRPasswordSetForm(forms.Form):
+    new_password1 = forms.CharField(label="Kata laluan baharu", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(label="Sahkan kata laluan baharu", widget=forms.PasswordInput)
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        data = super().clean()
+        p1, p2 = data.get("new_password1"), data.get("new_password2")
+        if p1 and p2 and p1 != p2:
+            self.add_error("new_password2", "Kata laluan tidak sepadan.")
+        if p1:
+            password_validation.validate_password(p1, self.user)
+        return data
+
+
+class PasswordRecoveryConfirmForm(forms.Form):
+    username = forms.CharField(label="Nama pengguna", max_length=150)
+    code = forms.CharField(label="Kod pemulihan 6 digit", min_length=6, max_length=6)
+    new_password1 = forms.CharField(label="Kata laluan baharu", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(label="Sahkan kata laluan baharu", widget=forms.PasswordInput)
+
+    def clean(self):
+        data = super().clean()
+        p1, p2 = data.get("new_password1"), data.get("new_password2")
+        if p1 and p2 and p1 != p2:
+            self.add_error("new_password2", "Kata laluan tidak sepadan.")
+        if p1:
+            password_validation.validate_password(p1)
+        return data

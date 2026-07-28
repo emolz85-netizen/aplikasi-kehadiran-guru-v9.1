@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity
+from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest
 
 
 @admin.register(SchoolSettings)
@@ -74,3 +74,11 @@ class LeaveRequestAdmin(admin.ModelAdmin):
 class OfficialDutyAdmin(admin.ModelAdmin):
     list_display = ("user", "title", "location", "start_date", "end_date", "status")
     list_filter = ("status",)
+
+
+@admin.register(PasswordRecoveryRequest)
+class PasswordRecoveryRequestAdmin(admin.ModelAdmin):
+    list_display = ("user", "status", "requested_at", "approved_at", "expires_at", "approved_by")
+    list_filter = ("status", "requested_at")
+    search_fields = ("user__username", "user__first_name", "user__last_name")
+    readonly_fields = ("code_hash", "code_display", "requested_at", "approved_at", "used_at")

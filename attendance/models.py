@@ -135,3 +135,24 @@ class OfficialDuty(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class PasswordRecoveryRequest(models.Model):
+    STATUS_CHOICES = [("MENUNGGU", "Menunggu"), ("DILULUSKAN", "Diluluskan"), ("SELESAI", "Selesai"), ("DITOLAK", "Ditolak")]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_recovery_requests")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="MENUNGGU")
+    code_hash = models.CharField(max_length=128, blank=True)
+    code_display = models.CharField(max_length=6, blank=True, help_text="Dipaparkan kepada admin sahaja")
+    expires_at = models.DateTimeField(null=True, blank=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="approved_password_recoveries")
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-requested_at"]
+        verbose_name = "Permintaan pemulihan kata laluan"
+        verbose_name_plural = "Permintaan pemulihan kata laluan"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_status_display()}"
