@@ -1,0 +1,10 @@
+V10.1.1 – Professional UI Refinement
+
+- Membetulkan punca menu sidebar menjadi dua kolum: gaya global nav flex-wrap.
+- Memaksa semua kumpulan dan pautan sidebar kepada satu kolum menegak.
+- Digunakan pada Dashboard Pentadbir dan Dashboard Guru.
+- Menyeragamkan lebar, ikon, teks, lencana dan jarak menu.
+- Menambah fallback logo sekiranya imej logo gagal dimuatkan.
+- Menyeragamkan logo, nama sekolah dan lencana versi pada kedua-dua peranan.
+- Tema pentadbir kekal biru gelap; tema guru diperkemas dalam warna hijau.
+- Tiada migration pangkalan data diperlukan.

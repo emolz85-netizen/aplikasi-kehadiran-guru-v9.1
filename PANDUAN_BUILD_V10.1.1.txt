@@ -1,0 +1,14 @@
+APLIKASI KEHADIRAN GURU – V10.1.1 PROFESSIONAL UI REFINEMENT
+
+CARA DEPLOY
+1. Gantikan semua kandungan repository dengan kandungan build ini.
+2. GitHub Desktop Summary:
+   Build V10.1.1 - Professional UI Refinement
+3. Commit to main dan Push origin.
+4. Tunggu Render Auto Deploy selesai.
+5. Tekan Kemas Kini pada PWA atau gunakan Ctrl+F5 pada pelayar komputer.
+
+CATATAN
+- Tiada migration baharu.
+- Data sedia ada tidak berubah.
+- Sidebar pentadbir dan guru kini dipaksa kepada satu senarai menegak penuh.

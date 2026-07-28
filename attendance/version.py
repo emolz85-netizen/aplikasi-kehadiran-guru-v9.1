@@ -3,8 +3,8 @@
 Ubah fail ini sahaja apabila menyediakan keluaran baharu supaya nombor versi
 konsisten pada dashboard, health check, endpoint versi dan service worker.
 """
-APP_VERSION = "10.1.0"
-APP_VERSION_LABEL = "V10.1"
+APP_VERSION = "10.1.1"
+APP_VERSION_LABEL = "V10.1.1"
 APP_RELEASE_CHANNEL = "stable"
 APP_RELEASE_DATE = "2026-07-29"
-APP_RELEASE_NAME = "Sistem Kehadiran Guru V10.1 – Professional Dashboard UI"
+APP_RELEASE_NAME = "Sistem Kehadiran Guru V10.1.1 – Professional UI Refinement"
