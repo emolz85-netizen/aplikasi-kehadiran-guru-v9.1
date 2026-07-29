@@ -357,7 +357,8 @@ def haversine_m(lat1, lon1, lat2, lon2):
 
 @login_required
 def dashboard(request):
-    if request.user.is_staff:
+    profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+    if profile.has_management_dashboard:
         return redirect("admin_dashboard")
     today = timezone.localdate()
     today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
@@ -689,7 +690,27 @@ def profile_page(request):
 
 
 @user_passes_test(lambda u: u.is_staff)
+@login_required
 def admin_dashboard(request):
+    profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+    if not profile.has_management_dashboard:
+        messages.error(request, "Anda tidak mempunyai kebenaran untuk membuka dashboard pengurusan.")
+        return redirect("dashboard")
+    role = profile.effective_role
+    dashboard_titles = {
+        "GURU_BESAR": "Dashboard Guru Besar",
+        "GPK": "Dashboard Guru Penolong Kanan",
+        "KERANI": "Dashboard Setiausaha / Kerani",
+        "ADMIN": "Dashboard Administrator",
+        "SUPER_ADMIN": "Dashboard Super Admin",
+    }
+    dashboard_subtitles = {
+        "GURU_BESAR": "Ringkasan eksekutif kehadiran dan prestasi seluruh sekolah.",
+        "GPK": "Pemantauan operasi harian, guru lewat dan tindakan susulan.",
+        "KERANI": "Akses laporan, rekod kehadiran dan penyediaan dokumen rasmi.",
+        "ADMIN": "Pengurusan pengguna, keselamatan, tetapan dan operasi sistem.",
+        "SUPER_ADMIN": "Kawalan penuh sistem, audit, konfigurasi dan kesihatan aplikasi.",
+    }
     today = timezone.localdate()
     User = get_user_model()
     teachers = User.objects.filter(is_active=True, is_staff=False).order_by("first_name", "username")
@@ -745,6 +766,13 @@ def admin_dashboard(request):
         "pending_leave": LeaveRequest.objects.filter(status="MENUNGGU").count(),
         "pending_duty": OfficialDuty.objects.filter(status="MENUNGGU").count(),
         "recent_leave_requests": LeaveRequest.objects.select_related("user").filter(status="MENUNGGU")[:5],
+        "dashboard_role": role,
+        "dashboard_title": dashboard_titles.get(role, "Dashboard Pengurusan"),
+        "dashboard_subtitle": dashboard_subtitles.get(role, "Ringkasan sistem kehadiran sekolah."),
+        "can_approve": role in {"GURU_BESAR", "GPK", "ADMIN", "SUPER_ADMIN"},
+        "can_manage_system": role in {"ADMIN", "SUPER_ADMIN"},
+        "can_reset_audit": role in {"ADMIN", "SUPER_ADMIN"},
+        "is_read_only_office": role == "KERANI",
     })
 
 

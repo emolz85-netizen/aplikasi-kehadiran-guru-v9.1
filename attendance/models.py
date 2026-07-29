@@ -96,9 +96,19 @@ class SchoolHoliday(models.Model):
 
 
 class TeacherProfile(models.Model):
+    ROLE_CHOICES = [
+        ("GURU", "Guru"),
+        ("GURU_BESAR", "Guru Besar"),
+        ("GPK", "Guru Penolong Kanan"),
+        ("KERANI", "Setiausaha / Kerani"),
+        ("ADMIN", "Administrator"),
+        ("SUPER_ADMIN", "Super Admin"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     staff_id = models.CharField(max_length=30, blank=True)
     position = models.CharField(max_length=100, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="GURU", db_index=True, verbose_name="Peranan sistem")
     phone = models.CharField(max_length=30, blank=True)
     reference_photo = models.ImageField(upload_to="face_reference/", null=True, blank=True, verbose_name="Foto rujukan wajah")
     reference_photo_bytes = models.BinaryField(null=True, blank=True, editable=False)
@@ -108,6 +118,23 @@ class TeacherProfile(models.Model):
     face_login_activated_at = models.DateTimeField(null=True, blank=True)
     face_login_last_used_at = models.DateTimeField(null=True, blank=True)
     face_login_failed_attempts = models.PositiveSmallIntegerField(default=0)
+
+
+    @property
+    def effective_role(self):
+        if self.user.is_superuser:
+            return "SUPER_ADMIN"
+        if self.user.is_staff and self.role not in {"GURU_BESAR", "GPK", "KERANI"}:
+            return "ADMIN"
+        return self.role or "GURU"
+
+    @property
+    def role_label(self):
+        return dict(self.ROLE_CHOICES).get(self.effective_role, "Guru")
+
+    @property
+    def has_management_dashboard(self):
+        return self.effective_role in {"GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN"}
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username

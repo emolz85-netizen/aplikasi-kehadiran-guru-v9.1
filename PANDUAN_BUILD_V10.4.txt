@@ -1,0 +1,13 @@
+PANDUAN NAIK TARAF V10.4
+
+1. Gantikan fail projek lama dengan kandungan build ini.
+2. Commit dan Push melalui GitHub Desktop.
+3. Tunggu Render Auto Deploy selesai.
+4. Migration 0015 akan berjalan melalui arahan deploy sedia ada.
+5. Buka Django Admin > Teacher profiles dan pilih peranan setiap pengguna.
+6. Akaun superuser ditetapkan sebagai Super Admin secara automatik.
+7. Akaun staff biasa ditetapkan sebagai Administrator secara automatik.
+8. Pengguna bukan staff kekal sebagai Guru kecuali jawatan lama dapat dikenal pasti sebagai Guru Besar, GPK atau Kerani.
+
+Cadangan Summary GitHub Desktop:
+Build V10.4 - Role-Based Enterprise Dashboard

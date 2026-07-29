@@ -32,8 +32,8 @@ class SchoolHolidayAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "staff_id", "position", "phone", "face_login_active", "reference_photo_updated_at", "face_login_last_used_at")
-    list_filter = ("face_login_active",)
+    list_display = ("user", "staff_id", "position", "role", "phone", "face_login_active", "reference_photo_updated_at", "face_login_last_used_at")
+    list_filter = ("role", "face_login_active",)
     search_fields = ("user__username", "user__first_name", "user__last_name", "staff_id")
 
 

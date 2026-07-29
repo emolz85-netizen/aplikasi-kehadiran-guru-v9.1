@@ -1,0 +1,12 @@
+V10.4 – ROLE-BASED ENTERPRISE DASHBOARD
+
+1. Menambah enam peranan sistem: Guru, Guru Besar, GPK, Kerani, Administrator dan Super Admin.
+2. Dashboard dipilih secara automatik mengikut peranan pengguna.
+3. Guru kekal menggunakan dashboard kehadiran peribadi.
+4. Guru Besar menerima ringkasan eksekutif seluruh sekolah.
+5. GPK menerima paparan pemantauan operasi dan tindakan susulan.
+6. Kerani menerima akses berfokuskan laporan dan rekod.
+7. Administrator dan Super Admin menerima akses pengurusan sistem.
+8. Menambah Today's Summary dan akses pantas berdasarkan peranan.
+9. Peranan boleh diubah melalui Django Admin > Teacher profiles.
+10. Fungsi V10.3.9 termasuk AI Automatic Face Login dikekalkan.

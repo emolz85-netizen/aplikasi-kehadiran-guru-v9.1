@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="{% if user.is_authenticated and user.is_staff %}#0f2747{% else %}#166534{% endif %}">
+  <meta name="theme-color" content="{% if user.is_authenticated and HAS_MANAGEMENT_DASHBOARD %}#0f2747{% else %}#166534{% endif %}">
   <meta name="application-name" content="Kehadiran Guru">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="{% static 'attendance/style.css' %}">
   <title>{% block title %}Kehadiran Guru{% endblock %}</title>
 </head>
-<body class="{% if user.is_authenticated %}{% if user.is_staff %}role-admin{% else %}role-teacher{% endif %}{% else %}role-public{% endif %}">
+<body class="{% if user.is_authenticated %}{% if HAS_MANAGEMENT_DASHBOARD %}role-admin role-{{ USER_ROLE|lower }}{% else %}role-teacher{% endif %}{% else %}role-public{% endif %}">
 {% if user.is_authenticated %}
 <div class="app-shell">
   <aside class="role-sidebar" id="roleSidebar">
@@ -27,10 +27,10 @@
     
     <nav class="sidebar-nav" aria-label="Menu utama">
       {% with current=request.resolver_match.url_name %}
-      {% if user.is_staff %}
+      {% if HAS_MANAGEMENT_DASHBOARD %}
         <section class="nav-group">
           <div class="nav-group-title">UTAMA</div>
-          <a class="{% if current == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}"><span class="nav-icon">🏠</span><span class="nav-text">Dashboard Pentadbir</span></a>
+          <a class="{% if current == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}"><span class="nav-icon">🏠</span><span class="nav-text">{{ USER_ROLE_LABEL }} Dashboard</span></a>
         </section>
         <section class="nav-group">
           <div class="nav-group-title">PENGURUSAN</div>
@@ -81,7 +81,7 @@
       <button type="button" class="header-action density-toggle" id="densityToggle" aria-label="Tukar kepadatan paparan" title="Paparan padat / selesa">↕️</button>
       <a class="header-notification" href="{% url 'notification_center' %}" aria-label="Notifikasi">🔔{% if NOTIFICATION_UNREAD_COUNT %}<span>{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
       <div class="profile-menu-wrap">
-        <button type="button" class="header-profile profile-menu-button" id="profileMenuButton" aria-expanded="false" aria-controls="profileMenu"><span class="header-avatar">👤</span><div><strong>{% if user.is_staff %}Pentadbir{% else %}Guru{% endif %}</strong><small>{{ user.get_full_name|default:user.username }}</small></div><span class="profile-chevron">⌄</span></button>
+        <button type="button" class="header-profile profile-menu-button" id="profileMenuButton" aria-expanded="false" aria-controls="profileMenu"><span class="header-avatar">👤</span><div><strong>{% if HAS_MANAGEMENT_DASHBOARD %}Pentadbir{% else %}Guru{% endif %}</strong><small>{{ user.get_full_name|default:user.username }}</small></div><span class="profile-chevron">⌄</span></button>
         <div class="profile-menu" id="profileMenu" hidden>
           <a href="{% url 'profile_page' %}">👤 Profil</a>
           <button type="button" id="profileThemeToggle">🌙 Mod Gelap</button>
@@ -100,7 +100,7 @@
 </main>
 {% if user.is_authenticated %}
 <nav class="mobile-bottom-nav" aria-label="Navigasi mudah alih">
-  {% if user.is_staff %}
+  {% if HAS_MANAGEMENT_DASHBOARD %}
   <a href="{% url 'admin_dashboard' %}"><span>🏠</span><small>Utama</small></a>
   <a href="{% url 'attendance_map' %}"><span>🗺️</span><small>Peta</small></a>
   <a class="mobile-main-action" href="{% url 'report_page' %}"><span>📊</span><small>Laporan</small></a>
