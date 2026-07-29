@@ -166,15 +166,15 @@ def _reference_source(profile):
 def face_login(request):
     school = SchoolSettings.load()
     if not school.face_login_enabled:
-        return JsonResponse({"ok": False, "message": "Face Login tidak diaktifkan oleh pentadbir."}, status=403)
+        return JsonResponse({"ok": False, "message": "Face Login is not enabled by the administrator."}, status=403)
 
     selfie = request.FILES.get("selfie")
     if not selfie:
-        return JsonResponse({"ok": False, "message": "Gambar wajah tidak diterima."}, status=400)
+        return JsonResponse({"ok": False, "message": "Face image was not received."}, status=400)
 
     session_failures = int(request.session.get("face_login_failures", 0))
     if session_failures >= school.face_login_max_attempts:
-        return JsonResponse({"ok": False, "locked": True, "message": "Had percubaan Face Login dicapai. Gunakan login biasa."}, status=429)
+        return JsonResponse({"ok": False, "locked": True, "message": "Maximum Face Login attempts reached. Please use Username and Password."}, status=429)
 
     candidates = TeacherProfile.objects.select_related("user").filter(
         face_login_active=True, user__is_active=True
@@ -197,12 +197,12 @@ def face_login(request):
             except Exception:
                 continue
     except Exception:
-        return JsonResponse({"ok": False, "message": "Gambar wajah tidak dapat diproses."}, status=400)
+        return JsonResponse({"ok": False, "message": "The face image could not be processed."}, status=400)
 
     if not matches:
         request.session["face_login_failures"] = session_failures + 1
         FaceLoginAttempt.objects.create(ip_address=get_client_ip(request), user_agent=request.META.get("HTTP_USER_AGENT", "")[:2000], details="Tiada profil Face Login tersedia")
-        return JsonResponse({"ok": False, "message": "Tiada wajah berdaftar yang sepadan."}, status=403)
+        return JsonResponse({"ok": False, "message": "No matching registered face was found."}, status=403)
 
     matches.sort(key=lambda item: item[0], reverse=True)
     best_score, quality_ok, profile = matches[0]
@@ -221,11 +221,11 @@ def face_login(request):
         request.session["face_login_failures"] = session_failures + 1
         remaining = max(0, school.face_login_max_attempts - request.session["face_login_failures"] )
         if not quality_ok:
-            message = "Gambar kurang jelas. Pastikan wajah terang dan kamera stabil."
+            message = "Image quality is too low. Improve lighting and hold the camera steady."
         elif not clear_winner:
-            message = "Wajah tidak dapat dikenal pasti dengan yakin. Cuba semula atau gunakan login biasa."
+            message = "Identity could not be verified confidently. Trying again..."
         else:
-            message = f"Wajah tidak sepadan ({best_score:.1f}%). Baki percubaan: {remaining}."
+            message = f"Face not recognized ({best_score:.1f}%). Remaining attempts: {remaining}."
         return JsonResponse({"ok": False, "message": message, "score": best_score, "remaining": remaining}, status=403)
 
     request.session.pop("face_login_failures", None)
@@ -234,7 +234,7 @@ def face_login(request):
     profile.save(update_fields=["face_login_failed_attempts", "face_login_last_used_at"])
     auth_login(request, profile.user, backend="django.contrib.auth.backends.ModelBackend")
     AccountActivity.objects.create(user=profile.user, action="Face Login berjaya", details=f"Skor padanan {best_score:.1f}%")
-    return JsonResponse({"ok": True, "message": "Face Login berjaya.", "redirect": reverse("dashboard"), "name": profile.user.get_full_name() or profile.user.username})
+    return JsonResponse({"ok": True, "message": "Login Successful.", "redirect": reverse("dashboard"), "name": profile.user.get_full_name() or profile.user.username})
 
 
 def health(request):

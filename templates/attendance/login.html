@@ -14,15 +14,28 @@
     <h2>Log Masuk</h2>
     {% if SCHOOL.face_login_enabled %}
     <div class="face-login-box" id="faceLoginBox">
-      <h3>🙂 Login Dengan Wajah</h3>
-      <p>Untuk pengguna yang telah mengaktifkan Face Login.</p>
+      <div class="face-login-heading">
+        <div>
+          <span class="face-ai-badge">AI</span>
+          <h3>Face Login</h3>
+        </div>
+        <span id="faceLoginLiveIndicator" class="face-live-indicator" data-state="idle">Ready</span>
+      </div>
+      <p class="face-login-intro">Open the front camera and look straight ahead. Scanning and login happen automatically.</p>
       <div class="face-login-camera" hidden>
         <video id="faceLoginVideo" autoplay muted playsinline></video>
         <canvas id="faceLoginCanvas" hidden></canvas>
+        <div class="face-scan-overlay" aria-hidden="true">
+          <div id="faceGuideFrame" class="face-guide-frame"><span></span></div>
+          <div class="face-scan-line"></div>
+        </div>
       </div>
-      <div id="faceLoginStatus" class="face-login-status">Tekan butang untuk membuka kamera hadapan.</div>
-      <button type="button" class="primary" id="startFaceLogin">Buka Kamera</button>
-      <button type="button" class="primary" id="captureFaceLogin" hidden>Imbas & Log Masuk</button>
+      <div id="faceLoginStatus" class="face-login-status" data-state="idle" aria-live="polite">Press the button to start AI Face Login.</div>
+      <div class="face-login-actions">
+        <button type="button" class="primary" id="startFaceLogin">Open Camera</button>
+        <button type="button" class="secondary-button" id="cancelFaceLogin" hidden>Cancel</button>
+      </div>
+      <small id="faceLoginAttemptText" class="face-attempt-text"></small>
     </div>
     <div class="login-divider"><span>ATAU</span></div>
     {% endif %}
@@ -43,60 +56,147 @@
 <script>
 (() => {
   const startBtn = document.getElementById('startFaceLogin');
-  const captureBtn = document.getElementById('captureFaceLogin');
+  const cancelBtn = document.getElementById('cancelFaceLogin');
   const video = document.getElementById('faceLoginVideo');
   const canvas = document.getElementById('faceLoginCanvas');
   const cameraWrap = document.querySelector('.face-login-camera');
   const status = document.getElementById('faceLoginStatus');
+  const indicator = document.getElementById('faceLoginLiveIndicator');
+  const guideFrame = document.getElementById('faceGuideFrame');
+  const attemptText = document.getElementById('faceLoginAttemptText');
   let stream = null;
+  let scanTimer = null;
+  let scanning = false;
+  let stopped = true;
+  let localAttempts = 0;
+  const maxAttempts = Number('{{ SCHOOL.face_login_max_attempts|default:5 }}') || 5;
+  const faceDetector = ('FaceDetector' in window) ? new FaceDetector({fastMode: true, maxDetectedFaces: 2}) : null;
 
   function csrfToken() {
     return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
   }
-  function stopCamera() {
+
+  function setStatus(message, state = 'detecting') {
+    status.textContent = message;
+    status.dataset.state = state;
+    indicator.dataset.state = state;
+    const labels = {
+      idle: 'Ready', camera: 'Camera Ready', detecting: 'Detecting',
+      found: 'Face Detected', verifying: 'Verifying', success: 'Successful', error: 'Try Again'
+    };
+    indicator.textContent = labels[state] || 'Active';
+    guideFrame?.classList.toggle('is-ready', state === 'found' || state === 'verifying' || state === 'success');
+  }
+
+  function stopCamera(resetUI = false) {
+    stopped = true;
+    scanning = false;
+    clearTimeout(scanTimer);
+    scanTimer = null;
     if (stream) stream.getTracks().forEach(track => track.stop());
     stream = null;
+    video.srcObject = null;
+    if (resetUI) {
+      cameraWrap.hidden = true;
+      startBtn.hidden = false;
+      startBtn.disabled = false;
+      startBtn.textContent = 'Open Camera';
+      cancelBtn.hidden = true;
+      attemptText.textContent = '';
+      setStatus('Press the button to start AI Face Login.', 'idle');
+    }
   }
-  startBtn?.addEventListener('click', async () => {
-    try {
-      status.textContent = 'Membuka kamera…';
-      stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'user'}, audio: false});
-      video.srcObject = stream;
-      await new Promise(resolve => {
-        if (video.readyState >= 2) return resolve();
-        video.addEventListener('loadedmetadata', resolve, {once:true});
-      });
-      await video.play();
-      cameraWrap.hidden = false;
-      startBtn.hidden = true;
-      captureBtn.hidden = false;
-      status.textContent = 'Pastikan wajah berada di tengah dan pencahayaan terang.';
-    } catch (err) {
-      status.textContent = 'Kamera tidak dapat dibuka. Benarkan akses kamera dalam tetapan pelayar.';
-    }
-  });
 
-  captureBtn?.addEventListener('click', async () => {
-    if (!stream || !video.videoWidth) {
-      status.textContent = 'Kamera belum bersedia.';
-      return;
+  async function imageQualityOkay() {
+    const width = Math.min(320, video.videoWidth || 320);
+    const height = Math.round(width * ((video.videoHeight || 240) / (video.videoWidth || 320)));
+    const qualityCanvas = document.createElement('canvas');
+    qualityCanvas.width = width;
+    qualityCanvas.height = height;
+    const ctx = qualityCanvas.getContext('2d', {willReadFrequently: true});
+    ctx.drawImage(video, 0, 0, width, height);
+    const pixels = ctx.getImageData(0, 0, width, height).data;
+    let brightness = 0;
+    for (let i = 0; i < pixels.length; i += 16) brightness += (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
+    brightness /= Math.max(1, pixels.length / 16);
+    if (brightness < 45) {
+      setStatus('Lighting Too Low — move to a brighter area.', 'error');
+      return false;
     }
-    captureBtn.disabled = true;
-    status.textContent = 'Mengenal pasti wajah…';
-    const maxWidth = 720;
-    const scale = Math.min(1, maxWidth / video.videoWidth);
-    canvas.width = Math.round(video.videoWidth * scale);
-    canvas.height = Math.round(video.videoHeight * scale);
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-    if (!blob) {
-      status.textContent = 'Gambar tidak berjaya diambil.';
-      captureBtn.disabled = false;
-      return;
+    if (brightness > 235) {
+      setStatus('Lighting Too Bright — reduce direct light.', 'error');
+      return false;
     }
-    const data = new FormData();
-    data.append('selfie', blob, 'face-login.jpg');
+    return true;
+  }
+
+  async function facePositionOkay() {
+    if (!faceDetector) return true;
     try {
+      const faces = await faceDetector.detect(video);
+      if (faces.length === 0) {
+        setStatus('No Face Detected — position your face inside the frame.', 'detecting');
+        return false;
+      }
+      if (faces.length > 1) {
+        setStatus('Multiple Faces Detected — only one person should be visible.', 'error');
+        return false;
+      }
+      const box = faces[0].boundingBox;
+      const ratio = box.width / video.videoWidth;
+      if (ratio < 0.18) {
+        setStatus('Move Closer.', 'detecting');
+        return false;
+      }
+      if (ratio > 0.72) {
+        setStatus('Move Back Slightly.', 'detecting');
+        return false;
+      }
+      const cx = box.x + box.width / 2;
+      const cy = box.y + box.height / 2;
+      if (Math.abs(cx - video.videoWidth / 2) > video.videoWidth * 0.2 || Math.abs(cy - video.videoHeight / 2) > video.videoHeight * 0.24) {
+        setStatus('Center Your Face Inside the Frame.', 'detecting');
+        return false;
+      }
+      return true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function scheduleScan(delay = 1000) {
+    clearTimeout(scanTimer);
+    if (!stopped) scanTimer = setTimeout(autoScan, delay);
+  }
+
+  async function autoScan() {
+    if (stopped || scanning || !stream || !video.videoWidth) return scheduleScan(600);
+    scanning = true;
+    try {
+      setStatus('Detecting Face...', 'detecting');
+      const [qualityOK, positionOK] = await Promise.all([imageQualityOkay(), facePositionOkay()]);
+      if (!qualityOK || !positionOK) return scheduleScan(850);
+
+      setStatus('Face Detected — hold still...', 'found');
+      await new Promise(resolve => setTimeout(resolve, 550));
+      if (stopped) return;
+
+      const maxWidth = 720;
+      const scale = Math.min(1, maxWidth / video.videoWidth);
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob) {
+        setStatus('Capture Failed — trying again...', 'error');
+        return scheduleScan(1000);
+      }
+
+      localAttempts += 1;
+      attemptText.textContent = `Automatic attempt ${localAttempts} of ${maxAttempts}`;
+      setStatus('Verifying Identity...', 'verifying');
+      const data = new FormData();
+      data.append('selfie', blob, 'automatic-face-login.jpg');
       const response = await fetch('{% url "face_login" %}', {
         method: 'POST', body: data,
         headers: {'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest'},
@@ -104,25 +204,66 @@
       });
       const result = await response.json();
       if (result.ok) {
-        status.textContent = `✓ Selamat datang ${result.name}`;
-        stopCamera();
+        setStatus(`Welcome Back, ${result.name}! Login Successful.`, 'success');
+        attemptText.textContent = '';
+        stopCamera(false);
+        await new Promise(resolve => setTimeout(resolve, 900));
         location.href = result.redirect;
         return;
       }
-      status.textContent = result.message || 'Face Login gagal.';
-      if (result.locked || result.remaining === 0) {
-        stopCamera();
-        captureBtn.hidden = true;
+
+      const remaining = Number.isFinite(Number(result.remaining)) ? Number(result.remaining) : Math.max(0, maxAttempts - localAttempts);
+      if (result.locked || remaining <= 0 || localAttempts >= maxAttempts) {
+        setStatus('Maximum Attempts Reached — please use Username and Password.', 'error');
+        attemptText.textContent = '';
+        stopCamera(false);
+        cameraWrap.hidden = true;
         startBtn.hidden = false;
-        startBtn.textContent = 'Gunakan Login Biasa';
+        startBtn.disabled = true;
+        startBtn.textContent = 'Face Login Locked';
+        cancelBtn.hidden = true;
+        return;
       }
-    } catch (err) {
-      status.textContent = 'Sambungan gagal. Cuba semula.';
+      setStatus(result.message || 'Face Not Recognized — trying again...', 'error');
+      scheduleScan(1400);
+    } catch (_) {
+      setStatus('Connection Failed — trying again...', 'error');
+      scheduleScan(1800);
     } finally {
-      captureBtn.disabled = false;
+      scanning = false;
+    }
+  }
+
+  startBtn?.addEventListener('click', async () => {
+    try {
+      stopped = false;
+      localAttempts = 0;
+      startBtn.disabled = true;
+      setStatus('Opening Camera...', 'detecting');
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {facingMode: 'user', width: {ideal: 1280}, height: {ideal: 720}}, audio: false
+      });
+      video.srcObject = stream;
+      await new Promise(resolve => {
+        if (video.readyState >= 2) return resolve();
+        video.addEventListener('loadedmetadata', resolve, {once: true});
+      });
+      await video.play();
+      cameraWrap.hidden = false;
+      startBtn.hidden = true;
+      startBtn.disabled = false;
+      cancelBtn.hidden = false;
+      setStatus('Camera Ready — look straight ahead.', 'camera');
+      scheduleScan(900);
+    } catch (_) {
+      stopped = true;
+      startBtn.disabled = false;
+      setStatus('Camera Access Denied — allow camera permission in browser settings.', 'error');
     }
   });
-  addEventListener('pagehide', stopCamera);
+
+  cancelBtn?.addEventListener('click', () => stopCamera(true));
+  addEventListener('pagehide', () => stopCamera(false));
 })();
 </script>
 {% endif %}

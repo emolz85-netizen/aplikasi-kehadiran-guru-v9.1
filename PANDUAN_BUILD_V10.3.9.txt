@@ -1,0 +1,14 @@
+PANDUAN NAIK TARAF V10.3.9
+
+1. Gantikan semua fail projek lama dengan kandungan ZIP ini.
+2. Commit dalam GitHub Desktop:
+   Build V10.3.9 - AI Automatic Face Login and Final Stabilization
+3. Push origin dan tunggu Render Auto Deploy selesai.
+4. Pada telefon, tutup aplikasi/PWA sepenuhnya dan buka semula.
+5. Jika paparan lama masih muncul, lakukan refresh penuh atau buang cache laman.
+6. Tekan Face Login > Open Camera. Selepas kamera bersedia, pandang ke kamera. Sistem akan scan, capture dan login secara automatik.
+
+Nota:
+- Kamera memerlukan HTTPS dan kebenaran kamera.
+- Safari/iPhone menggunakan auto capture dengan pemeriksaan kualiti pelayan.
+- Chrome/Edge yang menyokong FaceDetector menerima semakan kedudukan wajah tambahan.

@@ -1,0 +1,16 @@
+V10.3.9 – AI Automatic Face Login & Final Stabilization
+Tarikh: 29 Julai 2026
+
+PERUBAHAN UTAMA
+- Face Login kini mengimbas dan log masuk secara automatik selepas kamera dibuka.
+- Butang "Imbas & Log Masuk" dibuang sepenuhnya.
+- Status langsung dalam Bahasa Inggeris: Camera Ready, Detecting Face, Face Detected, Verifying Identity dan Login Successful.
+- Auto capture selepas wajah stabil selama kira-kira 0.55 saat.
+- Auto retry sehingga had percubaan sistem dicapai.
+- Pemeriksaan asas pencahayaan pada pelayar.
+- Sokongan FaceDetector pada pelayar yang menyokongnya untuk semakan satu wajah, kedudukan dan jarak.
+- Fallback automatik untuk Safari/iPhone yang tidak menyokong FaceDetector; pengesahan kualiti kekal dilakukan oleh pelayan.
+- Kamera ditutup automatik selepas login berjaya, dibatalkan atau had percubaan dicapai.
+- Bingkai wajah, scan line, live status indicator dan animasi kejayaan ditambah.
+- Login biasa kekal tersedia sebagai sandaran.
+- Tiada migration pangkalan data baharu diperlukan.
