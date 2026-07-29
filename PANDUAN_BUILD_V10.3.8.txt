@@ -1,0 +1,10 @@
+PANDUAN NAIK TARAF V10.3.8
+
+1. Gantikan semua fail projek lama dengan kandungan ZIP ini.
+2. Commit di GitHub Desktop menggunakan Summary:
+   Build V10.3.8 - Professional Audit Log Management
+3. Tekan Push origin dan tunggu Render Auto Deploy selesai.
+4. Tiada migration baharu diperlukan.
+5. Login sebagai pentadbir dan buka Log Audit Profesional.
+6. Untuk reset: tekan Reset Semua > Teruskan > taip RESET > Ya, Reset Semua.
+7. Gunakan Eksport CSV sebelum reset sekiranya salinan log lama diperlukan.

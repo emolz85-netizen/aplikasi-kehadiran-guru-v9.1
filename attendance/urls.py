@@ -36,6 +36,7 @@ urlpatterns = [
     path("import-guru/", views.import_teachers, name="import_teachers"),
     path("log-audit/", views.audit_log_page, name="audit_log_page"),
     path("log-audit/export-csv/", views.audit_log_export_csv, name="audit_log_export_csv"),
+    path("log-audit/reset-semua/", views.audit_log_reset_all, name="audit_log_reset_all"),
     path("keselamatan-peranti/", views.device_security_page, name="device_security_page"),
     path("keselamatan-peranti/<int:pk>/<str:status>/", views.device_update_status, name="device_update_status"),
     path("notifikasi/", views.notification_center, name="notification_center"),

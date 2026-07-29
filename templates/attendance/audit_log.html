@@ -2,11 +2,14 @@
 {% block title %}Log Audit Profesional{% endblock %}
 {% block content %}
 <style>
-.audit-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.audit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.audit-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 16px rgba(0,0,0,.07)}.audit-card b{display:block;font-size:1.7rem;margin-top:5px}.audit-filter{background:#fff;padding:16px;border-radius:14px;margin-bottom:16px;display:grid;grid-template-columns:2fr repeat(5,1fr);gap:10px;align-items:end}.audit-filter label{display:block;font-size:.82rem;font-weight:700;margin-bottom:5px}.audit-filter input,.audit-filter select{width:100%;box-sizing:border-box}.audit-table-wrap{overflow:auto;background:#fff;border-radius:14px;box-shadow:0 3px 16px rgba(0,0,0,.07)}.audit-table{width:100%;border-collapse:collapse;min-width:1100px}.audit-table th,.audit-table td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}.audit-table th{background:#f8fafc;position:sticky;top:0}.badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.75rem;font-weight:700}.badge.INFO{background:#dbeafe;color:#1e40af}.badge.AMARAN{background:#fef3c7;color:#92400e}.badge.KRITIKAL{background:#fee2e2;color:#991b1b}.muted{color:#64748b;font-size:.82rem}.pagination{display:flex;justify-content:center;gap:8px;margin-top:16px;align-items:center}@media(max-width:900px){.audit-grid{grid-template-columns:repeat(2,1fr)}.audit-filter{grid-template-columns:1fr 1fr}.audit-hero{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.audit-grid,.audit-filter{grid-template-columns:1fr}}
+.audit-hero{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.audit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.audit-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 3px 16px rgba(0,0,0,.07)}.audit-card b{display:block;font-size:1.7rem;margin-top:5px}.audit-filter{background:#fff;padding:16px;border-radius:14px;margin-bottom:16px;display:grid;grid-template-columns:2fr repeat(5,1fr);gap:10px;align-items:end}.audit-filter label{display:block;font-size:.82rem;font-weight:700;margin-bottom:5px}.audit-filter input,.audit-filter select{width:100%;box-sizing:border-box}.audit-table-wrap{overflow:auto;background:#fff;border-radius:14px;box-shadow:0 3px 16px rgba(0,0,0,.07)}.audit-table{width:100%;border-collapse:collapse;min-width:1100px}.audit-table th,.audit-table td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}.audit-table th{background:#f8fafc;position:sticky;top:0}.badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:.75rem;font-weight:700}.badge.INFO{background:#dbeafe;color:#1e40af}.badge.AMARAN{background:#fef3c7;color:#92400e}.badge.KRITIKAL{background:#fee2e2;color:#991b1b}.muted{color:#64748b;font-size:.82rem}.pagination{display:flex;justify-content:center;gap:8px;margin-top:16px;align-items:center}.audit-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.danger-button{background:#b91c1c!important;color:#fff!important;border:0;padding:10px 14px;border-radius:9px;font-weight:800;cursor:pointer}.danger-button:hover{background:#991b1b!important}.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999}.modal-backdrop[hidden]{display:none!important}.reset-modal{width:min(520px,100%);background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.reset-modal h2{margin:0 0 10px;color:#991b1b}.reset-modal .warning-box{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:13px;margin:14px 0}.reset-modal input{width:100%;box-sizing:border-box;font-size:1.1rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.secondary-button{background:#e5e7eb;color:#111827;border:0;padding:10px 14px;border-radius:9px;font-weight:700;cursor:pointer}.reset-step[hidden]{display:none!important}@media(max-width:900px){.audit-grid{grid-template-columns:repeat(2,1fr)}.audit-filter{grid-template-columns:1fr 1fr}.audit-hero{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.audit-grid,.audit-filter{grid-template-columns:1fr}}
 </style>
 <div class="audit-hero">
-  <div><small>BUILD V9.2.003</small><h1>Log Audit Profesional</h1><p>Jejak tindakan, keselamatan, IP dan peranti pengguna secara tersusun.</p></div>
-  <a class="button" href="{% url 'audit_log_export_csv' %}?{{ request.GET.urlencode }}">Eksport CSV</a>
+  <div><small>{{ APP_VERSION_LABEL }}</small><h1>Log Audit Profesional</h1><p>Jejak tindakan, keselamatan, IP dan peranti pengguna secara tersusun.</p></div>
+  <div class="audit-actions">
+    <a class="button" href="{% url 'audit_log_export_csv' %}?{{ request.GET.urlencode }}">Eksport CSV</a>
+    <button class="danger-button" type="button" id="openResetModal">🗑 Reset Semua</button>
+  </div>
 </div>
 <div class="audit-grid">
   <div class="audit-card"><span>Semua rekod</span><b>{{ stats.total }}</b></div>
@@ -39,4 +42,41 @@
 {% empty %}<tr><td colspan="6">Tiada log audit untuk penapis ini.</td></tr>{% endfor %}
 </tbody></table></div>
 {% if page_obj.paginator.num_pages > 1 %}<div class="pagination">{% if page_obj.has_previous %}<a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">← Sebelum</a>{% endif %}<span>Halaman {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Seterusnya →</a>{% endif %}</div>{% endif %}
+
+<div class="modal-backdrop" id="resetModal" hidden role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+  <div class="reset-modal">
+    <div class="reset-step" id="resetStep1">
+      <h2 id="resetTitle">⚠️ Reset Semua Log Audit</h2>
+      <div class="warning-box"><strong>Semua rekod Log Audit akan dipadam.</strong><br>Tindakan ini tidak boleh dibatalkan. Data guru, kehadiran, logo, tetapan dan Face Login tidak akan terjejas.</div>
+      <p>Disarankan tekan <strong>Eksport CSV</strong> terlebih dahulu sekiranya salinan rekod diperlukan.</p>
+      <div class="modal-actions"><button type="button" class="secondary-button close-reset">Batal</button><button type="button" class="danger-button" id="continueReset">Teruskan</button></div>
+    </div>
+    <div class="reset-step" id="resetStep2" hidden>
+      <h2>Pengesahan Akhir</h2>
+      <p>Untuk mengaktifkan butang reset, taip perkataan <strong>RESET</strong> di bawah.</p>
+      <form method="post" action="{% url 'audit_log_reset_all' %}" id="resetForm">{% csrf_token %}
+        <label for="resetConfirmation"><strong>Taip RESET</strong></label>
+        <input id="resetConfirmation" name="confirmation" autocomplete="off" required>
+        <div class="modal-actions"><button type="button" class="secondary-button" id="backReset">Kembali</button><button type="submit" class="danger-button" id="confirmReset" disabled>Ya, Reset Semua</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+ const modal=document.getElementById('resetModal'), open=document.getElementById('openResetModal');
+ const step1=document.getElementById('resetStep1'), step2=document.getElementById('resetStep2');
+ const input=document.getElementById('resetConfirmation'), confirm=document.getElementById('confirmReset');
+ function showStep1(){step1.hidden=false;step2.hidden=true;input.value='';confirm.disabled=true;}
+ function closeModal(){modal.hidden=true;showStep1();}
+ open.addEventListener('click',()=>{modal.hidden=false;showStep1();});
+ document.querySelectorAll('.close-reset').forEach(b=>b.addEventListener('click',closeModal));
+ document.getElementById('continueReset').addEventListener('click',()=>{step1.hidden=true;step2.hidden=false;setTimeout(()=>input.focus(),50);});
+ document.getElementById('backReset').addEventListener('click',showStep1);
+ input.addEventListener('input',()=>{confirm.disabled=input.value.trim()!=='RESET';});
+ modal.addEventListener('click',e=>{if(e.target===modal) closeModal();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden) closeModal();});
+ document.getElementById('resetForm').addEventListener('submit',e=>{if(input.value.trim()!=='RESET'){e.preventDefault();confirm.disabled=true;}});
+})();
+</script>
 {% endblock %}

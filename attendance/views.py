@@ -1193,7 +1193,7 @@ def export_pdf(request):
         canvas.setLineWidth(.5)
         canvas.line(30, 42, width - 30, 42)
         canvas.setFont("Helvetica", 7.5)
-        canvas.drawString(30, 29, f"Dokumen ini dijana oleh Sistem Kehadiran Guru SK Ulu Ansuan · V10.3.7 · {report_reference}")
+        canvas.drawString(30, 29, f"Dokumen ini dijana oleh Sistem Kehadiran Guru SK Ulu Ansuan · V10.3.8 · {report_reference}")
         canvas.drawRightString(width - 30, 29, f"Halaman {document.page}")
         canvas.restoreState()
 
@@ -1595,6 +1595,36 @@ def audit_log_export_csv(request):
         ])
     write_audit(request=request, category="LAPORAN", action="Eksport log audit CSV", description=f"{logs.count()} rekod dieksport.", status_code=200)
     return response
+
+
+@require_POST
+@user_passes_test(lambda u: u.is_staff)
+def audit_log_reset_all(request):
+    """Padam semua log audit sahaja selepas pengesahan perkataan RESET."""
+    from django.db import transaction
+    from .models import SystemAuditLog
+    from .audit import write_audit
+
+    confirmation = request.POST.get("confirmation", "").strip()
+    if confirmation != "RESET":
+        messages.error(request, "Pengesahan tidak tepat. Sila taip RESET untuk meneruskan.")
+        return redirect("audit_log_page")
+
+    with transaction.atomic():
+        deleted_count, _ = SystemAuditLog.objects.all().delete()
+        write_audit(
+            request=request,
+            user=request.user,
+            category="PENTADBIRAN",
+            severity="KRITIKAL",
+            action="RESET SEMUA LOG AUDIT",
+            description=f"Semua {deleted_count} rekod log audit terdahulu telah dipadam oleh pentadbir.",
+            status_code=200,
+            metadata={"deleted_count": deleted_count, "reset_type": "ALL"},
+        )
+
+    messages.success(request, f"Semua Log Audit berjaya dipadam. {deleted_count} rekod lama telah dibersihkan.")
+    return redirect("audit_log_page")
 
 
 @login_required

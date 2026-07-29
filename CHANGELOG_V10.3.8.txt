@@ -1,0 +1,12 @@
+V10.3.8 – Professional Audit Log Management
+Tarikh: 29 Julai 2026
+
+1. Menambah butang "Reset Semua" pada halaman Log Audit Profesional.
+2. Fungsi hanya boleh digunakan oleh pengguna pentadbir (is_staff).
+3. Menambah pengesahan dua peringkat sebelum pemadaman.
+4. Pentadbir wajib menaip perkataan RESET dengan tepat.
+5. Reset hanya memadam rekod SystemAuditLog dan tidak menyentuh data guru, kehadiran, tetapan, logo, profil atau Face Login.
+6. Selepas reset, satu rekod audit baharu disimpan dengan jumlah rekod yang dipadam.
+7. Pautan Eksport CSV kekal tersedia sebagai backup manual sebelum reset.
+8. Tiada tetapan "Kebenaran Reset Audit" ditambah, seperti diminta.
+9. Versi aplikasi dikemas kini kepada V10.3.8.
