@@ -1,0 +1,16 @@
+BUILD V10.3.1 – GPS ACCURACY FIX
+
+GitHub Desktop Summary:
+Build V10.3.1 - Baiki ketepatan GPS rekod masuk
+
+Selepas deploy Render:
+1. Tunggu migration selesai.
+2. Buka aplikasi dan tekan Kemas Kini jika notis PWA muncul.
+3. Jika masih melihat versi lama, tutup aplikasi dan buka semula atau tekan Ctrl+F5.
+4. Uji Rekod Masuk menggunakan telefon di kawasan sekolah.
+
+Tetapan sekolah dikekalkan:
+Latitude 5.745697
+Longitude 117.173844
+Radius 50 m
+Had ketepatan GPS 100 m

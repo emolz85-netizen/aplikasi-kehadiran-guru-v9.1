@@ -12,7 +12,7 @@ class SchoolSettings(models.Model):
     latitude = models.FloatField(default=5.745697)
     longitude = models.FloatField(default=117.173844)
     radius_meters = models.PositiveIntegerField(default=50)
-    max_gps_accuracy_meters = models.PositiveIntegerField(default=50)
+    max_gps_accuracy_meters = models.PositiveIntegerField(default=100)
     weekday_check_in = models.TimeField(default=time(7, 10))
     weekday_check_out = models.TimeField(default=time(13, 0))
     friday_check_in = models.TimeField(default=time(7, 10))

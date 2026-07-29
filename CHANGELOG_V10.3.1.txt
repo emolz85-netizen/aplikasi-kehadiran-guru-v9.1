@@ -1,0 +1,7 @@
+SISTEM KEHADIRAN GURU V10.3.1 – GPS ACCURACY FIX
+
+- Had minimum ketepatan GPS dinaikkan daripada 50 m kepada 100 m.
+- Tetapan GPS sedia ada yang kurang daripada 100 m dinaik taraf secara automatik semasa migration.
+- Radius sekolah kekal 50 m dan koordinat sekolah tidak berubah.
+- Kamera, selfie, Device Trust dan semakan lokasi masih dikekalkan.
+- Service Worker menggunakan cache versi 10.3.1.
