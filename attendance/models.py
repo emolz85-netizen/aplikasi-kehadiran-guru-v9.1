@@ -18,7 +18,7 @@ class SchoolSettings(models.Model):
     friday_check_in = models.TimeField(default=time(7, 10))
     friday_check_out = models.TimeField(default=time(11, 40))
     face_verification_enabled = models.BooleanField(default=True, verbose_name="Aktifkan pengesahan wajah")
-    face_match_threshold = models.PositiveSmallIntegerField(default=62, verbose_name="Ambang padanan visual (%)")
+    face_match_threshold = models.PositiveSmallIntegerField(default=35, verbose_name="Ambang padanan visual (%)")
     require_liveness_challenge = models.BooleanField(default=True, verbose_name="Wajib cabaran hidup")
     device_trust_enabled = models.BooleanField(default=True, verbose_name="Aktifkan peranti dipercayai")
     auto_trust_first_device = models.BooleanField(default=True, verbose_name="Percayai peranti pertama secara automatik")

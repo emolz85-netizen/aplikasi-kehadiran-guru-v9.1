@@ -1,0 +1,12 @@
+BUILD V10.3.3 – AMBANG PENGESAHAN IDENTITI 35%
+
+GitHub Desktop Summary:
+Build V10.3.3 - Kurangkan ambang pengesahan identiti kepada 35%
+
+Langkah naik taraf:
+1. Ekstrak ZIP ini.
+2. Gantikan semua kandungan repository GitHub dengan kandungan folder ini.
+3. Commit dan Push origin.
+4. Tunggu Render Auto Deploy selesai.
+5. Migration akan menukar ambang identiti sekolah sedia ada kepada 35%.
+6. Tutup dan buka semula aplikasi sebelum ujian Rekod Masuk.

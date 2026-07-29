@@ -1,0 +1,8 @@
+SISTEM KEHADIRAN GURU V10.3.3 – AMBANG IDENTITI 35%
+
+Pembaikan:
+- Ambang Pengesahan Identiti Aktif diturunkan kepada 35%.
+- Tetapan sekolah sedia ada dinaik taraf secara automatik kepada 35% semasa migration.
+- Pengesanan satu wajah, swafoto langsung, cabaran liveness, GPS dan Device Trust kekal aktif.
+- Nilai ambang masih boleh diubah oleh pentadbir melalui Tetapan Sekolah.
+- Pembaikan GPS V10.3.1 dan kamera/swafoto V10.3.2 dikekalkan.
