@@ -1,0 +1,15 @@
+PANDUAN NAIK TARAF V10.3.7
+
+1. Ekstrak fail ZIP ini.
+2. Gantikan semua fail projek lama melalui GitHub Desktop.
+3. Commit dengan ringkasan:
+   Build V10.3.7 - Professional Report Stability Update
+4. Tekan Push origin dan tunggu Render Auto Deploy selesai.
+5. Buka Tetapan Sekolah dan tekan Simpan sekali. Jika logo belum pernah dimuat naik, muat naik logo sekolah dan tekan Simpan.
+6. Buka Laporan Profesional, tekan Cetak dan semak logo pada Print Preview.
+7. Uji juga butang Eksport PDF.
+
+Nota:
+- Tiada migration baharu diperlukan.
+- Logo disimpan dalam pangkalan data dan digunakan sebagai PNG Base64 untuk cetakan.
+- Jika pelayar masih menunjukkan halaman lama, lakukan hard refresh (Ctrl+F5) atau kosongkan cache PWA.

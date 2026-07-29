@@ -31,6 +31,47 @@ LIVENESS_CHALLENGES = [
     "Angkat kening dan pandang kamera",
 ]
 
+
+def _official_report_logo(school):
+    """Return a self-contained PNG data URI and bytes for reliable print/PDF output.
+
+    The logo is read from database binary storage first. If an older deployment
+    only has the ImageField, it is copied and normalised into database storage.
+    """
+    raw = bytes(school.logo_bytes) if school.logo_bytes else b""
+    if not raw and school.logo:
+        try:
+            school.logo.open("rb")
+            raw = school.logo.read()
+            school.logo.close()
+        except Exception:
+            raw = b""
+
+    if not raw:
+        return "", b""
+
+    try:
+        image = Image.open(io.BytesIO(raw))
+        image.load()
+        if image.mode not in ("RGB", "RGBA"):
+            image = image.convert("RGBA")
+        output = io.BytesIO()
+        image.save(output, format="PNG", optimize=True)
+        png_bytes = output.getvalue()
+    except Exception:
+        # Preserve the original bytes if Pillow cannot normalise the image.
+        png_bytes = raw
+
+    if not school.logo_bytes or bytes(school.logo_bytes) != png_bytes or school.logo_mime_type != "image/png":
+        SchoolSettings.objects.filter(pk=school.pk).update(
+            logo_bytes=png_bytes, logo_mime_type="image/png"
+        )
+        school.logo_bytes = png_bytes
+        school.logo_mime_type = "image/png"
+
+    encoded = base64.b64encode(png_bytes).decode("ascii")
+    return f"data:image/png;base64,{encoded}", png_bytes
+
 def _image_fingerprint(upload):
     upload.seek(0)
     raw = upload.read()
@@ -879,6 +920,7 @@ def report_page(request):
         leaves = leaves.filter(start_date__lte=last_day, end_date__gte=first_day)
 
     school = SchoolSettings.load()
+    report_logo_data_uri, _ = _official_report_logo(school)
     month_names = [
         "", "Januari", "Februari", "Mac", "April", "Mei", "Jun",
         "Julai", "Ogos", "September", "Oktober", "November", "Disember"
@@ -960,6 +1002,7 @@ def report_page(request):
     report_reference = f"LKG-{generated_at:%Y%m%d-%H%M%S}-{request.user.pk:04d}"
     return render(request, "attendance/report.html", {
         "school": school,
+        "report_logo_data_uri": report_logo_data_uri,
         "records": records[:500],
         "teachers": teachers,
         "selected_teacher": selected_user_id,
@@ -1121,14 +1164,10 @@ def export_pdf(request):
     title_style = ParagraphStyle("ReportTitle", parent=styles["Heading1"], alignment=TA_CENTER, fontSize=13, leading=15, spaceAfter=4)
 
     logo_reader = None
-    if school.logo_bytes:
+    _, report_logo_bytes = _official_report_logo(school)
+    if report_logo_bytes:
         try:
-            logo_reader = ImageReader(io.BytesIO(bytes(school.logo_bytes)))
-        except Exception:
-            logo_reader = None
-    elif school.logo:
-        try:
-            logo_reader = ImageReader(school.logo.path)
+            logo_reader = ImageReader(io.BytesIO(report_logo_bytes))
         except Exception:
             logo_reader = None
 
@@ -1154,7 +1193,7 @@ def export_pdf(request):
         canvas.setLineWidth(.5)
         canvas.line(30, 42, width - 30, 42)
         canvas.setFont("Helvetica", 7.5)
-        canvas.drawString(30, 29, f"Dokumen ini dijana oleh Sistem Kehadiran Guru SK Ulu Ansuan · V10.3.6 · {report_reference}")
+        canvas.drawString(30, 29, f"Dokumen ini dijana oleh Sistem Kehadiran Guru SK Ulu Ansuan · V10.3.7 · {report_reference}")
         canvas.drawRightString(width - 30, 29, f"Halaman {document.page}")
         canvas.restoreState()
 

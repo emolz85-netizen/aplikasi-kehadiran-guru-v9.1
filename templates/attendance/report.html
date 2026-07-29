@@ -9,7 +9,7 @@
   .app-shell,.main-content,.content-wrap{display:block!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
   .official-report-head,.official-report-signature,.official-report-foot{display:block}
   .official-report-head{text-align:center;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:14px;position:relative;min-height:78px}
-  .official-report-head img{position:absolute;left:8px;top:0;width:72px;height:72px;object-fit:contain}
+  .official-report-head img{display:block!important;position:absolute;left:8px;top:0;width:72px;height:72px;object-fit:contain;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .official-report-head h1{font-size:17px;margin:0 80px 3px;text-transform:uppercase}.official-report-head p{margin:2px;font-size:11px}
   .official-report-title{text-align:center;margin:10px 0 12px}.official-report-title h2{font-size:15px;text-transform:uppercase;margin:0 0 4px}.official-report-title p{font-size:10px;margin:2px}
   .card{box-shadow:none!important;border:0!important;padding:0!important;margin:0 0 12px!important;break-inside:auto}.section-title{margin-bottom:6px}.section-title small{display:none}.section-title h2{font-size:12px}.table-scroll{overflow:visible!important}
@@ -36,7 +36,7 @@
 <div class="report-metrics"><div><b>{{ total_present }}</b><span>Jumlah hadir</span></div><div class="warning"><b>{{ total_late }}</b><span>Rekod lewat</span></div><div class="info"><b>{{ total_leave }}</b><span>Hari cuti</span></div><div class="danger"><b>{{ total_absent }}</b><span>Anggaran tidak hadir</span></div><div class="purple"><b>{{ working_days }}</b><span>Hari bekerja</span></div></div>
 <div class="actions report-actions"><a class="button primary" href="{% url 'export_excel' %}?{{ query_string }}">Eksport Excel</a><a class="button" href="{% url 'export_pdf' %}?{{ query_string }}">Eksport PDF</a><button type="button" onclick="window.print()">Cetak</button></div>
 
-<header class="official-report-head">{% if school.logo_data_uri %}<img src="{{ school.logo_data_uri }}" alt="Logo sekolah">{% endif %}<h1>{{ school.school_name|default:"SK Ulu Ansuan" }}</h1><p><b>Kod Sekolah: {{ school.school_code|default:"XBA2247" }}</b></p><p>{{ school.address|default:"Peti Surat 08, 89320 Telupid, Sabah" }}</p></header>
+<header class="official-report-head">{% if report_logo_data_uri %}<img src="{{ report_logo_data_uri }}" alt="Logo sekolah" width="72" height="72">{% endif %}<h1>{{ school.school_name|default:"SK Ulu Ansuan" }}</h1><p><b>Kod Sekolah: {{ school.school_code|default:"XBA2247" }}</b></p><p>{{ school.address|default:"Peti Surat 08, 89320 Telupid, Sabah" }}</p></header>
 <div class="official-report-title"><h2>{% if report_type == 'leave' %}Laporan Cuti Guru{% elif report_type == 'annual' %}Laporan Kehadiran Tahunan{% elif report_type == 'daily' %}Laporan Kehadiran Harian{% else %}Laporan Kehadiran Bulanan{% endif %}</h2><p>Tempoh: {% if report_type == 'annual' %}Tahun {{ selected_year }}{% else %}{{ month_name }} {{ selected_year }}{% endif %}</p><p>No. Rujukan: {{ report_reference }} &nbsp; | &nbsp; Tarikh Cetakan: {{ generated_at|date:"d/m/Y H:i" }}</p></div>
 
 {% if report_type == 'leave' %}

@@ -47,15 +47,15 @@ class SchoolSettings(models.Model):
     def save(self, *args, **kwargs):
         if not self.pk and SchoolSettings.objects.exists():
             self.pk = SchoolSettings.objects.first().pk
-        if self.logo and hasattr(self.logo, "file"):
+        if self.logo:
             try:
-                pos = self.logo.file.tell()
-                self.logo.file.seek(0)
-                raw = self.logo.file.read()
-                self.logo.file.seek(pos)
+                self.logo.open("rb")
+                raw = self.logo.read()
+                self.logo.close()
                 if raw:
                     self.logo_bytes = raw
-                    self.logo_mime_type = getattr(self.logo.file, "content_type", "") or "image/jpeg"
+                    content_type = getattr(getattr(self.logo, "file", None), "content_type", "")
+                    self.logo_mime_type = content_type or "image/jpeg"
             except Exception:
                 pass
         super().save(*args, **kwargs)

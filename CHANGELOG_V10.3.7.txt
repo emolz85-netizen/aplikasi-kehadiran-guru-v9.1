@@ -1,0 +1,17 @@
+V10.3.7 – Professional Report Stability Update
+Tarikh: 29 Julai 2026
+
+PEMBAIKAN UTAMA
+1. Logo laporan kini ditukar kepada PNG Base64 yang berdiri sendiri sebelum halaman cetak dipaparkan.
+2. Sistem tidak lagi bergantung pada URL /media/ untuk mencetak logo sekolah.
+3. Jika pemasangan lama hanya mempunyai fail logo dalam ImageField, sistem akan membaca, menormalkan dan menyalinnya ke BinaryField pangkalan data secara automatik.
+4. Eksport PDF menggunakan data logo yang sama dan stabil daripada pangkalan data.
+5. Sokongan imej JPEG, PNG dan format yang boleh dibaca Pillow dinormalkan kepada PNG.
+6. CSS cetakan diperkukuh supaya logo sentiasa dipaparkan ketika Print / Save as PDF.
+7. Versi aplikasi dikemas kini kepada V10.3.7.
+
+MAKLUMAT LAPORAN RASMI
+- SK Ulu Ansuan
+- Kod Sekolah: XBA2247
+- Peti Surat 08, 89320 Telupid, Sabah
+- Ruang nama dan jawatan pentadbir dibiarkan kosong.
