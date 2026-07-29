@@ -1,0 +1,6 @@
+BUILD V10.3.2 – IPHONE CAMERA & SELFIE FIX
+
+GitHub Desktop Summary:
+Build V10.3.2 - Baiki kamera dan pengesanan swafoto iPhone
+
+Selepas Render selesai deploy, tutup aplikasi sepenuhnya dan buka semula. Jika PWA masih memaparkan versi lama, padam ikon aplikasi daripada Home Screen, buka URL melalui Safari, uji kamera, kemudian Add to Home Screen semula.

@@ -1,0 +1,9 @@
+SISTEM KEHADIRAN GURU V10.3.2 – IPHONE CAMERA & SELFIE FIX
+
+- Membetulkan teks “Kamera belum dibuka” yang kekal walaupun kamera sudah aktif.
+- Menunggu kamera benar-benar bersedia sebelum swafoto boleh diambil.
+- Menolak imej kosong/terlalu kecil dan memaparkan mesej yang tepat.
+- Menetapkan status swafoto hanya selepas fail JPEG berjaya dibina.
+- Menambah keserasian kamera hadapan Safari/PWA iPhone.
+- Mengekalkan GPS sekolah, radius 50 m dan GPS accuracy fix V10.3.1.
+- Cache aplikasi dinaik taraf kepada V10.3.2.

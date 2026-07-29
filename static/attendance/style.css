@@ -261,3 +261,6 @@ body.ui-compact .card{padding:14px;margin-bottom:12px}body.ui-compact td,body.ui
   .professional-header{padding-top:max(10px,env(safe-area-inset-top))}
   .public-header{padding-top:max(14px,env(safe-area-inset-top))}
 }
+
+/* V10.3.2: pastikan atribut hidden mengatasi gaya kamera/PWA. */
+[hidden]{display:none!important}.camera-shell #camera-placeholder[hidden]{display:none!important}

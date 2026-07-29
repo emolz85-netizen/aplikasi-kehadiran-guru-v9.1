@@ -20,26 +20,47 @@ function haversineClient(lat1, lon1, lat2, lon2){
 
 async function startCamera(){
   if(!window.isSecureContext){alert("Kamera memerlukan HTTPS.");return;}
+  const video=document.getElementById("camera");
+  const placeholder=document.getElementById("camera-placeholder");
+  const badge=document.getElementById("selfie-badge");
+  if(!video){alert("Komponen kamera tidak ditemui. Muat semula aplikasi.");return;}
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false});
-    const video=document.getElementById("camera");
+    if(video.srcObject){video.srcObject.getTracks().forEach(track=>track.stop());}
+    selfieBlob=null;
+    if(badge) badge.hidden=true;
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:"user"},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
     video.srcObject=stream;
-    const placeholder=document.getElementById("camera-placeholder");
-    if(placeholder) placeholder.hidden=true;
-  }catch(e){alert("Kamera gagal dibuka. Benarkan kebenaran kamera.");}
+    await new Promise((resolve,reject)=>{
+      if(video.readyState>=2 && video.videoWidth>0){resolve();return;}
+      const timer=setTimeout(()=>reject(new Error("camera-timeout")),12000);
+      video.addEventListener("loadedmetadata",()=>{clearTimeout(timer);resolve();},{once:true});
+    });
+    await video.play();
+    if(placeholder){placeholder.hidden=true;placeholder.style.display="none";}
+    video.dataset.cameraReady="1";
+  }catch(e){
+    video.dataset.cameraReady="0";
+    if(placeholder){placeholder.hidden=false;placeholder.style.display="flex";}
+    alert("Kamera gagal dibuka. Benarkan kebenaran kamera dan cuba semula.");
+  }
 }
 
-function captureSelfie(){
+async function captureSelfie(){
   const v=document.getElementById("camera"),c=document.getElementById("snapshot");
-  if(!v||!v.srcObject){alert("Buka kamera dahulu.");return;}
-  c.width=v.videoWidth||640;c.height=v.videoHeight||480;
-  c.getContext("2d").drawImage(v,0,0,c.width,c.height);
-  c.toBlob(b=>{
-    selfieBlob=b;
-    const badge=document.getElementById("selfie-badge");
-    if(badge) badge.hidden=false;
-    alert("Swafoto telah diambil.");
-  },"image/jpeg",0.85);
+  if(!v||!v.srcObject||v.dataset.cameraReady!=="1"){alert("Buka kamera dan tunggu paparan wajah dahulu.");return;}
+  if(!v.videoWidth||!v.videoHeight){alert("Kamera masih sedang dimuatkan. Tunggu 2 saat dan cuba lagi.");return;}
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  const ctx=c.getContext("2d");
+  ctx.drawImage(v,0,0,c.width,c.height);
+  const blob=await new Promise(resolve=>c.toBlob(resolve,"image/jpeg",0.88));
+  if(!blob||blob.size<5000){selfieBlob=null;alert("Swafoto gagal diproses. Pastikan wajah kelihatan dan cuba lagi.");return;}
+  selfieBlob=blob;
+  const badge=document.getElementById("selfie-badge");
+  if(badge){badge.hidden=false;badge.textContent="✓ Swafoto tersedia";}
+  alert("Swafoto berjaya diambil dan sedia dihantar.");
 }
 
 function refreshGPS(){
