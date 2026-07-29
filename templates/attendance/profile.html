@@ -19,13 +19,23 @@
 </section>
 </div>
 <section class="card face-profile-card">
-  <h2>Foto Rujukan Wajah</h2>
-  <p>Foto ini digunakan sebagai rujukan semasa swafoto daftar masuk dan keluar. Gunakan gambar hadapan yang terang dan jelas.</p>
+  <h2>Foto Rujukan & Face Login</h2>
+  <p>Gunakan satu gambar hadapan yang terang dan jelas. Gambar disimpan secara kekal dalam pangkalan data dan tidak dipadam apabila anda logout.</p>
   {% if teacher_profile.reference_photo_data_uri %}<img class="reference-photo" src="{{ teacher_profile.reference_photo_data_uri }}" alt="Foto rujukan wajah">{% endif %}
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
     {{ face_form.as_p }}
     <button class="primary" name="save_face" type="submit">Simpan Foto Rujukan</button>
   </form>
+  <div class="face-login-profile-status">
+    <strong>Status Face Login:</strong>
+    {% if teacher_profile.face_login_active %}<span class="status-pill status-approved">Aktif</span>{% else %}<span class="status-pill">Tidak aktif</span>{% endif %}
+  </div>
+  {% if teacher_profile.face_login_active %}
+  <form method="post">{% csrf_token %}<button class="secondary-button" name="deactivate_face_login" type="submit">Nyahaktif Face Login</button></form>
+  {% else %}
+  <form method="post">{% csrf_token %}<button class="primary" name="activate_face_login" type="submit" {% if not teacher_profile.reference_photo_data_uri %}disabled{% endif %}>Aktifkan Face Login</button></form>
+  {% if not teacher_profile.reference_photo_data_uri %}<small>Muat naik satu foto dahulu untuk mengaktifkan Face Login.</small>{% endif %}
+  {% endif %}
 </section>
 <section class="card">
   <h2>Aktiviti Akaun Terkini</h2>

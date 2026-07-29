@@ -11,7 +11,22 @@
     {% if SCHOOL.address %}<p>{{ SCHOOL.address }}</p>{% else %}<p>Telupid, Sabah</p>{% endif %}
   </div>
   <section class="card login branded-login-card">
-    <h2>Log Masuk</h2><p>Sila gunakan akaun yang telah didaftarkan.</p>
+    <h2>Log Masuk</h2>
+    {% if SCHOOL.face_login_enabled %}
+    <div class="face-login-box" id="faceLoginBox">
+      <h3>🙂 Login Dengan Wajah</h3>
+      <p>Untuk pengguna yang telah mengaktifkan Face Login.</p>
+      <div class="face-login-camera" hidden>
+        <video id="faceLoginVideo" autoplay muted playsinline></video>
+        <canvas id="faceLoginCanvas" hidden></canvas>
+      </div>
+      <div id="faceLoginStatus" class="face-login-status">Tekan butang untuk membuka kamera hadapan.</div>
+      <button type="button" class="primary" id="startFaceLogin">Buka Kamera</button>
+      <button type="button" class="primary" id="captureFaceLogin" hidden>Imbas & Log Masuk</button>
+    </div>
+    <div class="login-divider"><span>ATAU</span></div>
+    {% endif %}
+    <p>Login pertama atau login sandaran menggunakan akaun biasa.</p>
     {% if form.errors %}<div class="error">Nama pengguna atau kata laluan salah.</div>{% endif %}
     <form method="post">{% csrf_token %}
       <label>Nama pengguna</label>{{ form.username }}
@@ -21,4 +36,94 @@
     </form>
   </section>
 </section>
+{% endblock %}
+{% block scripts %}
+{{ block.super }}
+{% if SCHOOL.face_login_enabled %}
+<script>
+(() => {
+  const startBtn = document.getElementById('startFaceLogin');
+  const captureBtn = document.getElementById('captureFaceLogin');
+  const video = document.getElementById('faceLoginVideo');
+  const canvas = document.getElementById('faceLoginCanvas');
+  const cameraWrap = document.querySelector('.face-login-camera');
+  const status = document.getElementById('faceLoginStatus');
+  let stream = null;
+
+  function csrfToken() {
+    return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+  }
+  function stopCamera() {
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+  startBtn?.addEventListener('click', async () => {
+    try {
+      status.textContent = 'Membuka kamera…';
+      stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'user'}, audio: false});
+      video.srcObject = stream;
+      await new Promise(resolve => {
+        if (video.readyState >= 2) return resolve();
+        video.addEventListener('loadedmetadata', resolve, {once:true});
+      });
+      await video.play();
+      cameraWrap.hidden = false;
+      startBtn.hidden = true;
+      captureBtn.hidden = false;
+      status.textContent = 'Pastikan wajah berada di tengah dan pencahayaan terang.';
+    } catch (err) {
+      status.textContent = 'Kamera tidak dapat dibuka. Benarkan akses kamera dalam tetapan pelayar.';
+    }
+  });
+
+  captureBtn?.addEventListener('click', async () => {
+    if (!stream || !video.videoWidth) {
+      status.textContent = 'Kamera belum bersedia.';
+      return;
+    }
+    captureBtn.disabled = true;
+    status.textContent = 'Mengenal pasti wajah…';
+    const maxWidth = 720;
+    const scale = Math.min(1, maxWidth / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    if (!blob) {
+      status.textContent = 'Gambar tidak berjaya diambil.';
+      captureBtn.disabled = false;
+      return;
+    }
+    const data = new FormData();
+    data.append('selfie', blob, 'face-login.jpg');
+    try {
+      const response = await fetch('{% url "face_login" %}', {
+        method: 'POST', body: data,
+        headers: {'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest'},
+        credentials: 'same-origin'
+      });
+      const result = await response.json();
+      if (result.ok) {
+        status.textContent = `✓ Selamat datang ${result.name}`;
+        stopCamera();
+        location.href = result.redirect;
+        return;
+      }
+      status.textContent = result.message || 'Face Login gagal.';
+      if (result.locked || result.remaining === 0) {
+        stopCamera();
+        captureBtn.hidden = true;
+        startBtn.hidden = false;
+        startBtn.textContent = 'Gunakan Login Biasa';
+      }
+    } catch (err) {
+      status.textContent = 'Sambungan gagal. Cuba semula.';
+    } finally {
+      captureBtn.disabled = false;
+    }
+  });
+  addEventListener('pagehide', stopCamera);
+})();
+</script>
+{% endif %}
 {% endblock %}

@@ -10,6 +10,7 @@ urlpatterns = [
     path("offline/", views.offline_page, name="offline_page"),
     path("pwa/pasang/", views.pwa_install, name="pwa_install"),
     path("login/", auth_views.LoginView.as_view(template_name="attendance/login.html"), name="login"),
+    path("login-wajah/", views.face_login, name="face_login"),
     path("lupa-kata-laluan/", views.password_recovery_request, name="password_recovery_request"),
     path("lupa-kata-laluan/status/", views.password_recovery_status, name="password_recovery_status"),
     path("pulih-kata-laluan/", views.password_recovery_confirm, name="password_recovery_confirm"),

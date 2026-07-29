@@ -1,0 +1,24 @@
+BUILD V10.3.5 – FACE LOGIN
+
+Summary GitHub Desktop:
+Build V10.3.5 - Face Login satu gambar dan media kekal
+
+Langkah deploy:
+1. Ekstrak ZIP ini.
+2. Gantikan fail projek lama menggunakan kandungan folder ini.
+3. Buka GitHub Desktop dan semak perubahan.
+4. Masukkan Summary di atas.
+5. Commit dan Push origin.
+6. Tunggu Render Auto Deploy selesai.
+7. Migration 0015 akan dijalankan oleh arahan deploy sedia ada.
+
+Cara pengguna mengaktifkan Face Login:
+1. Login biasa.
+2. Buka Profil Saya.
+3. Muat naik satu Foto Rujukan Wajah.
+4. Tekan Aktifkan Face Login.
+5. Logout dan pilih Login Dengan Wajah.
+
+Nota:
+- Jangan padam pangkalan data Render kerana foto kekal disimpan di dalam pangkalan data.
+- Jika foto ditukar, Face Login perlu diaktifkan semula.

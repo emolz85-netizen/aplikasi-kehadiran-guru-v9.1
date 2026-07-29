@@ -10,7 +10,7 @@ from PIL import Image, ImageStat
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth import get_user_model, update_session_auth_hash, login as auth_login
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import connection, models
@@ -21,7 +21,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
-from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent
+from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent, FaceLoginAttempt
 from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL, APP_RELEASE_DATE, APP_RELEASE_NAME
 
 LIVENESS_CHALLENGES = [
@@ -107,6 +107,94 @@ def _evaluate_location_security(request, school, user, lat, lng, accuracy, devic
             flags.append(f"Pergerakan tidak munasabah ({speed_kmh:.0f} km/j)"); score += 45
     score = min(score, 100)
     return {"score": score, "level": _risk_level(score), "flags": flags, "device": device, "age_seconds": age_seconds, "speed_kmh": speed_kmh}
+
+def _reference_source(profile):
+    """Return a seekable source for the persistent reference image."""
+    if profile.reference_photo_bytes:
+        return io.BytesIO(bytes(profile.reference_photo_bytes))
+    if profile.reference_photo:
+        try:
+            profile.reference_photo.open("rb")
+            return profile.reference_photo.file
+        except Exception:
+            return None
+    return None
+
+
+@require_POST
+def face_login(request):
+    school = SchoolSettings.load()
+    if not school.face_login_enabled:
+        return JsonResponse({"ok": False, "message": "Face Login tidak diaktifkan oleh pentadbir."}, status=403)
+
+    selfie = request.FILES.get("selfie")
+    if not selfie:
+        return JsonResponse({"ok": False, "message": "Gambar wajah tidak diterima."}, status=400)
+
+    session_failures = int(request.session.get("face_login_failures", 0))
+    if session_failures >= school.face_login_max_attempts:
+        return JsonResponse({"ok": False, "locked": True, "message": "Had percubaan Face Login dicapai. Gunakan login biasa."}, status=429)
+
+    candidates = TeacherProfile.objects.select_related("user").filter(
+        face_login_active=True, user__is_active=True
+    )
+    matches = []
+    quality = None
+    try:
+        raw = selfie.read()
+        selfie.seek(0)
+        if not raw:
+            raise ValueError("empty")
+        for profile in candidates:
+            reference = _reference_source(profile)
+            if not reference:
+                continue
+            live = io.BytesIO(raw)
+            try:
+                _, score, quality_ok, quality = _visual_match(reference, live)
+                matches.append((score, quality_ok, profile))
+            except Exception:
+                continue
+    except Exception:
+        return JsonResponse({"ok": False, "message": "Gambar wajah tidak dapat diproses."}, status=400)
+
+    if not matches:
+        request.session["face_login_failures"] = session_failures + 1
+        FaceLoginAttempt.objects.create(ip_address=get_client_ip(request), user_agent=request.META.get("HTTP_USER_AGENT", "")[:2000], details="Tiada profil Face Login tersedia")
+        return JsonResponse({"ok": False, "message": "Tiada wajah berdaftar yang sepadan."}, status=403)
+
+    matches.sort(key=lambda item: item[0], reverse=True)
+    best_score, quality_ok, profile = matches[0]
+    second_score = matches[1][0] if len(matches) > 1 else 0
+    clear_winner = best_score - second_score >= 2
+    passed = quality_ok and best_score >= school.face_login_threshold and clear_winner
+
+    FaceLoginAttempt.objects.create(
+        user=profile.user if passed else None,
+        success=passed, score=best_score, ip_address=get_client_ip(request),
+        user_agent=request.META.get("HTTP_USER_AGENT", "")[:2000],
+        details=("Padanan berjaya" if passed else f"Padanan ditolak; calon terbaik {profile.user.username}"),
+    )
+
+    if not passed:
+        request.session["face_login_failures"] = session_failures + 1
+        remaining = max(0, school.face_login_max_attempts - request.session["face_login_failures"] )
+        if not quality_ok:
+            message = "Gambar kurang jelas. Pastikan wajah terang dan kamera stabil."
+        elif not clear_winner:
+            message = "Wajah tidak dapat dikenal pasti dengan yakin. Cuba semula atau gunakan login biasa."
+        else:
+            message = f"Wajah tidak sepadan ({best_score:.1f}%). Baki percubaan: {remaining}."
+        return JsonResponse({"ok": False, "message": message, "score": best_score, "remaining": remaining}, status=403)
+
+    request.session.pop("face_login_failures", None)
+    profile.face_login_failed_attempts = 0
+    profile.face_login_last_used_at = timezone.now()
+    profile.save(update_fields=["face_login_failed_attempts", "face_login_last_used_at"])
+    auth_login(request, profile.user, backend="django.contrib.auth.backends.ModelBackend")
+    AccountActivity.objects.create(user=profile.user, action="Face Login berjaya", details=f"Skor padanan {best_score:.1f}%")
+    return JsonResponse({"ok": True, "message": "Face Login berjaya.", "redirect": reverse("dashboard"), "name": profile.user.get_full_name() or profile.user.username})
+
 
 def health(request):
     try:
@@ -517,10 +605,29 @@ def profile_page(request):
             if face_form.is_valid():
                 obj = face_form.save(commit=False)
                 obj.reference_photo_updated_at = timezone.now()
+                obj.face_login_active = False
+                obj.face_login_activated_at = None
                 obj.save()
                 AccountActivity.objects.create(user=request.user, action="Kemas kini foto rujukan wajah")
-                messages.success(request, "Foto rujukan wajah berjaya disimpan.")
+                messages.success(request, "Foto rujukan wajah berjaya disimpan. Aktifkan semula Face Login untuk menggunakan foto baharu.")
                 return redirect("profile_page")
+        elif "activate_face_login" in request.POST:
+            if not teacher_profile.reference_photo_bytes and not teacher_profile.reference_photo:
+                messages.error(request, "Muat naik satu foto rujukan wajah dahulu.")
+            else:
+                teacher_profile.face_login_active = True
+                teacher_profile.face_login_activated_at = timezone.now()
+                teacher_profile.face_login_failed_attempts = 0
+                teacher_profile.save(update_fields=["face_login_active", "face_login_activated_at", "face_login_failed_attempts"])
+                AccountActivity.objects.create(user=request.user, action="Aktifkan Face Login")
+                messages.success(request, "Face Login berjaya diaktifkan.")
+            return redirect("profile_page")
+        elif "deactivate_face_login" in request.POST:
+            teacher_profile.face_login_active = False
+            teacher_profile.save(update_fields=["face_login_active"])
+            AccountActivity.objects.create(user=request.user, action="Nyahaktif Face Login")
+            messages.success(request, "Face Login telah dinyahaktifkan.")
+            return redirect("profile_page")
         elif "change_password" in request.POST:
             password_form = MalayPasswordChangeForm(request.user, request.POST, prefix="password")
             if password_form.is_valid():

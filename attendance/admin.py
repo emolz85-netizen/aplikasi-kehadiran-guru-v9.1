@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog, PushSubscription, AppNotification, VapidConfiguration, TrustedDevice, LocationSecurityEvent
+from .models import TeacherProfile, Attendance, LeaveRequest, OfficialDuty, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, SystemAuditLog, PushSubscription, AppNotification, VapidConfiguration, TrustedDevice, LocationSecurityEvent, FaceLoginAttempt
 
 
 @admin.register(SchoolSettings)
@@ -9,7 +9,7 @@ class SchoolSettingsAdmin(admin.ModelAdmin):
         ("Sekolah", {"fields": ("school_name", "school_code", "address", "phone", "email", "logo")}),
         ("GPS", {"fields": ("latitude", "longitude", "radius_meters", "max_gps_accuracy_meters")}),
         ("Isnin hingga Khamis", {"fields": ("weekday_check_in", "weekday_check_out")}),
-        ("Pengesahan wajah", {"fields": ("face_verification_enabled", "face_match_threshold", "require_liveness_challenge")}),
+        ("Pengesahan wajah", {"fields": ("face_verification_enabled", "face_match_threshold", "require_liveness_challenge", "face_login_enabled", "face_login_threshold", "face_login_max_attempts")}),
         ("Anti GPS Spoofing & Device Trust", {"fields": ("device_trust_enabled", "auto_trust_first_device", "block_untrusted_device", "max_location_age_seconds", "max_plausible_speed_kmh", "high_risk_block_threshold")}),
         ("Jumaat", {"fields": ("friday_check_in", "friday_check_out")}),
     )
@@ -32,7 +32,8 @@ class SchoolHolidayAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "staff_id", "position", "phone", "reference_photo_updated_at")
+    list_display = ("user", "staff_id", "position", "phone", "face_login_active", "reference_photo_updated_at", "face_login_last_used_at")
+    list_filter = ("face_login_active",)
     search_fields = ("user__username", "user__first_name", "user__last_name", "staff_id")
 
 
@@ -150,3 +151,14 @@ class LocationSecurityEventAdmin(admin.ModelAdmin):
     readonly_fields = tuple(field.name for field in LocationSecurityEvent._meta.fields)
     date_hierarchy = "created_at"
     def has_add_permission(self, request): return False
+
+
+@admin.register(FaceLoginAttempt)
+class FaceLoginAttemptAdmin(admin.ModelAdmin):
+    list_display = ("attempted_at", "user", "success", "score", "ip_address", "details")
+    list_filter = ("success", "attempted_at")
+    search_fields = ("user__username", "details", "ip_address")
+    readonly_fields = ("user", "attempted_at", "success", "score", "ip_address", "user_agent", "details")
+
+    def has_add_permission(self, request):
+        return False

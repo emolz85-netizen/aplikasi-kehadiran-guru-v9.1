@@ -1,0 +1,23 @@
+SISTEM KEHADIRAN GURU V10.3.5 – FACE LOGIN
+
+Ciri baharu
+- Login menggunakan wajah bagi pengguna yang telah mengaktifkan Face Login.
+- Login pertama dan login sandaran kekal menggunakan nama pengguna dan kata laluan.
+- Pengguna mengaktifkan Face Login melalui halaman Profil.
+- Hanya satu foto rujukan wajah digunakan.
+- Foto rujukan disimpan sebagai data binari kekal dalam pangkalan data supaya tidak hilang selepas logout atau restart Render.
+- Had percubaan Face Login ditetapkan kepada 5 secara lalai.
+- Ambang Face Login boleh diubah oleh pentadbir dan ditetapkan kepada 45% secara lalai.
+- Log setiap percubaan Face Login disimpan untuk audit.
+
+Keselamatan
+- Gambar mesti mempunyai resolusi, pencahayaan dan kontras yang mencukupi.
+- Sistem hanya menerima calon terbaik yang mempunyai perbezaan jelas daripada calon kedua.
+- Login biasa kekal sebagai kaedah pemulihan.
+- Apabila foto rujukan ditukar, Face Login dinyahaktifkan sehingga pengguna mengaktifkannya semula.
+
+Dikekalkan daripada V10.3.4
+- Radius geofence 150 meter.
+- Ambang pengesahan kehadiran 35%.
+- Logo dan foto profil kekal selepas logout.
+- Pembaikan kamera, GPS dan PWA.

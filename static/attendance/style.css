@@ -264,3 +264,17 @@ body.ui-compact .card{padding:14px;margin-bottom:12px}body.ui-compact td,body.ui
 
 /* V10.3.2: pastikan atribut hidden mengatasi gaya kamera/PWA. */
 [hidden]{display:none!important}.camera-shell #camera-placeholder[hidden]{display:none!important}
+
+/* V10.3.5 Face Login */
+.face-login-box{border:1px solid var(--border,#d9e1ea);border-radius:16px;padding:16px;margin:14px 0;background:rgba(255,255,255,.04)}
+.face-login-box h3{margin-top:0}
+.face-login-camera{overflow:hidden;border-radius:14px;background:#111;aspect-ratio:4/3;margin:12px 0}
+.face-login-camera[hidden]{display:none!important}
+.face-login-camera video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+.face-login-status{padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.1);margin:10px 0;font-size:.94rem}
+.login-divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--muted,#687386);font-size:.78rem;font-weight:700;letter-spacing:.08em}
+.login-divider:before,.login-divider:after{content:"";height:1px;background:var(--border,#d9e1ea);flex:1}
+.face-login-profile-status{margin:16px 0 10px}
+.status-pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#e8edf3;margin-left:6px;font-size:.82rem}
+.status-pill.status-approved{background:#dff7e8;color:#176b38}
+button[disabled]{opacity:.55;cursor:not-allowed}

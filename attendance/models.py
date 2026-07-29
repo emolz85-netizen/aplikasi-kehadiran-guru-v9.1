@@ -20,6 +20,9 @@ class SchoolSettings(models.Model):
     friday_check_out = models.TimeField(default=time(11, 40))
     face_verification_enabled = models.BooleanField(default=True, verbose_name="Aktifkan pengesahan wajah")
     face_match_threshold = models.PositiveSmallIntegerField(default=35, verbose_name="Ambang padanan visual (%)")
+    face_login_enabled = models.BooleanField(default=True, verbose_name="Benarkan Face Login")
+    face_login_threshold = models.PositiveSmallIntegerField(default=45, verbose_name="Ambang Face Login (%)")
+    face_login_max_attempts = models.PositiveSmallIntegerField(default=5, verbose_name="Percubaan maksimum Face Login")
     require_liveness_challenge = models.BooleanField(default=True, verbose_name="Wajib cabaran hidup")
     device_trust_enabled = models.BooleanField(default=True, verbose_name="Aktifkan peranti dipercayai")
     auto_trust_first_device = models.BooleanField(default=True, verbose_name="Percayai peranti pertama secara automatik")
@@ -99,6 +102,10 @@ class TeacherProfile(models.Model):
     reference_photo_bytes = models.BinaryField(null=True, blank=True, editable=False)
     reference_photo_mime_type = models.CharField(max_length=100, blank=True, default="image/jpeg", editable=False)
     reference_photo_updated_at = models.DateTimeField(null=True, blank=True)
+    face_login_active = models.BooleanField(default=False, verbose_name="Face Login aktif")
+    face_login_activated_at = models.DateTimeField(null=True, blank=True)
+    face_login_last_used_at = models.DateTimeField(null=True, blank=True)
+    face_login_failed_attempts = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
@@ -125,6 +132,25 @@ class TeacherProfile(models.Model):
             return self.reference_photo.url if self.reference_photo else ""
         except Exception:
             return ""
+
+
+class FaceLoginAttempt(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+    success = models.BooleanField(default=False)
+    score = models.FloatField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    details = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-attempted_at"]
+        verbose_name = "Percubaan Face Login"
+        verbose_name_plural = "Percubaan Face Login"
+
+    def __str__(self):
+        identity = self.user.username if self.user else "Tidak dikenal pasti"
+        return f"{identity} - {'BERJAYA' if self.success else 'GAGAL'}"
 
 
 class AccountActivity(models.Model):
