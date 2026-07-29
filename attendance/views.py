@@ -956,6 +956,8 @@ def report_page(request):
         leave_summary.append({"teacher": teacher, "counts": counts, "total": sum(counts.values())})
 
     query_string = request.GET.urlencode()
+    generated_at = timezone.localtime()
+    report_reference = f"LKG-{generated_at:%Y%m%d-%H%M%S}-{request.user.pk:04d}"
     return render(request, "attendance/report.html", {
         "school": school,
         "records": records[:500],
@@ -978,7 +980,8 @@ def report_page(request):
         "total_absent": total_absent,
         "average_pct": average_pct,
         "query_string": query_string,
-        "generated_at": timezone.localtime(),
+        "generated_at": generated_at,
+        "report_reference": report_reference,
     })
 
 
@@ -1097,21 +1100,78 @@ def export_pdf(request):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from reportlab.lib.utils import ImageReader
+    from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Table, TableStyle, Paragraph, Spacer, KeepTogether
 
     year, month, report_type, users, records = _report_filters(request)
     school = SchoolSettings.load()
+    generated_at = timezone.localtime()
+    report_reference = f"LKG-{generated_at:%Y%m%d-%H%M%S}-{request.user.pk:04d}"
     output = io.BytesIO()
     filename = f"laporan_kehadiran_{year}_{month:02d}.pdf"
-    doc = SimpleDocTemplate(output, pagesize=landscape(A4), rightMargin=28, leftMargin=28, topMargin=28, bottomMargin=28)
+    page_size = landscape(A4)
+    width, height = page_size
+    doc = BaseDocTemplate(output, pagesize=page_size, rightMargin=30, leftMargin=30, topMargin=112, bottomMargin=62, title="Laporan Kehadiran Guru")
+    frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="report_frame")
+
     styles = getSampleStyleSheet()
-    centered = ParagraphStyle("Centered", parent=styles["Heading1"], alignment=TA_CENTER, fontSize=15, leading=18)
+    normal8 = ParagraphStyle("Normal8", parent=styles["Normal"], fontSize=8, leading=10)
+    center8 = ParagraphStyle("Center8", parent=normal8, alignment=TA_CENTER)
+    title_style = ParagraphStyle("ReportTitle", parent=styles["Heading1"], alignment=TA_CENTER, fontSize=13, leading=15, spaceAfter=4)
+
+    logo_reader = None
+    if school.logo_bytes:
+        try:
+            logo_reader = ImageReader(io.BytesIO(bytes(school.logo_bytes)))
+        except Exception:
+            logo_reader = None
+    elif school.logo:
+        try:
+            logo_reader = ImageReader(school.logo.path)
+        except Exception:
+            logo_reader = None
+
+    def draw_page(canvas, document):
+        canvas.saveState()
+        # Header rasmi setiap halaman
+        if logo_reader:
+            try:
+                canvas.drawImage(logo_reader, 36, height - 88, width=58, height=58, preserveAspectRatio=True, mask="auto", anchor="c")
+            except Exception:
+                pass
+        canvas.setFont("Helvetica-Bold", 14)
+        canvas.drawCentredString(width / 2, height - 42, (school.school_name or "SK Ulu Ansuan").upper())
+        canvas.setFont("Helvetica-Bold", 9)
+        canvas.drawCentredString(width / 2, height - 57, f"Kod Sekolah: {school.school_code or 'XBA2247'}")
+        canvas.setFont("Helvetica", 9)
+        canvas.drawCentredString(width / 2, height - 70, school.address or "Peti Surat 08, 89320 Telupid, Sabah")
+        canvas.setStrokeColor(colors.HexColor("#334155"))
+        canvas.setLineWidth(1.2)
+        canvas.line(30, height - 82, width - 30, height - 82)
+        # Footer rasmi dan halaman
+        canvas.setStrokeColor(colors.HexColor("#94a3b8"))
+        canvas.setLineWidth(.5)
+        canvas.line(30, 42, width - 30, 42)
+        canvas.setFont("Helvetica", 7.5)
+        canvas.drawString(30, 29, f"Dokumen ini dijana oleh Sistem Kehadiran Guru SK Ulu Ansuan · V10.3.6 · {report_reference}")
+        canvas.drawRightString(width - 30, 29, f"Halaman {document.page}")
+        canvas.restoreState()
+
+    doc.addPageTemplates([PageTemplate(id="official", frames=[frame], onPage=draw_page)])
+
+    month_names = ["", "Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"]
+    if report_type == "annual":
+        report_title = f"LAPORAN KEHADIRAN TAHUNAN {year}"
+        period_text = f"Tempoh: Tahun {year}"
+    else:
+        report_title = f"LAPORAN KEHADIRAN GURU — {month_names[month].upper()} {year}"
+        period_text = f"Tempoh: {month_names[month]} {year}"
+
     story = [
-        Paragraph(school.school_name, centered),
-        Paragraph((f"Laporan Kehadiran {month:02d}/{year}" if report_type != "annual" else f"Laporan Kehadiran Tahunan {year}"), ParagraphStyle("Sub", parent=styles["Normal"], alignment=TA_CENTER, fontSize=10)),
-        Paragraph(f"Dicetak oleh: {request.user.get_full_name() or request.user.username} | {timezone.localtime():%d/%m/%Y %H:%M}", ParagraphStyle("Meta", parent=styles["Normal"], alignment=TA_CENTER, fontSize=8)),
-        Spacer(1, 14),
+        Paragraph(report_title, title_style),
+        Paragraph(f"{period_text} &nbsp;&nbsp;|&nbsp;&nbsp; Tarikh Cetakan: {generated_at:%d/%m/%Y %H:%M} &nbsp;&nbsp;|&nbsp;&nbsp; No. Rujukan: {report_reference}", center8),
+        Spacer(1, 12),
     ]
     data = [["Bil", "Tarikh", "Nama Guru", "Masuk", "Keluar", "Status", "Lewat"]]
     for idx, r in enumerate(records[:500], 1):
@@ -1122,24 +1182,31 @@ def export_pdf(request):
             target_dt = timezone.make_aware(datetime.combine(r.date, target_in), timezone.get_current_timezone())
             late_text = f"{max(int((local_in-target_dt).total_seconds()//60),0)} min"
         data.append([
-            idx, r.date.strftime("%d/%m/%Y"), r.user.get_full_name() or r.user.username,
+            str(idx), r.date.strftime("%d/%m/%Y"), Paragraph(r.user.get_full_name() or r.user.username, normal8),
             timezone.localtime(r.check_in).strftime("%H:%M") if r.check_in else "-",
             timezone.localtime(r.check_out).strftime("%H:%M") if r.check_out else "-",
             r.get_status_display(), late_text,
         ])
-    table = Table(data, repeatRows=1, colWidths=[35, 70, 190, 65, 65, 70, 65])
+    table = Table(data, repeatRows=1, colWidths=[35, 70, 250, 65, 65, 80, 65], hAlign="CENTER")
     table.setStyle(TableStyle([
         ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#dbeafe")),
-        ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.HexColor("#0f172a")),
         ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
         ("FONTSIZE", (0,0), (-1,-1), 8),
-        ("GRID", (0,0), (-1,-1), .35, colors.HexColor("#94a3b8")),
+        ("GRID", (0,0), (-1,-1), .4, colors.HexColor("#64748b")),
         ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+        ("ALIGN", (0,0), (1,-1), "CENTER"),
+        ("ALIGN", (3,1), (-1,-1), "CENTER"),
         ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#f8fafc")]),
-        ("LEFTPADDING", (0,0), (-1,-1), 5),
-        ("RIGHTPADDING", (0,0), (-1,-1), 5),
+        ("LEFTPADDING", (0,0), (-1,-1), 5), ("RIGHTPADDING", (0,0), (-1,-1), 5),
+        ("TOPPADDING", (0,0), (-1,-1), 5), ("BOTTOMPADDING", (0,0), (-1,-1), 5),
     ]))
     story.append(table)
+    story.append(Spacer(1, 24))
+    sign_name = school.report_signatory_name or "____________________________"
+    sign_position = school.report_signatory_position or "____________________________"
+    signature = Table([[Paragraph("Disahkan oleh,<br/><br/><br/><br/>____________________________<br/>Nama: %s<br/>Jawatan: %s<br/>Tarikh: ____________________________" % (sign_name, sign_position), ParagraphStyle("Sign", parent=normal8, alignment=TA_LEFT, leading=13))]], colWidths=[270], hAlign="RIGHT")
+    story.append(KeepTogether(signature))
     doc.build(story)
     output.seek(0)
     return FileResponse(output, as_attachment=True, filename=filename)

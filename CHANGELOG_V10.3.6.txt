@@ -1,0 +1,23 @@
+V10.3.6 – PROFESSIONAL OFFICIAL REPORTS
+Tarikh: 29 Julai 2026
+
+PENAMBAHBAIKAN UTAMA
+1. Semua laporan cetak menggunakan kepala rasmi sekolah:
+   - Logo sekolah
+   - SK Ulu Ansuan
+   - Kod Sekolah XBA2247
+   - Peti Surat 08, 89320 Telupid, Sabah
+2. Laporan PDF mempunyai header rasmi pada setiap halaman.
+3. Footer PDF memaparkan versi sistem, nombor rujukan dan nombor halaman.
+4. Ruang tandatangan pentadbir ditambah pada bahagian bawah laporan.
+5. Nama dan jawatan pentadbir dibiarkan kosong secara lalai dan boleh diisi melalui Tetapan Sekolah.
+6. Cetakan terus dari pelayar menggunakan format A4 landskap, jadual berulang dan susun atur rasmi.
+7. Setiap laporan mempunyai nombor rujukan unik berdasarkan tarikh, masa dan pengguna.
+8. Versi aplikasi dikemas kini kepada V10.3.6.
+
+KEKAL TANPA PERUBAHAN
+- Face Login satu gambar
+- Radius GPS 150 meter
+- Ambang pengesahan kehadiran 35%
+- Ambang Face Login 45%
+- Penyimpanan logo dan foto wajah dalam pangkalan data

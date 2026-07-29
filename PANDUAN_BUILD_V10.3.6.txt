@@ -1,0 +1,19 @@
+PANDUAN NAIK TARAF V10.3.6
+
+1. Nyahzip fail projek V10.3.6.
+2. Salin semua fail ke folder repositori GitHub Desktop dan gantikan fail lama.
+3. Dalam GitHub Desktop, gunakan Summary:
+   Build V10.3.6 - Professional Official Reports
+4. Klik Commit dan Push origin.
+5. Tunggu Render Auto Deploy selesai.
+6. Migrasi 0016 akan menetapkan:
+   Nama sekolah: SK Ulu Ansuan
+   Kod sekolah: XBA2247
+   Alamat: Peti Surat 08, 89320 Telupid, Sabah
+7. Uji menu Laporan:
+   - Cetak terus
+   - Eksport PDF
+   - Pastikan logo, kod sekolah, alamat dan ruang tandatangan dipaparkan.
+
+CATATAN
+Nama dan jawatan pentadbir sengaja dibiarkan kosong. Maklumat ini boleh diisi kemudian melalui Django Admin > Tetapan sekolah.

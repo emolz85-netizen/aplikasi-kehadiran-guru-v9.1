@@ -1,8 +1,26 @@
 {% extends "attendance/base.html" %}
-{% block title %}Laporan Profesional{% endblock %}
+{% block title %}Laporan Rasmi{% endblock %}
 {% block content %}
+<style>
+.official-report-head,.official-report-signature,.official-report-foot{display:none}
+@media print{
+  @page{size:A4 landscape;margin:15mm 12mm 18mm}
+  .sidebar,.topbar,.mobile-bottom-nav,.report-hero,.report-filters,.report-metrics,.report-actions,footer{display:none!important}
+  .app-shell,.main-content,.content-wrap{display:block!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
+  .official-report-head,.official-report-signature,.official-report-foot{display:block}
+  .official-report-head{text-align:center;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:14px;position:relative;min-height:78px}
+  .official-report-head img{position:absolute;left:8px;top:0;width:72px;height:72px;object-fit:contain}
+  .official-report-head h1{font-size:17px;margin:0 80px 3px;text-transform:uppercase}.official-report-head p{margin:2px;font-size:11px}
+  .official-report-title{text-align:center;margin:10px 0 12px}.official-report-title h2{font-size:15px;text-transform:uppercase;margin:0 0 4px}.official-report-title p{font-size:10px;margin:2px}
+  .card{box-shadow:none!important;border:0!important;padding:0!important;margin:0 0 12px!important;break-inside:auto}.section-title{margin-bottom:6px}.section-title small{display:none}.section-title h2{font-size:12px}.table-scroll{overflow:visible!important}
+  table{width:100%!important;border-collapse:collapse!important;font-size:8.5px!important}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #555!important;padding:4px!important;background:#fff!important;color:#000!important}
+  .status-pill,.percentage-pill{border:0!important;padding:0!important;background:none!important;color:#000!important}
+  .official-report-signature{margin-top:25px;width:310px;margin-left:auto;break-inside:avoid;font-size:10px}.signature-space{height:55px}.signature-line{border-top:1px solid #111;padding-top:4px}
+  .official-report-foot{margin-top:20px;border-top:1px solid #777;padding-top:5px;text-align:center;font-size:8px;color:#333}.report-generated{display:none}
+}
+</style>
 <section class="report-hero">
-  <div><small>BUILD V9.2.001</small><h1>Sistem Laporan Profesional</h1><p>Kehadiran, kelewatan, cuti dan prestasi guru dalam satu paparan.</p></div>
+  <div><small>{{ APP_VERSION_LABEL }}</small><h1>Sistem Laporan Profesional</h1><p>Kehadiran, kelewatan, cuti dan prestasi guru dalam satu paparan.</p></div>
   <div class="report-score"><strong>{{ average_pct }}%</strong><small>Purata kehadiran</small></div>
 </section>
 
@@ -15,41 +33,19 @@
   <button type="submit">Tapis Laporan</button>
 </form>
 
-<div class="report-metrics">
-  <div><b>{{ total_present }}</b><span>Jumlah hadir</span></div>
-  <div class="warning"><b>{{ total_late }}</b><span>Rekod lewat</span></div>
-  <div class="info"><b>{{ total_leave }}</b><span>Hari cuti</span></div>
-  <div class="danger"><b>{{ total_absent }}</b><span>Anggaran tidak hadir</span></div>
-  <div class="purple"><b>{{ working_days }}</b><span>Hari bekerja</span></div>
-</div>
+<div class="report-metrics"><div><b>{{ total_present }}</b><span>Jumlah hadir</span></div><div class="warning"><b>{{ total_late }}</b><span>Rekod lewat</span></div><div class="info"><b>{{ total_leave }}</b><span>Hari cuti</span></div><div class="danger"><b>{{ total_absent }}</b><span>Anggaran tidak hadir</span></div><div class="purple"><b>{{ working_days }}</b><span>Hari bekerja</span></div></div>
+<div class="actions report-actions"><a class="button primary" href="{% url 'export_excel' %}?{{ query_string }}">Eksport Excel</a><a class="button" href="{% url 'export_pdf' %}?{{ query_string }}">Eksport PDF</a><button type="button" onclick="window.print()">Cetak</button></div>
 
-<div class="actions report-actions">
-  <a class="button primary" href="{% url 'export_excel' %}?{{ query_string }}">Eksport Excel</a>
-  <a class="button" href="{% url 'export_pdf' %}?{{ query_string }}">Eksport PDF</a>
-  <button type="button" onclick="window.print()">Cetak</button>
-</div>
+<header class="official-report-head">{% if school.logo_data_uri %}<img src="{{ school.logo_data_uri }}" alt="Logo sekolah">{% endif %}<h1>{{ school.school_name|default:"SK Ulu Ansuan" }}</h1><p><b>Kod Sekolah: {{ school.school_code|default:"XBA2247" }}</b></p><p>{{ school.address|default:"Peti Surat 08, 89320 Telupid, Sabah" }}</p></header>
+<div class="official-report-title"><h2>{% if report_type == 'leave' %}Laporan Cuti Guru{% elif report_type == 'annual' %}Laporan Kehadiran Tahunan{% elif report_type == 'daily' %}Laporan Kehadiran Harian{% else %}Laporan Kehadiran Bulanan{% endif %}</h2><p>Tempoh: {% if report_type == 'annual' %}Tahun {{ selected_year }}{% else %}{{ month_name }} {{ selected_year }}{% endif %}</p><p>No. Rujukan: {{ report_reference }} &nbsp; | &nbsp; Tarikh Cetakan: {{ generated_at|date:"d/m/Y H:i" }}</p></div>
 
 {% if report_type == 'leave' %}
-<section class="card">
-  <div class="section-title"><div><small>RINGKASAN</small><h2>Penggunaan Cuti — {{ month_name }} {{ selected_year }}</h2></div></div>
-  <div class="table-scroll"><table class="report-table"><thead><tr><th>Guru</th>{% for code,label in leave_types %}<th>{{ code }}</th>{% endfor %}<th>Jumlah</th></tr></thead><tbody>
-  {% for row in leave_summary %}<tr><td><b>{{ row.teacher.get_full_name|default:row.teacher.username }}</b></td>{% for code,label in leave_types %}<td>{% for key,value in row.counts.items %}{% if key == code %}{{ value }}{% endif %}{% endfor %}</td>{% endfor %}<td><b>{{ row.total }}</b></td></tr>{% empty %}<tr><td colspan="10">Tiada data cuti.</td></tr>{% endfor %}
-  </tbody></table></div>
-</section>
+<section class="card"><div class="section-title"><div><small>RINGKASAN</small><h2>Penggunaan Cuti — {{ month_name }} {{ selected_year }}</h2></div></div><div class="table-scroll"><table class="report-table"><thead><tr><th>Guru</th>{% for code,label in leave_types %}<th>{{ code }}</th>{% endfor %}<th>Jumlah</th></tr></thead><tbody>{% for row in leave_summary %}<tr><td><b>{{ row.teacher.get_full_name|default:row.teacher.username }}</b></td>{% for code,label in leave_types %}<td>{% for key,value in row.counts.items %}{% if key == code %}{{ value }}{% endif %}{% endfor %}</td>{% endfor %}<td><b>{{ row.total }}</b></td></tr>{% empty %}<tr><td colspan="10">Tiada data cuti.</td></tr>{% endfor %}</tbody></table></div></section>
 {% else %}
-<section class="card">
-  <div class="section-title"><div><small>PRESTASI</small><h2>Ringkasan Guru — {% if report_type == 'annual' %}Tahun {{ selected_year }}{% else %}{{ month_name }} {{ selected_year }}{% endif %}</h2></div></div>
-  <div class="table-scroll"><table class="report-table"><thead><tr><th>Guru</th><th>Hadir</th><th>Lewat</th><th>Cuti</th><th>Tugas Rasmi</th><th>Tidak Hadir</th><th>Peratus</th></tr></thead><tbody>
-  {% for row in summary_rows %}<tr><td><b>{{ row.teacher.get_full_name|default:row.teacher.username }}</b></td><td>{{ row.present }}</td><td>{{ row.late }}</td><td>{{ row.leave }}</td><td>{{ row.duty }}</td><td>{{ row.absent }}</td><td><span class="percentage-pill">{{ row.percentage }}%</span></td></tr>{% empty %}<tr><td colspan="7">Tiada data guru.</td></tr>{% endfor %}
-  </tbody></table></div>
-</section>
-
-<section class="card">
-  <div class="section-title"><div><small>REKOD TERPERINCI</small><h2>Senarai Kehadiran</h2></div><span>{{ records|length }} rekod dipaparkan</span></div>
-  <div class="table-scroll"><table class="report-table detailed"><thead><tr><th>Tarikh</th><th>Guru</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>GPS Masuk</th><th>GPS Keluar</th></tr></thead><tbody>
-  {% for r in records %}<tr><td>{{ r.date|date:"d/m/Y" }}</td><td><b>{{ r.user.get_full_name|default:r.user.username }}</b></td><td>{{ r.check_in|date:"H:i:s"|default:"—" }}</td><td>{{ r.check_out|date:"H:i:s"|default:"—" }}</td><td><span class="status-pill {% if r.status == 'LEWAT' %}late{% else %}present{% endif %}">{{ r.get_status_display }}</span></td><td>{{ r.distance_in_m|floatformat:1|default:"—" }} m</td><td>{{ r.distance_out_m|floatformat:1|default:"—" }} m</td></tr>{% empty %}<tr><td colspan="7">Tiada rekod untuk penapis ini.</td></tr>{% endfor %}
-  </tbody></table></div>
-</section>
+<section class="card"><div class="section-title"><div><small>PRESTASI</small><h2>Ringkasan Guru — {% if report_type == 'annual' %}Tahun {{ selected_year }}{% else %}{{ month_name }} {{ selected_year }}{% endif %}</h2></div></div><div class="table-scroll"><table class="report-table"><thead><tr><th>Guru</th><th>Hadir</th><th>Lewat</th><th>Cuti</th><th>Tugas Rasmi</th><th>Tidak Hadir</th><th>Peratus</th></tr></thead><tbody>{% for row in summary_rows %}<tr><td><b>{{ row.teacher.get_full_name|default:row.teacher.username }}</b></td><td>{{ row.present }}</td><td>{{ row.late }}</td><td>{{ row.leave }}</td><td>{{ row.duty }}</td><td>{{ row.absent }}</td><td><span class="percentage-pill">{{ row.percentage }}%</span></td></tr>{% empty %}<tr><td colspan="7">Tiada data guru.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="card"><div class="section-title"><div><small>REKOD TERPERINCI</small><h2>Senarai Kehadiran</h2></div><span>{{ records|length }} rekod dipaparkan</span></div><div class="table-scroll"><table class="report-table detailed"><thead><tr><th>Tarikh</th><th>Guru</th><th>Masuk</th><th>Keluar</th><th>Status</th><th>GPS Masuk</th><th>GPS Keluar</th></tr></thead><tbody>{% for r in records %}<tr><td>{{ r.date|date:"d/m/Y" }}</td><td><b>{{ r.user.get_full_name|default:r.user.username }}</b></td><td>{{ r.check_in|date:"H:i:s"|default:"—" }}</td><td>{{ r.check_out|date:"H:i:s"|default:"—" }}</td><td><span class="status-pill {% if r.status == 'LEWAT' %}late{% else %}present{% endif %}">{{ r.get_status_display }}</span></td><td>{{ r.distance_in_m|floatformat:1|default:"—" }} m</td><td>{{ r.distance_out_m|floatformat:1|default:"—" }} m</td></tr>{% empty %}<tr><td colspan="7">Tiada rekod untuk penapis ini.</td></tr>{% endfor %}</tbody></table></div></section>
 {% endif %}
-<p class="report-generated">Dijana pada {{ generated_at|date:"d/m/Y H:i" }} oleh {{ user.get_full_name|default:user.username }}.</p>
+<section class="official-report-signature"><p>Disahkan oleh,</p><div class="signature-space"></div><div class="signature-line"><b>{{ school.report_signatory_name|default:"" }}</b><br>Nama: {{ school.report_signatory_name|default:"____________________________" }}<br>Jawatan: {{ school.report_signatory_position|default:"____________________________" }}<br>Tarikh: ____________________________</div></section>
+<div class="official-report-foot">Dokumen ini dijana oleh Sistem Kehadiran Guru SK Ulu Ansuan · {{ APP_VERSION_LABEL }} · No. Rujukan: {{ report_reference }}</div>
+<p class="report-generated">Dijana pada {{ generated_at|date:"d/m/Y H:i" }} oleh {{ user.get_full_name|default:user.username }}. No. Rujukan: {{ report_reference }}</p>
 {% endblock %}

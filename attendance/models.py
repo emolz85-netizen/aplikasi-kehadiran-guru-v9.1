@@ -10,6 +10,8 @@ class SchoolSettings(models.Model):
     address = models.TextField(blank=True, default="")
     phone = models.CharField(max_length=30, blank=True, default="", verbose_name="Telefon sekolah")
     email = models.EmailField(blank=True, default="", verbose_name="Emel sekolah")
+    report_signatory_name = models.CharField(max_length=150, blank=True, default="", verbose_name="Nama pentadbir laporan")
+    report_signatory_position = models.CharField(max_length=150, blank=True, default="", verbose_name="Jawatan pentadbir laporan")
     latitude = models.FloatField(default=5.745697)
     longitude = models.FloatField(default=117.173844)
     radius_meters = models.PositiveIntegerField(default=150, verbose_name="Radius geofence (meter)")
