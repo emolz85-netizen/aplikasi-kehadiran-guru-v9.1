@@ -21,7 +21,7 @@
 <div class="app-shell">
   <aside class="role-sidebar" id="roleSidebar">
     <div class="sidebar-brand">
-      {% if SCHOOL and SCHOOL.logo %}<img src="{{ SCHOOL.logo.url }}" alt="Logo {{ SCHOOL_NAME }}" onerror="this.onerror=null;this.src='{% static 'attendance/icon-192.png' %}'">{% else %}<img src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
+      {% if SCHOOL and SCHOOL.logo_data_uri %}<img src="{{ SCHOOL.logo_data_uri }}" alt="Logo {{ SCHOOL_NAME }}" onerror="this.onerror=null;this.src='{% static 'attendance/icon-192.png' %}'">{% else %}<img src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
       <div class="sidebar-brand-copy"><strong>{{ SCHOOL_NAME }}</strong><small>Sistem Kehadiran Guru</small><span class="sidebar-release">{{ APP_VERSION_LABEL }} Stable</span></div>
     </div>
     

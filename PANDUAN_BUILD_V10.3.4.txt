@@ -1,0 +1,15 @@
+BUILD V10.3.4 – STABILITY UPDATE
+
+GitHub Desktop Summary:
+Build V10.3.4 - Stability Update radius 150m dan media kekal
+
+LANGKAH DEPLOY
+1. Ekstrak ZIP ini.
+2. Gantikan semua kandungan repository dengan kandungan folder yang diekstrak.
+3. GitHub Desktop > Summary seperti di atas > Commit > Push origin.
+4. Tunggu Render Auto Deploy selesai.
+5. Migration 0014 akan menetapkan radius 150m dan menyediakan storan media dalam pangkalan data.
+6. Tutup aplikasi/PWA dan buka semula. Tekan Kemas Kini Sekarang jika banner muncul.
+
+PENTING
+Jika logo atau gambar profil sudah hilang sebelum pemasangan versi ini, muat naik semula sekali. Selepas itu salinan akan disimpan dalam pangkalan data dan kekal selepas logout/login.

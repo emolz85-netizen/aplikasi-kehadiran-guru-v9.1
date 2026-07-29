@@ -21,7 +21,7 @@
 <section class="card face-profile-card">
   <h2>Foto Rujukan Wajah</h2>
   <p>Foto ini digunakan sebagai rujukan semasa swafoto daftar masuk dan keluar. Gunakan gambar hadapan yang terang dan jelas.</p>
-  {% if teacher_profile.reference_photo %}<img class="reference-photo" src="{{ teacher_profile.reference_photo.url }}" alt="Foto rujukan wajah">{% endif %}
+  {% if teacher_profile.reference_photo_data_uri %}<img class="reference-photo" src="{{ teacher_profile.reference_photo_data_uri }}" alt="Foto rujukan wajah">{% endif %}
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
     {{ face_form.as_p }}
     <button class="primary" name="save_face" type="submit">Simpan Foto Rujukan</button>

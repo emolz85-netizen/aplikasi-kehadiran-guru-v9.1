@@ -4,7 +4,7 @@
 {% block content %}
 <section class="branding-login-wrap">
   <div class="branding-panel">
-    {% if SCHOOL and SCHOOL.logo %}<img class="school-logo-main" src="{{ SCHOOL.logo.url }}" alt="Logo {{ SCHOOL_NAME }}">{% else %}<img class="school-logo-main" src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
+    {% if SCHOOL and SCHOOL.logo_data_uri %}<img class="school-logo-main" src="{{ SCHOOL.logo_data_uri }}" alt="Logo {{ SCHOOL_NAME }}">{% else %}<img class="school-logo-main" src="{% static 'attendance/icon-192.png' %}" alt="Logo sekolah">{% endif %}
     <span class="eyebrow">SISTEM KEHADIRAN GURU</span>
     <h1>{{ SCHOOL_NAME }}</h1>
     {% if SCHOOL.school_code %}<p class="school-code">Kod Sekolah: {{ SCHOOL.school_code }}</p>{% endif %}

@@ -397,7 +397,8 @@ def record_attendance(request, action):
         if school.require_liveness_challenge and (not challenge or not liveness_confirmed):
             return JsonResponse({"ok": False, "message": "Sila lengkapkan dan sahkan cabaran hidup yang dipaparkan."}, status=400)
         try:
-            selfie_hash, face_score, quality_ok, quality = _visual_match(profile.reference_photo, selfie)
+            reference_source = io.BytesIO(bytes(profile.reference_photo_bytes)) if profile.reference_photo_bytes else profile.reference_photo
+            selfie_hash, face_score, quality_ok, quality = _visual_match(reference_source, selfie)
         except Exception:
             return JsonResponse({"ok": False, "message": "Imej tidak dapat diproses. Ambil semula swafoto yang jelas."}, status=400)
         if not quality_ok:

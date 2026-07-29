@@ -1,0 +1,15 @@
+SISTEM KEHADIRAN GURU V10.3.4 – STABILITY UPDATE
+Tarikh: 29 Julai 2026
+
+PEMBAIKAN UTAMA
+1. Radius geofence sekolah ditetapkan kepada 150 meter.
+2. Ambang pengesahan identiti kekal 35%.
+3. Logo sekolah disalin dan disimpan dalam pangkalan data supaya kekal selepas logout/login.
+4. Foto rujukan profil disalin dan disimpan dalam pangkalan data supaya kekal selepas logout/login.
+5. Paparan logo dan foto profil menggunakan salinan pangkalan data sebagai sumber utama.
+6. Pengesahan wajah menggunakan salinan pangkalan data apabila fail media biasa tidak tersedia.
+7. Pembaikan kamera, swafoto, GPS dan PWA daripada versi terdahulu dikekalkan.
+
+NOTA
+- Radius masih boleh diubah oleh pentadbir melalui Django Admin > Tetapan sekolah.
+- Muat naik semula logo/foto sekali selepas kemas kini sekiranya fail lama telah pun hilang sebelum V10.3.4 dipasang.

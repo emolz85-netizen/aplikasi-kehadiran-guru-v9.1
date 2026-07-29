@@ -7,7 +7,7 @@
 <div class="message holiday-notice"><strong>Hujung minggu.</strong> Kehadiran tidak diperlukan hari ini.</div>
 {% endif %}
 
-<section class="dashboard-brand-strip">{% if school.logo %}<img src="{{ school.logo.url }}" alt="Logo sekolah">{% endif %}<div><span class="eyebrow">SISTEM KEHADIRAN GURU</span><h2>Dashboard Guru</h2><p>{{ school.school_name }}</p></div></section>
+<section class="dashboard-brand-strip">{% if school.logo_data_uri %}<img src="{{ school.logo_data_uri }}" alt="Logo sekolah">{% endif %}<div><span class="eyebrow">SISTEM KEHADIRAN GURU</span><h2>Dashboard Guru</h2><p>{{ school.school_name }}</p></div></section>
 
 <section class="teacher-hero">
   <div>

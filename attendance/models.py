@@ -1,4 +1,5 @@
 from datetime import time
+import base64
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -11,7 +12,7 @@ class SchoolSettings(models.Model):
     email = models.EmailField(blank=True, default="", verbose_name="Emel sekolah")
     latitude = models.FloatField(default=5.745697)
     longitude = models.FloatField(default=117.173844)
-    radius_meters = models.PositiveIntegerField(default=50)
+    radius_meters = models.PositiveIntegerField(default=150, verbose_name="Radius geofence (meter)")
     max_gps_accuracy_meters = models.PositiveIntegerField(default=100)
     weekday_check_in = models.TimeField(default=time(7, 10))
     weekday_check_out = models.TimeField(default=time(13, 0))
@@ -27,6 +28,8 @@ class SchoolSettings(models.Model):
     max_plausible_speed_kmh = models.PositiveIntegerField(default=180, verbose_name="Kelajuan maksimum munasabah (km/j)")
     high_risk_block_threshold = models.PositiveSmallIntegerField(default=80, verbose_name="Ambang sekatan skor risiko")
     logo = models.ImageField(upload_to="school/", null=True, blank=True)
+    logo_bytes = models.BinaryField(null=True, blank=True, editable=False)
+    logo_mime_type = models.CharField(max_length=100, blank=True, default="image/jpeg", editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -39,7 +42,27 @@ class SchoolSettings(models.Model):
     def save(self, *args, **kwargs):
         if not self.pk and SchoolSettings.objects.exists():
             self.pk = SchoolSettings.objects.first().pk
+        if self.logo and hasattr(self.logo, "file"):
+            try:
+                pos = self.logo.file.tell()
+                self.logo.file.seek(0)
+                raw = self.logo.file.read()
+                self.logo.file.seek(pos)
+                if raw:
+                    self.logo_bytes = raw
+                    self.logo_mime_type = getattr(self.logo.file, "content_type", "") or "image/jpeg"
+            except Exception:
+                pass
         super().save(*args, **kwargs)
+
+    @property
+    def logo_data_uri(self):
+        if self.logo_bytes:
+            return f"data:{self.logo_mime_type or 'image/jpeg'};base64,{base64.b64encode(bytes(self.logo_bytes)).decode('ascii')}"
+        try:
+            return self.logo.url if self.logo else ""
+        except Exception:
+            return ""
 
     @classmethod
     def load(cls):
@@ -73,10 +96,35 @@ class TeacherProfile(models.Model):
     position = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=30, blank=True)
     reference_photo = models.ImageField(upload_to="face_reference/", null=True, blank=True, verbose_name="Foto rujukan wajah")
+    reference_photo_bytes = models.BinaryField(null=True, blank=True, editable=False)
+    reference_photo_mime_type = models.CharField(max_length=100, blank=True, default="image/jpeg", editable=False)
     reference_photo_updated_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.user.get_full_name() or self.user.username
+
+    def save(self, *args, **kwargs):
+        if self.reference_photo and hasattr(self.reference_photo, "file"):
+            try:
+                pos = self.reference_photo.file.tell()
+                self.reference_photo.file.seek(0)
+                raw = self.reference_photo.file.read()
+                self.reference_photo.file.seek(pos)
+                if raw:
+                    self.reference_photo_bytes = raw
+                    self.reference_photo_mime_type = getattr(self.reference_photo.file, "content_type", "") or "image/jpeg"
+            except Exception:
+                pass
+        super().save(*args, **kwargs)
+
+    @property
+    def reference_photo_data_uri(self):
+        if self.reference_photo_bytes:
+            return f"data:{self.reference_photo_mime_type or 'image/jpeg'};base64,{base64.b64encode(bytes(self.reference_photo_bytes)).decode('ascii')}"
+        try:
+            return self.reference_photo.url if self.reference_photo else ""
+        except Exception:
+            return ""
 
 
 class AccountActivity(models.Model):
