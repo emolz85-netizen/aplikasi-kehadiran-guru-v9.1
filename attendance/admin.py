@@ -8,10 +8,11 @@ class SchoolSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Sekolah", {"fields": ("school_name", "school_code", "address", "phone", "email", "logo")}),
         ("GPS", {"fields": ("latitude", "longitude", "radius_meters", "max_gps_accuracy_meters")}),
-        ("Isnin hingga Khamis", {"fields": ("weekday_check_in", "weekday_check_out")}),
+        ("Jadual Guru & GPK (Isnin hingga Khamis)", {"fields": ("weekday_check_in", "weekday_check_out")}),
         ("Pengesahan wajah", {"fields": ("face_verification_enabled", "face_match_threshold", "require_liveness_challenge", "face_login_enabled", "face_login_threshold", "face_login_max_attempts")}),
         ("Anti GPS Spoofing & Device Trust", {"fields": ("device_trust_enabled", "auto_trust_first_device", "block_untrusted_device", "max_location_age_seconds", "max_plausible_speed_kmh", "high_risk_block_threshold")}),
-        ("Jumaat", {"fields": ("friday_check_in", "friday_check_out")}),
+        ("Jadual Guru & GPK (Jumaat)", {"fields": ("friday_check_in", "friday_check_out")}),
+        ("Jadual Guru Besar & Setiausaha/Kerani", {"fields": ("office_check_in", "office_check_out")}),
     )
 
     def has_add_permission(self, request):

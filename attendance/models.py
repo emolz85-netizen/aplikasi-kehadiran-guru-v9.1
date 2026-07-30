@@ -20,6 +20,8 @@ class SchoolSettings(models.Model):
     weekday_check_out = models.TimeField(default=time(13, 0))
     friday_check_in = models.TimeField(default=time(7, 10))
     friday_check_out = models.TimeField(default=time(11, 40))
+    office_check_in = models.TimeField(default=time(8, 0), verbose_name="Waktu masuk Guru Besar / Kerani")
+    office_check_out = models.TimeField(default=time(16, 0), verbose_name="Waktu keluar Guru Besar / Kerani")
     face_verification_enabled = models.BooleanField(default=True, verbose_name="Aktifkan pengesahan wajah")
     face_match_threshold = models.PositiveSmallIntegerField(default=35, verbose_name="Ambang padanan visual (%)")
     face_login_enabled = models.BooleanField(default=True, verbose_name="Benarkan Face Login")
@@ -78,6 +80,20 @@ class SchoolSettings(models.Model):
         if date_value.weekday() == 4:
             return self.friday_check_in, self.friday_check_out
         return self.weekday_check_in, self.weekday_check_out
+
+    def times_for_role(self, role, date_value):
+        # Guru Besar dan Setiausaha/Kerani menggunakan jadual pejabat 08:00-16:00.
+        if role in {"GURU_BESAR", "KERANI"}:
+            return self.office_check_in, self.office_check_out
+        # Guru Penolong Kanan menggunakan jadual kehadiran guru.
+        return self.times_for_date(date_value)
+
+    def times_for_user(self, user, date_value):
+        try:
+            role = user.teacherprofile.effective_role
+        except Exception:
+            role = "GURU"
+        return self.times_for_role(role, date_value)
 
 
 class SchoolHoliday(models.Model):

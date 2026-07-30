@@ -23,7 +23,7 @@ from django.urls import reverse
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
 from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent, FaceLoginAttempt
 from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL, APP_RELEASE_DATE, APP_RELEASE_NAME
-from .permissions import role_required, get_user_role, MANAGEMENT_ROLES, APPROVAL_ROLES, REPORT_ALL_ROLES, AUDIT_VIEW_ROLES, SYSTEM_ADMIN_ROLES
+from .permissions import role_required, get_user_role, MANAGEMENT_ROLES, APPROVAL_ROLES, REPORT_ALL_ROLES, AUDIT_VIEW_ROLES, SYSTEM_ADMIN_ROLES, ATTENDANCE_ROLES
 
 LIVENESS_CHALLENGES = [
     "Senyum dan pandang terus ke kamera",
@@ -356,11 +356,8 @@ def haversine_m(lat1, lon1, lat2, lon2):
     a = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
     return r * (2 * math.atan2(math.sqrt(a), math.sqrt(1-a)))
 
-@login_required
-def dashboard(request):
+def _render_personal_attendance_dashboard(request):
     profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
-    if profile.has_management_dashboard:
-        return redirect("admin_dashboard")
     today = timezone.localdate()
     today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
     record = Attendance.objects.filter(user=request.user, date=today).first()
@@ -424,7 +421,7 @@ def dashboard(request):
         month_calendar.append(row)
 
     school = SchoolSettings.load()
-    target_in, target_out = school.times_for_date(today)
+    target_in, target_out = school.times_for_role(profile.effective_role, today)
     week_start = today - timezone.timedelta(days=today.weekday())
     week_records = Attendance.objects.filter(
         user=request.user,
@@ -461,10 +458,28 @@ def dashboard(request):
     })
 
 @login_required
+def dashboard(request):
+    profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+    if profile.has_management_dashboard:
+        return redirect("admin_dashboard")
+    return _render_personal_attendance_dashboard(request)
+
+
+@login_required
+def my_attendance(request):
+    role = get_user_role(request.user)
+    if role not in ATTENDANCE_ROLES:
+        messages.error(request, "Peranan ini tidak ditetapkan untuk merekod kehadiran.")
+        return redirect("admin_dashboard" if role in MANAGEMENT_ROLES else "dashboard")
+    return _render_personal_attendance_dashboard(request)
+
+
+@login_required
 @require_POST
 def record_attendance(request, action):
-    if get_user_role(request.user) in MANAGEMENT_ROLES:
-        return JsonResponse({"ok": False, "message": "Peranan pengurusan tidak dibenarkan merekod kehadiran melalui dashboard guru."}, status=403)
+    role = get_user_role(request.user)
+    if role not in ATTENDANCE_ROLES:
+        return JsonResponse({"ok": False, "message": "Peranan ini tidak dibenarkan merekod kehadiran."}, status=403)
     if action not in {"masuk", "keluar"}:
         return JsonResponse({"ok": False, "message": "Tindakan tidak sah."}, status=400)
 
@@ -561,7 +576,7 @@ def record_attendance(request, action):
         rec.check_in_risk_score = security["score"]
         rec.check_in_risk_level = security["level"]
         rec.check_in_security_flags = security["flags"]
-        target_in, _ = school.times_for_date(today)
+        target_in, _ = school.times_for_role(role, today)
         rec.status = "LEWAT" if timezone.localtime(now).time() > target_in else "HADIR"
     else:
         if not rec.check_in:
@@ -772,7 +787,7 @@ def _enterprise_dashboard_context(request):
 
     school = SchoolSettings.load()
     today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
-    target_in, target_out = school.times_for_date(today)
+    target_in, target_out = school.times_for_role(role, today)
     attention_count = late + absent_count
     operational_status = "Perlu perhatian" if attention_count else "Operasi normal"
 
@@ -795,6 +810,7 @@ def _enterprise_dashboard_context(request):
         "is_read_only_office": role in {"KERANI", "GPK", "GURU_BESAR"},
         "can_view_audit": role in AUDIT_VIEW_ROLES, "can_manage_users": role in SYSTEM_ADMIN_ROLES,
         "can_manage_security": role in SYSTEM_ADMIN_ROLES, "can_view_map": role in MANAGEMENT_ROLES,
+        "can_record_attendance": role in ATTENDANCE_ROLES,
     }
 
 

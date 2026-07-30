@@ -1,0 +1,9 @@
+V10.5.1 – ROLE WORKING SCHEDULE & MANAGEMENT ATTENDANCE
+
+- Guru Penolong Kanan boleh merekod masuk/keluar seperti guru.
+- Guru Besar dan Setiausaha/Kerani boleh merekod kehadiran melalui dashboard pengurusan.
+- Jadual Guru dan GPK kekal mengikut jadual sekolah.
+- Jadual Guru Besar dan Kerani ditetapkan 08:00 hingga 16:00 setiap hari bekerja.
+- Status lewat dikira mengikut jadual peranan pengguna.
+- Tetapan jadual pejabat boleh diubah dalam Django Admin > Tetapan sekolah.
+- Administrator dan Super Admin kekal sebagai akaun sistem dan tidak merekod kehadiran secara lalai.

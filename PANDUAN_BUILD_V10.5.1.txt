@@ -1,0 +1,8 @@
+BUILD V10.5.1
+
+1. Gantikan semua fail repository dengan kandungan build ini.
+2. Commit: Build V10.5.1 - Role Working Schedule and Management Attendance
+3. Push origin dan tunggu Render Auto Deploy.
+4. Migration 0018 akan menambah waktu pejabat 08:00-16:00.
+5. Tetapkan peranan pengguna di Django Admin > Teacher Profiles.
+6. Guru Besar, GPK dan Kerani membuka Dashboard Pengurusan lalu pilih Daftar Kehadiran Saya.
