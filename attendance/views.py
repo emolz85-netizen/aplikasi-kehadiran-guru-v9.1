@@ -709,7 +709,7 @@ def profile_page(request):
 
 @role_required("ADMIN", "SUPER_ADMIN")
 def school_management_center(request):
-    """V10.7 single administrative control center.
+    """V11.0 Enterprise Foundation administrative control center.
 
     This view reuses existing SchoolSettings and SchoolHoliday records, so the
     current school logo and configuration remain intact during upgrade.

@@ -1,0 +1,11 @@
+UJIAN V11.0.001 – ENTERPRISE FOUNDATION
+
+[ ] Halaman login memaparkan logo sekolah sedia ada.
+[ ] Kod sekolah dan alamat sekolah kekal seperti reka bentuk sebelumnya.
+[ ] Product, Version, Developer dan Product by menggunakan font serta warna yang sama dengan copyright.
+[ ] Tiada teks lesen yang bercantum.
+[ ] Version memaparkan V11.0 Enterprise.
+[ ] Build Number memaparkan 11.0.001.
+[ ] School Management Center masih boleh dibuka oleh Administrator dan Super Admin.
+[ ] Semua modul direct navigation masih berfungsi.
+[ ] Data SchoolSettings dan logo sekolah tidak berubah.

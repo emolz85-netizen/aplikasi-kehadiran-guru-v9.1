@@ -1,0 +1,11 @@
+PANDUAN BUILD V11.0.001
+
+1. Simpan backup build V10.7.003 yang stabil.
+2. Ekstrak ZIP V11.0.001 dan gantikan fail projek.
+3. Commit menggunakan GitHub Desktop.
+4. Push ke GitHub dan tunggu Render auto deploy.
+5. Uji halaman login, dashboard, School Management Center dan semua direct module navigation.
+6. Pastikan logo serta data sekolah sedia ada kekal.
+
+CADANGAN COMMIT
+feat: initialize V11 Enterprise Foundation (V11.0.001)

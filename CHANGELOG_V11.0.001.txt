@@ -1,0 +1,19 @@
+eHadir Guru Enterprise V11.0.001 – Enterprise Foundation
+Release Date: 30 July 2026
+Build: 11.0.001
+
+PERUBAHAN UTAMA
+- Memulakan generasi V11.0 Enterprise Foundation berasaskan build stabil V10.7.003.
+- Menetapkan versi rasmi kepada V11.0 Enterprise dan Build 11.0.001.
+- Menyeragamkan font dan warna bagi Product, Version, Developer dan Product by dengan teks copyright.
+- Menambah baris Version: V11.0 Enterprise pada blok lesen halaman login.
+- Mengekalkan reka bentuk asal Kod Sekolah dan Alamat Sekolah.
+- Mengekalkan logo sekolah serta semua data SchoolSettings sedia ada.
+- Mengekalkan School Management Center dan direct module navigation.
+
+IDENTITI RASMI
+eHadir Guru Enterprise
+Version: V11.0 Enterprise
+Developer: Raimol Salati
+Product by: Emoz San Technologies
+© 2026 Emoz San Technologies. All Rights Reserved.

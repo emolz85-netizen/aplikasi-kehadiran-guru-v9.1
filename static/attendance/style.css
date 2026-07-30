@@ -318,3 +318,26 @@ button[disabled]{opacity:.55;cursor:not-allowed}
 .login-credit-item b{font-size:.95rem;font-weight:800;overflow-wrap:anywhere}
 .login-credit-footer{font-size:.74rem;line-height:1.5;opacity:.84}
 @media(max-width:760px){.login-product-credit{margin-top:22px;padding-left:8px;padding-right:8px;gap:10px}.login-credit-product{font-size:1rem}.login-credit-item b{font-size:.9rem}.login-credit-footer{font-size:.7rem}}
+
+
+/* V11.0.001 Enterprise Foundation: unified license typography */
+.login-product-credit{
+  font-family:Inter,Poppins,"Segoe UI",Arial,sans-serif;
+  color:rgba(255,255,255,.84);
+  gap:7px;
+}
+.login-credit-line,.login-credit-footer{
+  margin:0;
+  color:inherit;
+  font-family:inherit;
+  font-size:.76rem;
+  font-weight:400;
+  line-height:1.55;
+  letter-spacing:.01em;
+  text-align:center;
+}
+.login-credit-footer{opacity:1}
+.login-credit-divider{background:linear-gradient(90deg,transparent,rgba(255,255,255,.48),transparent)}
+@media(max-width:760px){
+  .login-credit-line,.login-credit-footer{font-size:.7rem}
+}
