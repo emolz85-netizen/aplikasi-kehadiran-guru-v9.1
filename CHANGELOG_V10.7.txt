@@ -11,3 +11,10 @@ PERUBAHAN UTAMA
 - Menambah seksyen License & Version dengan eHadir Guru Enterprise, V10.7 Stable, Build Number, Release Date dan Developer.
 - Akses dihadkan kepada ADMIN dan SUPER_ADMIN.
 - Tiada migration pangkalan data diperlukan.
+
+V10.7.001 - Direct Module Navigation Fix
+- School Profile now opens the existing school profile record directly.
+- Academic & Working Session opens the relevant configuration record directly.
+- Communication opens its configuration record directly.
+- System Configuration opens the relevant configuration record directly.
+- Existing school logo and saved settings remain unchanged.

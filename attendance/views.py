@@ -21,7 +21,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
-from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent, FaceLoginAttempt
+from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent, FaceLoginAttempt, VapidConfiguration
 from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL, APP_RELEASE_DATE, APP_RELEASE_NAME, APP_BUILD_NUMBER, APP_DEVELOPER
 from .permissions import role_required, get_user_role, MANAGEMENT_ROLES, APPROVAL_ROLES, REPORT_ALL_ROLES, AUDIT_VIEW_ROLES, SYSTEM_ADMIN_ROLES, ATTENDANCE_ROLES
 
@@ -716,6 +716,7 @@ def school_management_center(request):
     """
     school = SchoolSettings.load()
     role = get_user_role(request.user)
+    vapid = VapidConfiguration.objects.first()
     return render(request, "attendance/school_management_center.html", {
         "school": school,
         "dashboard_role": role,
@@ -727,6 +728,15 @@ def school_management_center(request):
         "app_developer": APP_DEVELOPER,
         "holiday_count": SchoolHoliday.objects.filter(is_active=True).count(),
         "user_count": get_user_model().objects.count(),
+        # Direct module destinations: clicking a card opens the selected module
+        # immediately instead of stopping at an intermediate settings dashboard.
+        "school_profile_url": reverse("admin:attendance_schoolsettings_change", args=[school.pk]),
+        "working_session_url": reverse("admin:attendance_schoolsettings_change", args=[school.pk]),
+        "system_configuration_url": reverse("admin:attendance_schoolsettings_change", args=[school.pk]),
+        "communication_url": (
+            reverse("admin:attendance_vapidconfiguration_change", args=[vapid.pk])
+            if vapid else reverse("admin:attendance_vapidconfiguration_add")
+        ),
     })
 
 

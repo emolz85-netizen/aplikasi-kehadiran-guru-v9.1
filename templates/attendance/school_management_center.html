@@ -17,14 +17,14 @@
 </section>
 
 <section class="smc-grid">
-  <a href="/admin/attendance/schoolsettings/" class="smc-module"><span>🏫</span><div><h2>School Profile</h2><p>Nama, kod, alamat, telefon, emel, GPS dan logo sekolah.</p><em>Logo sedia ada dikekalkan</em></div></a>
+  <a href="{{ school_profile_url }}" class="smc-module"><span>🏫</span><div><h2>School Profile</h2><p>Nama, kod, alamat, telefon, emel, GPS dan logo sekolah.</p><em>Logo sedia ada dikekalkan</em></div></a>
   <a href="/admin/attendance/teacherprofile/" class="smc-module"><span>👥</span><div><h2>User Management</h2><p>Urus guru, peranan, status akaun dan akses sistem.</p><em>Menggantikan menu pengguna lama</em></div></a>
-  <a href="/admin/attendance/schoolsettings/" class="smc-module"><span>⏰</span><div><h2>Academic & Working Session</h2><p>Waktu masuk, waktu keluar, jadual Jumaat dan jadual pejabat.</p><em>Menggunakan tetapan sedia ada</em></div></a>
+  <a href="{{ working_session_url }}" class="smc-module"><span>⏰</span><div><h2>Academic & Working Session</h2><p>Waktu masuk, waktu keluar, jadual Jumaat dan jadual pejabat.</p><em>Menggunakan tetapan sedia ada</em></div></a>
   <a href="/admin/attendance/schoolholiday/" class="smc-module"><span>🎉</span><div><h2>Holiday Management</h2><p>Tambah, kemas kini atau nyahaktif hari kelepasan sekolah.</p><em>{{ holiday_count }} cuti aktif</em></div></a>
-  <a href="/admin/attendance/vapidconfiguration/" class="smc-module"><span>📧</span><div><h2>Communication</h2><p>Konfigurasi notifikasi dan saluran komunikasi sistem.</p><em>Notification sedia ada kekal</em></div></a>
+  <a href="{{ communication_url }}" class="smc-module"><span>📧</span><div><h2>Communication</h2><p>Konfigurasi notifikasi dan saluran komunikasi sistem.</p><em>Notification sedia ada kekal</em></div></a>
   <a href="/admin/" class="smc-module"><span>💾</span><div><h2>Backup & Restore</h2><p>Pusat persediaan backup pangkalan data dan media deployment.</p><em>Tiada data dipadam semasa upgrade</em></div></a>
   <a href="{% url 'device_security_page' %}" class="smc-module"><span>🔒</span><div><h2>Security Center</h2><p>Peranti dipercayai, risiko lokasi dan kawalan keselamatan.</p><em>Akses Admin dan Super Admin</em></div></a>
-  <a href="/admin/attendance/schoolsettings/" class="smc-module"><span>⚙️</span><div><h2>System Configuration</h2><p>GPS, pengesahan wajah, radius dan tetapan operasi sistem.</p><em>Menggantikan Settings lama</em></div></a>
+  <a href="{{ system_configuration_url }}" class="smc-module"><span>⚙️</span><div><h2>System Configuration</h2><p>GPS, pengesahan wajah, radius dan tetapan operasi sistem.</p><em>Menggantikan Settings lama</em></div></a>
   <a href="{% url 'audit_log_page' %}" class="smc-module"><span>🛠️</span><div><h2>Maintenance & Audit</h2><p>Semak kesihatan operasi, log audit dan aktiviti pentadbir.</p><em>Pusat penyelenggaraan</em></div></a>
 </section>
 
