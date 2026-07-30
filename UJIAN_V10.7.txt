@@ -1,0 +1,7 @@
+UJIAN V10.7
+- Python compileall: wajib lulus.
+- ZIP integrity: wajib lulus.
+- Role gate: hanya ADMIN dan SUPER_ADMIN.
+- Dashboard: hanya satu kad School Management Center menggantikan kad pentadbiran lama.
+- Logo: logo_data_uri masih digunakan dan logo_bytes tidak diubah/dipadam.
+- License & Version: eHadir Guru Enterprise / V10.7 Stable / Build Number / Release Date / Developer.

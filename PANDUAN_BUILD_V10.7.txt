@@ -1,0 +1,12 @@
+PANDUAN BUILD V10.7
+
+1. Backup versi stabil dan pangkalan data.
+2. Gantikan fail projek dengan kandungan ZIP V10.7.
+3. Commit dan push melalui GitHub Desktop.
+4. Tunggu Render auto deploy.
+5. Log masuk sebagai Administrator atau Super Admin.
+6. Buka Dashboard > School Management Center.
+7. Pastikan logo sekolah, nama sekolah dan konfigurasi lama masih dipaparkan.
+8. Uji semua pautan modul dan seksyen License & Version.
+
+Nota: Build ini tidak memerlukan migration baharu dan tidak memadam data SchoolSettings.

@@ -62,7 +62,7 @@
     {% if can_approve %}<a href="{% url 'leave_admin' %}"><span>✅</span><b>Kelulusan Cuti</b><small>Semak permohonan yang menunggu tindakan.</small></a>{% endif %}
     {% if can_view_map %}<a href="{% url 'attendance_map' %}"><span>🗺️</span><b>Peta Kehadiran</b><small>Lihat lokasi daftar masuk hari ini.</small></a>{% endif %}
     {% if can_view_audit %}<a href="{% url 'audit_log_page' %}"><span>📋</span><b>Log Audit</b><small>Pantau aktiviti dan keselamatan sistem.</small></a>{% endif %}
-    {% if can_manage_users %}<a href="/admin/attendance/teacherprofile/"><span>👥</span><b>Guru & Peranan</b><small>Urus profil, jawatan dan akses sistem.</small></a><a href="/admin/attendance/schoolsettings/"><span>⚙️</span><b>Tetapan Sistem</b><small>Konfigurasi sekolah, GPS dan wajah.</small></a>{% endif %}
+    {% if can_manage_users %}<a href="{% url 'school_management_center' %}" class="school-management-action"><span>🏫</span><b>School Management Center</b><small>Satu pusat kawalan untuk sekolah, pengguna, cuti, keselamatan, backup dan konfigurasi.</small></a>{% endif %}
   </div>
 </section>
 

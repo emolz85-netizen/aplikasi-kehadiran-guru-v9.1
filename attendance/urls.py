@@ -23,6 +23,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("profil/", views.profile_page, name="profile_page"),
     path("dashboard-admin/", views.admin_dashboard, name="admin_dashboard"),
+    path("school-management-center/", views.school_management_center, name="school_management_center"),
     path("kehadiran-saya/", views.my_attendance, name="my_attendance"),
     path("dashboard-admin/live/", views.dashboard_live_data, name="dashboard_live_data"),
     path("pusat-pemantauan/", views.monitoring_center, name="monitoring_center"),

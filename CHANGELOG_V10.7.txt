@@ -1,0 +1,13 @@
+eHadir Guru Enterprise V10.7 – School Management Center
+Release: 30 Julai 2026
+Build: 10.7.000
+
+PERUBAHAN UTAMA
+- Menambah satu School Management Center khusus untuk Administrator dan Super Admin.
+- Menggantikan kad Guru & Peranan dan Tetapan Sistem yang berasingan pada dashboard dengan satu pusat kawalan.
+- Menggunakan semula SchoolSettings dan SchoolHoliday sedia ada; tiada data sekolah dipadam.
+- Logo sekolah dikekalkan melalui logo_data_uri dan storan logo_bytes sedia ada.
+- Menambah modul School Profile, User Management, Working Session, Holiday, Communication, Backup, Security, Configuration dan Maintenance.
+- Menambah seksyen License & Version dengan eHadir Guru Enterprise, V10.7 Stable, Build Number, Release Date dan Developer.
+- Akses dihadkan kepada ADMIN dan SUPER_ADMIN.
+- Tiada migration pangkalan data diperlukan.

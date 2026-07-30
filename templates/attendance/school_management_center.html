@@ -1,0 +1,42 @@
+{% extends "attendance/base.html" %}
+{% block title %}School Management Center{% endblock %}
+{% block content %}
+<section class="smc-hero">
+  <div class="smc-school-brand">
+    {% if school.logo_data_uri %}<img src="{{ school.logo_data_uri }}" alt="Logo {{ school.school_name }}">{% else %}<div class="smc-logo-placeholder">🏫</div>{% endif %}
+    <div><span class="eyebrow">V10.7 · ADMINISTRATOR CONTROL CENTER</span><h1>School Management Center</h1><p>{{ school.school_name }}{% if school.school_code %} · {{ school.school_code }}{% endif %}</p><small>Semua konfigurasi pentadbiran dihimpunkan dalam satu sistem tanpa memadam logo atau data sekolah sedia ada.</small></div>
+  </div>
+  <span class="smc-access-badge">{{ USER_ROLE_LABEL }}</span>
+</section>
+
+<section class="smc-overview">
+  <article><small>Pengguna Sistem</small><strong>{{ user_count }}</strong><span>Akaun berdaftar</span></article>
+  <article><small>Hari Kelepasan Aktif</small><strong>{{ holiday_count }}</strong><span>Dalam kalendar sekolah</span></article>
+  <article><small>Radius GPS</small><strong>{{ school.radius_meters }} m</strong><span>{{ school.latitude }}, {{ school.longitude }}</span></article>
+  <article><small>Versi Semasa</small><strong>{{ app_version_label }}</strong><span>{{ app_release_channel|title }}</span></article>
+</section>
+
+<section class="smc-grid">
+  <a href="/admin/attendance/schoolsettings/" class="smc-module"><span>🏫</span><div><h2>School Profile</h2><p>Nama, kod, alamat, telefon, emel, GPS dan logo sekolah.</p><em>Logo sedia ada dikekalkan</em></div></a>
+  <a href="/admin/attendance/teacherprofile/" class="smc-module"><span>👥</span><div><h2>User Management</h2><p>Urus guru, peranan, status akaun dan akses sistem.</p><em>Menggantikan menu pengguna lama</em></div></a>
+  <a href="/admin/attendance/schoolsettings/" class="smc-module"><span>⏰</span><div><h2>Academic & Working Session</h2><p>Waktu masuk, waktu keluar, jadual Jumaat dan jadual pejabat.</p><em>Menggunakan tetapan sedia ada</em></div></a>
+  <a href="/admin/attendance/schoolholiday/" class="smc-module"><span>🎉</span><div><h2>Holiday Management</h2><p>Tambah, kemas kini atau nyahaktif hari kelepasan sekolah.</p><em>{{ holiday_count }} cuti aktif</em></div></a>
+  <a href="/admin/attendance/vapidconfiguration/" class="smc-module"><span>📧</span><div><h2>Communication</h2><p>Konfigurasi notifikasi dan saluran komunikasi sistem.</p><em>Notification sedia ada kekal</em></div></a>
+  <a href="/admin/" class="smc-module"><span>💾</span><div><h2>Backup & Restore</h2><p>Pusat persediaan backup pangkalan data dan media deployment.</p><em>Tiada data dipadam semasa upgrade</em></div></a>
+  <a href="{% url 'device_security_page' %}" class="smc-module"><span>🔒</span><div><h2>Security Center</h2><p>Peranti dipercayai, risiko lokasi dan kawalan keselamatan.</p><em>Akses Admin dan Super Admin</em></div></a>
+  <a href="/admin/attendance/schoolsettings/" class="smc-module"><span>⚙️</span><div><h2>System Configuration</h2><p>GPS, pengesahan wajah, radius dan tetapan operasi sistem.</p><em>Menggantikan Settings lama</em></div></a>
+  <a href="{% url 'audit_log_page' %}" class="smc-module"><span>🛠️</span><div><h2>Maintenance & Audit</h2><p>Semak kesihatan operasi, log audit dan aktiviti pentadbir.</p><em>Pusat penyelenggaraan</em></div></a>
+</section>
+
+<section class="smc-license">
+  <header><div><span class="eyebrow">LICENSE & VERSION</span><h2>Paparan Maklumat Sistem</h2></div><span class="smc-stable">Stable</span></header>
+  <div class="smc-license-body">
+    <div class="smc-product"><strong>eHadir Guru Enterprise</strong><span>{{ app_version_label }} Stable</span></div>
+    <dl>
+      <div><dt>Build Number</dt><dd>{{ app_build_number }}</dd></div>
+      <div><dt>Release Date</dt><dd>{{ app_release_date }}</dd></div>
+      <div><dt>Developer</dt><dd>{{ app_developer }}</dd></div>
+    </dl>
+  </div>
+</section>
+{% endblock %}
