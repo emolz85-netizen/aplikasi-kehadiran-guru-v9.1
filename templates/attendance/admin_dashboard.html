@@ -23,6 +23,24 @@
   <article class="v105-kpi compact"><span>⏱</span><small>Purata Masuk</small><strong id="averageCheckin">{{ average_checkin }}</strong><em>Sasaran {{ target_in|time:"H:i" }}</em></article>
 </section>
 
+{% if can_view_enterprise_statistics %}
+<section class="v1053-enterprise-statistics">
+  <header class="v1053-section-heading"><div><span class="eyebrow">V10.5.3 · ENTERPRISE STATISTICS</span><h2>Statistik Kehadiran Enterprise</h2><p>Analisis mingguan dan bulanan untuk tindakan pengurusan.</p></div><span class="v105-chip">{{ USER_ROLE_LABEL }}</span></header>
+  <div class="v1053-stat-grid">
+    <article><small>Peratus Hari Ini</small><strong>{{ percentage }}%</strong><em>{{ attended }} daripada {{ total }} guru</em></article>
+    <article><small>Peratus Minggu Ini</small><strong>{{ weekly_attendance_rate }}%</strong><em class="{% if weekly_trend < 0 %}trend-down{% else %}trend-up{% endif %}">{% if weekly_trend >= 0 %}▲{% else %}▼{% endif %} {{ weekly_trend }} mata</em></article>
+    <article><small>Peratus Bulan Ini</small><strong>{{ monthly_attendance_rate }}%</strong><em class="{% if monthly_trend < 0 %}trend-down{% else %}trend-up{% endif %}">{% if monthly_trend >= 0 %}▲{% else %}▼{% endif %} {{ monthly_trend }} mata</em></article>
+    <article><small>Purata Hadir Hari Ini</small><strong>{{ average_checkin_today }}</strong><em>Masa daftar masuk</em></article>
+    <article><small>Purata Hadir Minggu Ini</small><strong>{{ average_checkin_week }}</strong><em>Masa daftar masuk</em></article>
+    <article><small>Purata Hadir Bulan Ini</small><strong>{{ average_checkin_month }}</strong><em>Masa daftar masuk</em></article>
+  </div>
+  <div class="v1053-chart-grid">
+    <article class="pro-panel"><header><div><h2>Graf Mingguan</h2><p>Peratus kehadiran tujuh hari terkini</p></div></header><div class="v105-bars">{% for item in weekly_stats %}<div class="v105-bar-item" title="{{ item.date|date:'d M Y' }} · {{ item.rate }}%"><b>{{ item.rate }}%</b><div><i style="height:{{ item.height }}%"></i></div><small>{{ item.date|date:'D' }}</small></div>{% endfor %}</div></article>
+    <article class="pro-panel"><header><div><h2>Graf Bulanan</h2><p>Prestasi harian bulan semasa</p></div></header><div class="v1053-monthly-bars">{% for item in monthly_chart %}<div class="v1053-month-item {% if not item.is_working_day %}weekend{% endif %}" title="{{ item.date|date:'d M Y' }} · {{ item.rate }}%"><b>{{ item.rate }}%</b><div><i style="height:{{ item.height }}%"></i></div><small>{{ item.label }}</small></div>{% endfor %}</div></article>
+  </div>
+</section>
+{% endif %}
+
 <section class="v105-grid-main">
   <article class="pro-panel v105-chart-card">
     <header><div><h2>Trend Kehadiran 7 Hari</h2><p>Peratus guru yang mendaftar masuk</p></div><span class="v105-chip">7 Hari</span></header>

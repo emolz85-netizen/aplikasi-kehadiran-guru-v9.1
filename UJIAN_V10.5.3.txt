@@ -1,0 +1,14 @@
+SENARAI UJIAN V10.5.3
+
+[ ] Dashboard GPK memaparkan Enterprise Statistics.
+[ ] Dashboard Guru Besar memaparkan Enterprise Statistics.
+[ ] Dashboard Administrator memaparkan Enterprise Statistics.
+[ ] Dashboard Super Admin memaparkan Enterprise Statistics.
+[ ] Dashboard Guru tidak memaparkan Enterprise Statistics.
+[ ] Dashboard Kerani tidak memaparkan Enterprise Statistics.
+[ ] Graf mingguan memaparkan tujuh hari.
+[ ] Graf bulanan memaparkan hari bulan semasa.
+[ ] Purata masa hadir hari/minggu/bulan dipaparkan.
+[ ] Peratus kehadiran hari/minggu/bulan dipaparkan.
+[ ] Paparan telefon boleh discroll tanpa pecah susun atur.
+[ ] Pusat Pemantauan V10.5.2 masih boleh dibuka.

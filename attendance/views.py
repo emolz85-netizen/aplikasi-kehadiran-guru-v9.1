@@ -785,6 +785,73 @@ def _enterprise_dashboard_context(request):
     else:
         average_checkin = "--:--"
 
+    # V10.5.3 Enterprise Statistics (GPK, Guru Besar, Administrator, Super Admin)
+    enterprise_statistics_roles = {"GPK", "GURU_BESAR", "ADMIN", "SUPER_ADMIN"}
+    can_view_enterprise_statistics = role in enterprise_statistics_roles
+
+    def _average_time_for(queryset):
+        minutes = []
+        for value in queryset.filter(check_in__isnull=False).values_list("check_in", flat=True):
+            local_value = timezone.localtime(value) if timezone.is_aware(value) else value
+            minutes.append(local_value.hour * 60 + local_value.minute)
+        if not minutes:
+            return "--:--"
+        average = round(sum(minutes) / len(minutes))
+        return f"{average // 60:02d}:{average % 60:02d}"
+
+    def _working_days(start_date, end_date):
+        holiday_dates = set(SchoolHoliday.objects.filter(
+            date__range=(start_date, end_date), is_active=True
+        ).values_list("date", flat=True))
+        days = []
+        cursor = start_date
+        while cursor <= end_date:
+            if cursor.weekday() < 5 and cursor not in holiday_dates:
+                days.append(cursor)
+            cursor += timedelta(days=1)
+        return days
+
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+    week_days = _working_days(week_start, today)
+    month_days = _working_days(month_start, today)
+
+    week_records = Attendance.objects.filter(date__range=(week_start, today), check_in__isnull=False)
+    month_records = Attendance.objects.filter(date__range=(month_start, today), check_in__isnull=False)
+    weekly_attendance_rate = round(week_records.count() / (total * len(week_days)) * 100, 1) if total and week_days else 0
+    monthly_attendance_rate = round(month_records.count() / (total * len(month_days)) * 100, 1) if total and month_days else 0
+
+    previous_week_end = week_start - timedelta(days=1)
+    previous_week_start = previous_week_end - timedelta(days=6)
+    previous_week_days = _working_days(previous_week_start, previous_week_end)
+    previous_week_count = Attendance.objects.filter(date__range=(previous_week_start, previous_week_end), check_in__isnull=False).count()
+    previous_week_rate = round(previous_week_count / (total * len(previous_week_days)) * 100, 1) if total and previous_week_days else 0
+    weekly_trend = round(weekly_attendance_rate - previous_week_rate, 1)
+
+    previous_month_end = month_start - timedelta(days=1)
+    previous_month_start = previous_month_end.replace(day=1)
+    previous_month_days = _working_days(previous_month_start, previous_month_end)
+    previous_month_count = Attendance.objects.filter(date__range=(previous_month_start, previous_month_end), check_in__isnull=False).count()
+    previous_month_rate = round(previous_month_count / (total * len(previous_month_days)) * 100, 1) if total and previous_month_days else 0
+    monthly_trend = round(monthly_attendance_rate - previous_month_rate, 1)
+
+    monthly_chart = []
+    for day_number in range(1, calendar.monthrange(today.year, today.month)[1] + 1):
+        day = today.replace(day=day_number)
+        if day > today:
+            break
+        day_count = Attendance.objects.filter(date=day, check_in__isnull=False).count()
+        day_rate = round(day_count / total * 100, 1) if total else 0
+        monthly_chart.append({
+            "date": day, "label": str(day_number), "count": day_count, "rate": day_rate,
+            "height": max(3, round(day_rate)) if day_count else 2,
+            "is_working_day": day.weekday() < 5,
+        })
+
+    average_checkin_today = average_checkin
+    average_checkin_week = _average_time_for(Attendance.objects.filter(date__range=(week_start, today)))
+    average_checkin_month = _average_time_for(Attendance.objects.filter(date__range=(month_start, today)))
+
     school = SchoolSettings.load()
     today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
     target_in, target_out = school.times_for_role(role, today)
@@ -811,6 +878,14 @@ def _enterprise_dashboard_context(request):
         "can_view_audit": role in AUDIT_VIEW_ROLES, "can_manage_users": role in SYSTEM_ADMIN_ROLES,
         "can_manage_security": role in SYSTEM_ADMIN_ROLES, "can_view_map": role in MANAGEMENT_ROLES,
         "can_record_attendance": role in ATTENDANCE_ROLES,
+        "can_view_enterprise_statistics": can_view_enterprise_statistics,
+        "weekly_attendance_rate": weekly_attendance_rate,
+        "monthly_attendance_rate": monthly_attendance_rate,
+        "weekly_trend": weekly_trend, "monthly_trend": monthly_trend,
+        "average_checkin_today": average_checkin_today,
+        "average_checkin_week": average_checkin_week,
+        "average_checkin_month": average_checkin_month,
+        "monthly_chart": monthly_chart,
     }
 
 

@@ -1,0 +1,17 @@
+SISTEM KEHADIRAN GURU V10.5.3 – ENTERPRISE STATISTICS
+Tarikh: 30 Julai 2026
+
+FUNGSI BAHARU
+1. Graf kehadiran mingguan tujuh hari.
+2. Graf kehadiran bulanan bagi bulan semasa.
+3. Purata masa hadir untuk hari ini, minggu ini dan bulan ini.
+4. Peratus kehadiran untuk hari ini, minggu ini dan bulan ini.
+5. Penunjuk trend mingguan dan bulanan berbanding tempoh sebelumnya.
+6. Statistik dipaparkan pada dashboard GPK, Guru Besar, Administrator dan Super Admin.
+7. Dashboard Guru dan Setiausaha/Kerani tidak memaparkan Enterprise Statistics.
+
+TEKNIKAL
+- Tiada migrasi pangkalan data diperlukan.
+- Statistik dikira daripada rekod Attendance sedia ada.
+- Hari Sabtu, Ahad dan hari kelepasan aktif dikecualikan daripada denominator kadar tempoh.
+- Fungsi V10.5.2 Pusat Pemantauan dikekalkan.

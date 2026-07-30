@@ -1,0 +1,14 @@
+PANDUAN DEPLOY V10.5.3
+
+1. Simpan ZIP backup versi stabil V10.5.2.
+2. Extract ZIP V10.5.3.
+3. Salin dan replace semua fail projek dalam repository tempatan.
+4. Buka GitHub Desktop dan pastikan Current Branch ialah main.
+5. Commit: Build V10.5.3 Enterprise Statistics
+6. Klik Push origin.
+7. Tunggu Render Auto Deploy selesai.
+8. Login sebagai GPK, Guru Besar, Administrator dan Super Admin untuk menguji statistik.
+
+NOTA
+- Tiada arahan migrate diperlukan untuk versi ini.
+- Jangan padam pemboleh ubah persekitaran Render yang sedia ada.
