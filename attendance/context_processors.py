@@ -1,6 +1,9 @@
 from django.conf import settings
 from .models import SchoolSettings, AppNotification
-from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL
+from .version import (
+    APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL, APP_BUILD_NUMBER,
+    APP_RELEASE_DATE, APP_DEVELOPER, APP_COMPANY, APP_PRODUCT, APP_COPYRIGHT,
+)
 from .permissions import APPROVAL_ROLES, AUDIT_VIEW_ROLES, SYSTEM_ADMIN_ROLES, MANAGEMENT_ROLES
 
 
@@ -31,6 +34,12 @@ def school_context(request):
             "APP_VERSION": APP_VERSION,
             "APP_VERSION_LABEL": APP_VERSION_LABEL,
             "APP_RELEASE_CHANNEL": APP_RELEASE_CHANNEL,
+            "APP_BUILD_NUMBER": APP_BUILD_NUMBER,
+            "APP_RELEASE_DATE": APP_RELEASE_DATE,
+            "APP_DEVELOPER": APP_DEVELOPER,
+            "APP_COMPANY": APP_COMPANY,
+            "APP_PRODUCT": APP_PRODUCT,
+            "APP_COPYRIGHT": APP_COPYRIGHT,
             "NOTIFICATION_UNREAD_COUNT": AppNotification.objects.filter(user=request.user, is_read=False).count() if request.user.is_authenticated else 0,
         }
     except Exception:
@@ -63,5 +72,11 @@ def school_context(request):
             "APP_VERSION": APP_VERSION,
             "APP_VERSION_LABEL": APP_VERSION_LABEL,
             "APP_RELEASE_CHANNEL": APP_RELEASE_CHANNEL,
+            "APP_BUILD_NUMBER": APP_BUILD_NUMBER,
+            "APP_RELEASE_DATE": APP_RELEASE_DATE,
+            "APP_DEVELOPER": APP_DEVELOPER,
+            "APP_COMPANY": APP_COMPANY,
+            "APP_PRODUCT": APP_PRODUCT,
+            "APP_COPYRIGHT": APP_COPYRIGHT,
             "NOTIFICATION_UNREAD_COUNT": AppNotification.objects.filter(user=request.user, is_read=False).count() if request.user.is_authenticated else 0,
         }

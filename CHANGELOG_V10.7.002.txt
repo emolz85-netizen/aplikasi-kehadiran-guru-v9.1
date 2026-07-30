@@ -1,0 +1,12 @@
+eHadir Guru Enterprise V10.7.002 – Official License & Branding
+
+Tarikh keluaran: 30 July 2026
+
+PERUBAHAN
+- Menetapkan Developer rasmi: Raimol Salati.
+- Menetapkan Product by: Emoz San Technologies.
+- Menambah Licensed To berdasarkan nama dan kod sekolah sedia ada.
+- Menambah copyright rasmi: © 2026 Emoz San Technologies. All Rights Reserved.
+- Menyeragamkan branding pada License & Version, halaman log masuk, footer sistem, sidebar dan laporan rasmi.
+- Menaikkan Build Number kepada 10.7.002.
+- Logo sekolah dan semua data SchoolSettings sedia ada kekal tanpa perubahan.

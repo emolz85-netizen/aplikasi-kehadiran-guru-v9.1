@@ -71,7 +71,7 @@
       </section>
       {% endwith %}
     </nav>
-    <form class="sidebar-logout" method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">🚪 <span>Log Keluar</span></button></form><div class="sidebar-version"><b>Sistem Kehadiran Guru</b><span>{{ APP_VERSION_LABEL }}</span><small>© 2026 Hak Cipta Terpelihara.</small></div>
+    <form class="sidebar-logout" method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">🚪 <span>Log Keluar</span></button></form><div class="sidebar-version"><b>{{ APP_PRODUCT }}</b><span>{{ APP_VERSION_LABEL }} · Build {{ APP_BUILD_NUMBER }}</span><small>{{ APP_COMPANY }}</small></div>
   </aside>
   <div class="app-content">
     <header class="role-header professional-header">
@@ -115,10 +115,10 @@
   {% endif %}
 </nav>
 <div class="mobile-offline-indicator" id="mobileOfflineIndicator" hidden>📡 Anda sedang luar talian</div>
-<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }} · © 2026</footer>
+<footer>{{ APP_PRODUCT }} · {{ APP_VERSION_LABEL }} · Product by {{ APP_COMPANY }} · {{ APP_COPYRIGHT }}</footer>
   </div>
 </div>
-{% else %}<footer>Sistem Kehadiran Guru {{ SCHOOL_NAME }} · {{ APP_VERSION_LABEL }} · © 2026</footer>{% endif %}
+{% else %}<footer>{{ APP_PRODUCT }} · {{ APP_VERSION_LABEL }} · Product by {{ APP_COMPANY }} · {{ APP_COPYRIGHT }}</footer>{% endif %}
 <script src="{% static 'attendance/app.js' %}"></script>
 <script>window.PWA_SERVICE_WORKER_URL="{% url 'service_worker' %}";</script>
 <script src="{% static 'attendance/pwa.js' %}"></script>

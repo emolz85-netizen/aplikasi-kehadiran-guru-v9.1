@@ -36,7 +36,10 @@
       <div><dt>Build Number</dt><dd>{{ app_build_number }}</dd></div>
       <div><dt>Release Date</dt><dd>{{ app_release_date }}</dd></div>
       <div><dt>Developer</dt><dd>{{ app_developer }}</dd></div>
+      <div><dt>Product by</dt><dd>{{ APP_COMPANY }}</dd></div>
+      <div><dt>Licensed To</dt><dd>{{ school.school_name }}{% if school.school_code %} · {{ school.school_code }}{% endif %}</dd></div>
     </dl>
+    <p class="smc-license-copyright">{{ APP_COPYRIGHT }}</p>
   </div>
 </section>
 {% endblock %}
