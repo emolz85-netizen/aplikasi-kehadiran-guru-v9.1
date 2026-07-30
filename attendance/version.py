@@ -1,10 +1,6 @@
-"""Maklumat keluaran rasmi aplikasi.
-
-Ubah fail ini sahaja apabila menyediakan keluaran baharu supaya nombor versi
-konsisten pada dashboard, health check, endpoint versi dan service worker.
-"""
-APP_VERSION = "10.4.0"
-APP_VERSION_LABEL = "V10.4"
+"""Maklumat keluaran rasmi aplikasi."""
+APP_VERSION = "10.4.1"
+APP_VERSION_LABEL = "V10.4.1"
 APP_RELEASE_CHANNEL = "stable"
-APP_RELEASE_DATE = "2026-07-29"
-APP_RELEASE_NAME = "Sistem Kehadiran Guru V10.4 – Role-Based Enterprise Dashboard"
+APP_RELEASE_DATE = "2026-07-30"
+APP_RELEASE_NAME = "Sistem Kehadiran Guru V10.4.1 – Role Permission Matrix"

@@ -1,0 +1,12 @@
+PANDUAN V10.4.1
+
+1. Gantikan semua fail repositori dengan kandungan ZIP ini.
+2. GitHub Desktop: Commit summary "Build V10.4.1 - Role Permission Matrix".
+3. Push origin dan tunggu Render Auto Deploy.
+4. Tiada migration baharu diperlukan.
+5. Buka Django Admin > Teacher Profiles dan tetapkan Peranan Sistem.
+6. Log keluar dan log masuk semula menggunakan setiap akaun untuk menguji menu mengikut peranan.
+
+Nota penting:
+- Position ialah jawatan rasmi sekolah.
+- Peranan Sistem menentukan dashboard dan hak akses aplikasi.

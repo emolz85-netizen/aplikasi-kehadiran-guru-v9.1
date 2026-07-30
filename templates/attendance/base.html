@@ -34,21 +34,21 @@
         </section>
         <section class="nav-group">
           <div class="nav-group-title">PENGURUSAN</div>
-          <a href="/admin/auth/user/"><span class="nav-icon">👨‍🏫</span><span class="nav-text">Pengurusan Guru</span></a>
-          <a class="{% if current == 'leave_admin' or current == 'leave_review' %}active{% endif %}" href="{% url 'leave_admin' %}"><span class="nav-icon">📅</span><span class="nav-text">Kelulusan Cuti</span></a>
-          <a class="{% if current == 'password_recovery_admin' %}active{% endif %}" href="{% url 'password_recovery_admin' %}"><span class="nav-icon">🔑</span><span class="nav-text">Pengurusan Akaun</span></a>
+{% if CAN_MANAGE_SYSTEM %}<a href="/admin/attendance/teacherprofile/"><span class="nav-icon">👨‍🏫</span><span class="nav-text">Pengurusan Guru & Peranan</span></a>{% endif %}
+          {% if CAN_APPROVE %}<a class="{% if current == 'leave_admin' or current == 'leave_review' %}active{% endif %}" href="{% url 'leave_admin' %}"><span class="nav-icon">📅</span><span class="nav-text">Kelulusan Cuti</span></a>{% endif %}
+          {% if CAN_MANAGE_SYSTEM %}<a class="{% if current == 'password_recovery_admin' %}active{% endif %}" href="{% url 'password_recovery_admin' %}"><span class="nav-icon">🔑</span><span class="nav-text">Pengurusan Akaun</span></a>{% endif %}
         </section>
         <section class="nav-group">
           <div class="nav-group-title">KEHADIRAN & KESELAMATAN</div>
-          <a href="/admin/attendance/attendance/"><span class="nav-icon">📊</span><span class="nav-text">Kehadiran Guru</span></a>
-          <a class="{% if current == 'attendance_map' %}active{% endif %}" href="{% url 'attendance_map' %}"><span class="nav-icon">🗺️</span><span class="nav-text">Peta Kehadiran</span></a>
-          <a class="{% if current == 'device_security_page' %}active{% endif %}" href="{% url 'device_security_page' %}"><span class="nav-icon">🛡️</span><span class="nav-text">Device Trust & GPS</span></a>
+{% if CAN_MANAGE_SYSTEM %}<a href="/admin/attendance/attendance/"><span class="nav-icon">📊</span><span class="nav-text">Kehadiran Guru</span></a>{% endif %}
+          {% if CAN_VIEW_MAP %}<a class="{% if current == 'attendance_map' %}active{% endif %}" href="{% url 'attendance_map' %}"><span class="nav-icon">🗺️</span><span class="nav-text">Peta Kehadiran</span></a>{% endif %}
+          {% if CAN_MANAGE_SYSTEM %}<a class="{% if current == 'device_security_page' %}active{% endif %}" href="{% url 'device_security_page' %}"><span class="nav-icon">🛡️</span><span class="nav-text">Device Trust & GPS</span></a>{% endif %}
         </section>
         <section class="nav-group">
           <div class="nav-group-title">LAPORAN & SISTEM</div>
           <a class="{% if current == 'report_page' %}active{% endif %}" href="{% url 'report_page' %}"><span class="nav-icon">📄</span><span class="nav-text">Laporan</span></a>
-          <a class="{% if current == 'audit_log_page' %}active{% endif %}" href="{% url 'audit_log_page' %}"><span class="nav-icon">📋</span><span class="nav-text">Log Audit</span></a>
-          <a href="/admin/attendance/schoolsettings/"><span class="nav-icon">⚙️</span><span class="nav-text">Tetapan Sekolah</span></a>
+{% if CAN_VIEW_AUDIT %}<a class="{% if current == 'audit_log_page' %}active{% endif %}" href="{% url 'audit_log_page' %}"><span class="nav-icon">📋</span><span class="nav-text">Log Audit{% if not CAN_MANAGE_SYSTEM %} (Paparan){% endif %}</span></a>{% endif %}
+          {% if CAN_MANAGE_SYSTEM %}<a href="/admin/attendance/schoolsettings/"><span class="nav-icon">⚙️</span><span class="nav-text">Tetapan Sekolah</span></a>{% endif %}
         </section>
       {% else %}
         <section class="nav-group">
@@ -81,7 +81,7 @@
       <button type="button" class="header-action density-toggle" id="densityToggle" aria-label="Tukar kepadatan paparan" title="Paparan padat / selesa">↕️</button>
       <a class="header-notification" href="{% url 'notification_center' %}" aria-label="Notifikasi">🔔{% if NOTIFICATION_UNREAD_COUNT %}<span>{{ NOTIFICATION_UNREAD_COUNT }}</span>{% endif %}</a>
       <div class="profile-menu-wrap">
-        <button type="button" class="header-profile profile-menu-button" id="profileMenuButton" aria-expanded="false" aria-controls="profileMenu"><span class="header-avatar">👤</span><div><strong>{% if HAS_MANAGEMENT_DASHBOARD %}Pentadbir{% else %}Guru{% endif %}</strong><small>{{ user.get_full_name|default:user.username }}</small></div><span class="profile-chevron">⌄</span></button>
+        <button type="button" class="header-profile profile-menu-button" id="profileMenuButton" aria-expanded="false" aria-controls="profileMenu"><span class="header-avatar">👤</span><div><strong>{{ USER_ROLE_LABEL }}</strong><small>{{ user.get_full_name|default:user.username }}</small></div><span class="profile-chevron">⌄</span></button>
         <div class="profile-menu" id="profileMenu" hidden>
           <a href="{% url 'profile_page' %}">👤 Profil</a>
           <button type="button" id="profileThemeToggle">🌙 Mod Gelap</button>

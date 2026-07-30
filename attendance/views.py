@@ -23,6 +23,7 @@ from django.urls import reverse
 from .forms import LeaveRequestForm, OfficialDutyForm, TeacherImportForm, ProfileForm, MalayPasswordChangeForm, PasswordRecoveryRequestForm, PasswordRecoveryConfirmForm, QRPasswordSetForm, LeaveReviewForm, FaceReferenceForm
 from .models import Attendance, LeaveRequest, OfficialDuty, TeacherProfile, SchoolSettings, SchoolHoliday, AccountActivity, PasswordRecoveryRequest, PushSubscription, AppNotification, TrustedDevice, LocationSecurityEvent, FaceLoginAttempt
 from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL, APP_RELEASE_DATE, APP_RELEASE_NAME
+from .permissions import role_required, get_user_role, MANAGEMENT_ROLES, APPROVAL_ROLES, REPORT_ALL_ROLES, AUDIT_VIEW_ROLES, SYSTEM_ADMIN_ROLES
 
 LIVENESS_CHALLENGES = [
     "Senyum dan pandang terus ke kamera",
@@ -462,8 +463,8 @@ def dashboard(request):
 @login_required
 @require_POST
 def record_attendance(request, action):
-    if request.user.is_staff:
-        return JsonResponse({"ok": False, "message": "Akaun pentadbir tidak dibenarkan merekod kehadiran."}, status=403)
+    if get_user_role(request.user) in MANAGEMENT_ROLES:
+        return JsonResponse({"ok": False, "message": "Peranan pengurusan tidak dibenarkan merekod kehadiran melalui dashboard guru."}, status=403)
     if action not in {"masuk", "keluar"}:
         return JsonResponse({"ok": False, "message": "Tindakan tidak sah."}, status=400)
 
@@ -595,7 +596,7 @@ def record_attendance(request, action):
         send_notification(request.user, "Daftar keluar berjaya", f"Rekod pulang anda telah disimpan pada {local_time}.", "KEHADIRAN", "/")
     return JsonResponse({"ok": True, "message": f"Berjaya. Jarak {distance:.1f} m, ketepatan GPS {accuracy:.0f} m, risiko {security['level'].lower()} ({security['score']}/100).", "risk_score": security["score"], "risk_level": security["level"], "flags": security["flags"]})
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def device_security_page(request):
     devices = TrustedDevice.objects.select_related("user", "approved_by").all()
     status = request.GET.get("status", "")
@@ -610,7 +611,7 @@ def device_security_page(request):
     })
 
 @require_POST
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def device_update_status(request, pk, status):
     if status not in {"DIPERCAYAI", "MENUNGGU", "DISEKAT"}:
         return JsonResponse({"ok": False}, status=400)
@@ -689,8 +690,7 @@ def profile_page(request):
     })
 
 
-@user_passes_test(lambda u: u.is_staff)
-@login_required
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
 def admin_dashboard(request):
     profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
     if not profile.has_management_dashboard:
@@ -772,15 +772,22 @@ def admin_dashboard(request):
         "can_approve": role in {"GURU_BESAR", "GPK", "ADMIN", "SUPER_ADMIN"},
         "can_manage_system": role in {"ADMIN", "SUPER_ADMIN"},
         "can_reset_audit": role in {"ADMIN", "SUPER_ADMIN"},
-        "is_read_only_office": role == "KERANI",
+        "is_read_only_office": role in {"KERANI", "GPK", "GURU_BESAR"},
+        "can_view_audit": role in AUDIT_VIEW_ROLES,
+        "can_manage_users": role in SYSTEM_ADMIN_ROLES,
+        "can_manage_security": role in SYSTEM_ADMIN_ROLES,
+        "can_view_map": role in MANAGEMENT_ROLES,
     })
 
 
 @login_required
 def leave_page(request):
-    if request.user.is_staff:
-        messages.info(request, "Akaun pentadbir menggunakan modul Pengurusan Cuti, bukan permohonan cuti peribadi.")
-        return redirect("leave_admin")
+    if get_user_role(request.user) in MANAGEMENT_ROLES:
+        if get_user_role(request.user) in APPROVAL_ROLES:
+            messages.info(request, "Peranan pengurusan menggunakan modul Kelulusan Cuti.")
+            return redirect("leave_admin")
+        messages.info(request, "Peranan ini tidak menggunakan permohonan cuti peribadi.")
+        return redirect("admin_dashboard")
     if request.method == "POST":
         form = LeaveRequestForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
@@ -833,7 +840,7 @@ def leave_cancel(request, pk):
     return redirect("leave_page")
 
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("GURU_BESAR", "GPK", "ADMIN", "SUPER_ADMIN")
 def leave_admin(request):
     status = request.GET.get("status", "MENUNGGU").upper()
     valid_status = {x[0] for x in LeaveRequest.STATUS_CHOICES}
@@ -853,7 +860,7 @@ def leave_admin(request):
     })
 
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("GURU_BESAR", "GPK", "ADMIN", "SUPER_ADMIN")
 def leave_review(request, pk, decision):
     item = get_object_or_404(LeaveRequest.objects.select_related("user"), pk=pk)
     if item.status != "MENUNGGU":
@@ -920,7 +927,8 @@ def report_page(request):
 
     User = get_user_model()
     teachers = User.objects.filter(is_active=True, is_staff=False).order_by("first_name", "last_name", "username")
-    if request.user.is_staff:
+    report_role = get_user_role(request.user)
+    if report_role in REPORT_ALL_ROLES:
         selected_users = teachers
         if selected_user_id.isdigit():
             selected_users = selected_users.filter(pk=int(selected_user_id))
@@ -1073,7 +1081,7 @@ def _report_filters(request):
     report_type = request.GET.get("type", "monthly").strip().lower()
     User = get_user_model()
     users = User.objects.filter(is_active=True, is_staff=False)
-    if request.user.is_staff:
+    if get_user_role(request.user) in REPORT_ALL_ROLES:
         if teacher_id.isdigit():
             users = users.filter(pk=int(teacher_id))
     else:
@@ -1279,7 +1287,7 @@ def export_pdf(request):
     return FileResponse(output, as_attachment=True, filename=filename)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
 def attendance_map(request):
     today = timezone.localdate()
     selected_date = today
@@ -1344,7 +1352,7 @@ def attendance_map(request):
         "markers": markers,
     })
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def import_teachers(request):
     result = None
     if request.method == "POST":
@@ -1488,7 +1496,7 @@ def password_recovery_qr_set(request):
     return render(request, "attendance/password_recovery_qr_set.html", {"form": form, "recovery": recovery})
 
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def password_recovery_admin(request):
     import qrcode
     items = list(PasswordRecoveryRequest.objects.select_related("user", "approved_by")[:100])
@@ -1508,7 +1516,7 @@ def password_recovery_admin(request):
 
 
 @require_POST
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def password_recovery_approve(request, pk):
     import secrets
     item = get_object_or_404(PasswordRecoveryRequest.objects.select_related("user"), pk=pk)
@@ -1529,14 +1537,14 @@ def password_recovery_approve(request, pk):
 
 
 @require_POST
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def password_recovery_reject(request, pk):
     item = PasswordRecoveryRequest.objects.get(pk=pk)
     item.status="DITOLAK"; item.code_display=""; item.save(update_fields=["status","code_display"])
     messages.success(request, "Permintaan ditolak.")
     return redirect("password_recovery_admin")
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
 def audit_log_page(request):
     from django.core.paginator import Paginator
     from django.db.models import Q, Count
@@ -1588,7 +1596,7 @@ def audit_log_page(request):
     })
 
 
-@user_passes_test(lambda u: u.is_staff)
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
 def audit_log_export_csv(request):
     import csv
     from django.db.models import Q
@@ -1626,7 +1634,7 @@ def audit_log_export_csv(request):
 
 
 @require_POST
-@user_passes_test(lambda u: u.is_staff)
+@role_required("ADMIN", "SUPER_ADMIN")
 def audit_log_reset_all(request):
     """Padam semua log audit sahaja selepas pengesahan perkataan RESET."""
     from django.db import transaction

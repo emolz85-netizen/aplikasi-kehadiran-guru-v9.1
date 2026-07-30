@@ -1,6 +1,7 @@
 from django.conf import settings
 from .models import SchoolSettings, AppNotification
 from .version import APP_VERSION, APP_VERSION_LABEL, APP_RELEASE_CHANNEL
+from .permissions import APPROVAL_ROLES, AUDIT_VIEW_ROLES, SYSTEM_ADMIN_ROLES, MANAGEMENT_ROLES
 
 
 def school_context(request):
@@ -18,6 +19,10 @@ def school_context(request):
             "USER_ROLE": role_code,
             "USER_ROLE_LABEL": role_label,
             "HAS_MANAGEMENT_DASHBOARD": has_management_dashboard,
+            "CAN_APPROVE": role_code in APPROVAL_ROLES,
+            "CAN_VIEW_AUDIT": role_code in AUDIT_VIEW_ROLES,
+            "CAN_MANAGE_SYSTEM": role_code in SYSTEM_ADMIN_ROLES,
+            "CAN_VIEW_MAP": role_code in MANAGEMENT_ROLES,
             "SCHOOL": school,
             "SCHOOL_NAME": school.school_name,
             "SCHOOL_LATITUDE": school.latitude,
@@ -46,6 +51,10 @@ def school_context(request):
             "USER_ROLE": role_code,
             "USER_ROLE_LABEL": role_label,
             "HAS_MANAGEMENT_DASHBOARD": has_management_dashboard,
+            "CAN_APPROVE": role_code in APPROVAL_ROLES,
+            "CAN_VIEW_AUDIT": role_code in AUDIT_VIEW_ROLES,
+            "CAN_MANAGE_SYSTEM": role_code in SYSTEM_ADMIN_ROLES,
+            "CAN_VIEW_MAP": role_code in MANAGEMENT_ROLES,
             "SCHOOL": None,
             "SCHOOL_NAME": settings.SCHOOL_NAME,
             "SCHOOL_LATITUDE": settings.SCHOOL_LATITUDE,

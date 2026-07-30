@@ -1,20 +1,20 @@
 {% extends "attendance/base.html" %}
-{% block title %}{{ dashboard_title }}
+{% block title %}{{ dashboard_title }}{% endblock %}
+{% block content %}
+<section class="pro-page-heading">
+  <div><span class="eyebrow">{{ USER_ROLE_LABEL|upper }}</span><h1>{{ dashboard_title }}</h1><p>{{ dashboard_subtitle }}</p></div>
+  <div class="pro-date-card"><span>▣</span><div><b>{{ today|date:"l, d F Y" }}</b><small>{% now "H:i:s" %}</small></div></div>
+</section>
+
 <section class="pro-panel enterprise-actions">
   <header><div><h2>Akses Pantas Mengikut Peranan</h2><p>Menu disesuaikan untuk {{ USER_ROLE_LABEL }}.</p></div></header>
   <div class="enterprise-action-grid">
     <a href="{% url 'report_page' %}"><span>📄</span><b>Laporan Profesional</b><small>Jana, cetak dan eksport laporan rasmi.</small></a>
     {% if can_approve %}<a href="{% url 'leave_admin' %}"><span>✅</span><b>Kelulusan Cuti</b><small>Semak permohonan yang menunggu tindakan.</small></a>{% endif %}
-    <a href="{% url 'attendance_map' %}"><span>🗺️</span><b>Peta Kehadiran</b><small>Lihat lokasi daftar masuk hari ini.</small></a>
-    <a href="{% url 'audit_log_page' %}"><span>📋</span><b>Log Audit</b><small>{% if is_read_only_office %}Paparan rekod aktiviti sistem.{% else %}Pantau aktiviti dan keselamatan sistem.{% endif %}</small></a>
-    {% if can_manage_system %}<a href="/admin/auth/user/"><span>👥</span><b>Pengurusan Pengguna</b><small>Urus akaun dan peranan pengguna.</small></a><a href="/admin/attendance/schoolsettings/"><span>⚙️</span><b>Tetapan Sistem</b><small>Konfigurasi sekolah, GPS dan wajah.</small></a>{% endif %}
+    {% if can_view_map %}<a href="{% url 'attendance_map' %}"><span>🗺️</span><b>Peta Kehadiran</b><small>Lihat lokasi daftar masuk hari ini.</small></a>{% endif %}
+    {% if can_view_audit %}<a href="{% url 'audit_log_page' %}"><span>📋</span><b>Log Audit</b><small>{% if is_read_only_office %}Paparan sahaja untuk pemantauan.{% else %}Pantau aktiviti dan keselamatan sistem.{% endif %}</small></a>{% endif %}
+    {% if can_manage_users %}<a href="/admin/attendance/teacherprofile/"><span>👥</span><b>Pengurusan Guru & Peranan</b><small>Urus profil, jawatan dan peranan sistem.</small></a><a href="/admin/attendance/schoolsettings/"><span>⚙️</span><b>Tetapan Sistem</b><small>Konfigurasi sekolah, GPS dan wajah.</small></a>{% endif %}
   </div>
-</section>
-{% endblock %}
-{% block content %}
-<section class="pro-page-heading">
-  <div><span class="eyebrow">{{ USER_ROLE_LABEL|upper }}</span><h1>{{ dashboard_title }}</h1><p>{{ dashboard_subtitle }}</p></div>
-  <div class="pro-date-card"><span>▣</span><div><b>{{ today|date:"l, d F Y" }}</b><small>{% now "H:i:s" %}</small></div></div>
 </section>
 
 {% if today_holiday %}<div class="pro-notice"><b>Hari kelepasan: {{ today_holiday.name }}</b><span>{{ today_holiday.description }}</span></div>{% endif %}

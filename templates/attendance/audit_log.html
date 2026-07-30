@@ -8,7 +8,7 @@
   <div><small>{{ APP_VERSION_LABEL }}</small><h1>Log Audit Profesional</h1><p>Jejak tindakan, keselamatan, IP dan peranti pengguna secara tersusun.</p></div>
   <div class="audit-actions">
     <a class="button" href="{% url 'audit_log_export_csv' %}?{{ request.GET.urlencode }}">Eksport CSV</a>
-    <button class="danger-button" type="button" id="openResetModal">🗑 Reset Semua</button>
+    {% if CAN_MANAGE_SYSTEM %}<button class="danger-button" type="button" id="openResetModal">🗑 Reset Semua</button>{% endif %}
   </div>
 </div>
 <div class="audit-grid">
@@ -43,7 +43,7 @@
 </tbody></table></div>
 {% if page_obj.paginator.num_pages > 1 %}<div class="pagination">{% if page_obj.has_previous %}<a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">← Sebelum</a>{% endif %}<span>Halaman {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">Seterusnya →</a>{% endif %}</div>{% endif %}
 
-<div class="modal-backdrop" id="resetModal" hidden role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+{% if CAN_MANAGE_SYSTEM %}<div class="modal-backdrop" id="resetModal" hidden role="dialog" aria-modal="true" aria-labelledby="resetTitle">
   <div class="reset-modal">
     <div class="reset-step" id="resetStep1">
       <h2 id="resetTitle">⚠️ Reset Semua Log Audit</h2>
@@ -78,5 +78,5 @@
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden) closeModal();});
  document.getElementById('resetForm').addEventListener('submit',e=>{if(input.value.trim()!=='RESET'){e.preventDefault();confirm.disabled=true;}});
 })();
-</script>
+</script>{% endif %}
 {% endblock %}

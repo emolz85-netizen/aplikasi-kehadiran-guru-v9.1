@@ -1,0 +1,12 @@
+V10.4.1 – ROLE PERMISSION MATRIX
+
+PENAMBAHBAIKAN
+- Hak akses sebenar kini diperiksa pada bahagian server, bukan sekadar menyembunyikan menu.
+- Dashboard pengurusan boleh dibuka mengikut Peranan Sistem walaupun akaun bukan Django staff.
+- Guru Besar dan GPK: dashboard, laporan semua guru, kelulusan cuti, peta dan audit paparan.
+- Setiausaha / Kerani: dashboard, laporan semua guru, peta dan audit paparan sahaja.
+- Administrator dan Super Admin: akses pengurusan pengguna, keselamatan, tetapan dan reset audit.
+- Guru: dashboard, kehadiran, cuti, tugas rasmi serta laporan sendiri.
+- Menu sisi dan Akses Pantas berubah secara automatik mengikut peranan.
+- Pengurusan Guru kini terus membuka Teacher Profiles supaya Peranan Sistem mudah ditukar.
+- Laporan seluruh sekolah kini berdasarkan Peranan Sistem, bukan semata-mata status is_staff.
