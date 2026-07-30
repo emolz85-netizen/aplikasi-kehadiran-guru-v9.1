@@ -1,0 +1,18 @@
+APLIKASI KEHADIRAN GURU - V10.5.2
+ATTENDANCE MONITORING CENTER
+Tarikh keluaran: 30 Julai 2026
+
+FUNGSI BAHARU
+- Pusat Pemantauan Kehadiran untuk Guru Besar, GPK, Kerani, Administrator dan Super Admin.
+- Daily Attendance Brief dengan kadar kehadiran semasa.
+- Kad langsung: jumlah staf, hadir, lewat, belum hadir, cuti dan tugas rasmi.
+- Senarai staf yang belum daftar masuk, hadir lewat atau tiada daftar keluar semalam.
+- Timeline daftar masuk hari ini.
+- Senarai cuti dan tugas rasmi yang diluluskan.
+- Kemas kini automatik setiap 30 saat.
+
+TEKNIKAL
+- URL baharu: /pusat-pemantauan/
+- Endpoint JSON: /pusat-pemantauan/live/
+- Tiada migration pangkalan data baharu.
+- Semua fungsi V10.5.1 dikekalkan.

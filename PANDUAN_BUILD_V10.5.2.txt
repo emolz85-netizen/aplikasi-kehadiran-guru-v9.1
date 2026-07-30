@@ -1,0 +1,24 @@
+PANDUAN DEPLOY V10.5.2
+
+1. Pastikan GitHub Desktop berada pada branch main.
+2. Ekstrak ZIP ini.
+3. Salin semua kandungan ke folder repository dan pilih Replace files.
+4. Pastikan tiada folder atau fail bernama "- Copy".
+5. GitHub Desktop Summary:
+   Build V10.5.2 - Attendance Monitoring Center
+6. Klik Commit to main.
+7. Klik Push origin.
+8. Tunggu Render Auto Deploy selesai.
+9. Log keluar dan log masuk semula.
+10. Buka Dashboard Pengurusan > Pusat Pemantauan.
+
+UJIAN PENERIMAAN
+- Guru Besar boleh membuka Pusat Pemantauan.
+- GPK boleh membuka Pusat Pemantauan.
+- Kerani boleh membuka Pusat Pemantauan.
+- Guru biasa tidak boleh membuka modul pengurusan.
+- Nombor hadir, lewat, cuti dan tugas rasmi adalah betul.
+- Timeline dikemas kini tanpa refresh selepas 30 saat.
+- Check-in/check-out, Face Login, laporan dan Audit Log masih berfungsi.
+
+Migration baharu: TIADA.

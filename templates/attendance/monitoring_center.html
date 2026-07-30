@@ -1,0 +1,55 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Pusat Pemantauan Kehadiran{% endblock %}
+{% block content %}
+<section class="monitor-hero">
+  <div>
+    <span class="eyebrow">V10.5.2 · ATTENDANCE MONITORING CENTER</span>
+    <h1>Pusat Pemantauan Kehadiran</h1>
+    <p>{{ school.school_name|default:"Sekolah" }} · {{ today|date:"d F Y" }}</p>
+  </div>
+  <div class="monitor-live"><span class="live-dot"></span><div><b>Live</b><small>Dikemas kini <span id="monitorUpdated">{% now "H:i:s" %}</span></small></div></div>
+</section>
+
+<section class="monitor-brief">
+  <span>✦</span>
+  <div><small>DAILY ATTENDANCE BRIEF</small><h2 id="monitorBrief">{{ daily_brief }}</h2><p>Kadar kehadiran semasa ialah <b id="monitorRateText">{{ percentage }}%</b>.</p></div>
+</section>
+
+<section class="monitor-kpis">
+  <article><small>Jumlah Staf</small><strong id="monitorTotal">{{ total }}</strong></article>
+  <article><small>Hadir</small><strong id="monitorAttended">{{ attended }}</strong></article>
+  <article><small>Lewat</small><strong id="monitorLate">{{ late }}</strong></article>
+  <article><small>Belum Hadir</small><strong id="monitorAbsent">{{ absent_count }}</strong></article>
+  <article><small>Cuti</small><strong id="monitorLeave">{{ on_leave }}</strong></article>
+  <article><small>Tugas Rasmi</small><strong id="monitorDuty">{{ on_duty }}</strong></article>
+</section>
+
+<section class="monitor-layout">
+  <article class="pro-panel monitor-attention">
+    <header><div><h2>Perlu Tindakan</h2><p>Isu yang memerlukan semakan pentadbiran.</p></div><span class="pro-count" id="attentionCount">{{ attention_items|length }}</span></header>
+    <div id="monitorAttention">
+      {% for item in attention_items %}<div class="monitor-row {{ item.severity }}"><span>{% if item.severity == 'danger' %}!{% elif item.severity == 'warning' %}◷{% else %}i{% endif %}</span><div><b>{{ item.name }}</b><small>{{ item.issue }} · {{ item.detail }}</small></div></div>{% empty %}<p class="empty-state">Tiada isu memerlukan tindakan.</p>{% endfor %}
+    </div>
+  </article>
+  <article class="pro-panel monitor-timeline">
+    <header><div><h2>Timeline Daftar Masuk</h2><p>Disusun mengikut masa hari ini.</p></div></header>
+    <div id="monitorTimeline">
+      {% for item in timeline_items %}<div class="timeline-row"><time>{{ item.time }}</time><span class="{% if item.late %}late{% else %}present{% endif %}"></span><div><b>{{ item.name }}</b><small>{{ item.status }}</small></div></div>{% empty %}<p class="empty-state">Belum ada daftar masuk hari ini.</p>{% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="monitor-lists">
+  <article class="pro-panel"><header><div><h2>Cuti Hari Ini</h2><p>Permohonan yang telah diluluskan.</p></div><span class="pro-count" id="leaveCount">{{ on_leave }}</span></header><div id="monitorLeaveList">{% for item in leave_items %}<div class="simple-person"><b>{{ item.name }}</b><small>{{ item.detail }}</small></div>{% empty %}<p class="empty-state">Tiada staf bercuti hari ini.</p>{% endfor %}</div></article>
+  <article class="pro-panel"><header><div><h2>Tugas Rasmi</h2><p>Staf yang bertugas di luar.</p></div><span class="pro-count" id="dutyCount">{{ on_duty }}</span></header><div id="monitorDutyList">{% for item in duty_items %}<div class="simple-person"><b>{{ item.name }}</b><small>{{ item.detail }}</small></div>{% empty %}<p class="empty-state">Tiada tugas rasmi hari ini.</p>{% endfor %}</div></article>
+  <article class="pro-panel"><header><div><h2>Semakan Rekod</h2><p>Rekod daftar keluar semalam.</p></div></header><div class="record-check"><strong id="noCheckoutCount">{{ no_checkout_count }}</strong><span>staf tiada daftar keluar pada {{ yesterday|date:"d/m/Y" }}</span></div></article>
+</section>
+
+<section class="monitor-actions">
+  <a href="{% url 'admin_dashboard' %}">← Dashboard Pengurusan</a>
+  <a href="{% url 'attendance_map' %}">Peta Kehadiran</a>
+  <a href="{% url 'report_page' %}">Laporan Profesional</a>
+</section>
+{% endblock %}
+{% block scripts %}<script>window.MONITORING_LIVE_URL="{% url 'monitoring_center_live' %}";</script><script src="{% static 'attendance/monitoring-v1052.js' %}"></script>{% endblock %}

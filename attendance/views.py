@@ -814,6 +814,125 @@ def _enterprise_dashboard_context(request):
     }
 
 
+def _monitoring_center_payload(request):
+    """Return live operational attendance data for the V10.5.2 monitoring center."""
+    context = _enterprise_dashboard_context(request)
+    if context is None:
+        return None
+
+    today = context["today"]
+    yesterday = today - timedelta(days=1)
+    while yesterday.weekday() >= 5:
+        yesterday -= timedelta(days=1)
+
+    records = context["records"]
+    late_records = records.filter(check_in__isnull=False, status="LEWAT")
+    no_checkout_yesterday = Attendance.objects.filter(
+        date=yesterday, check_in__isnull=False, check_out__isnull=True
+    ).select_related("user").order_by("user__first_name", "user__username")
+
+    leave_items = LeaveRequest.objects.select_related("user").filter(
+        status="DILULUSKAN", start_date__lte=today, end_date__gte=today
+    ).order_by("user__first_name", "user__username")
+    duty_items = OfficialDuty.objects.select_related("user").filter(
+        status="DILULUSKAN", start_date__lte=today, end_date__gte=today
+    ).order_by("user__first_name", "user__username")
+
+    attention = []
+    for teacher in context["absent"]:
+        attention.append({
+            "name": teacher.get_full_name() or teacher.username,
+            "issue": "Belum daftar masuk",
+            "detail": "Tiada rekod masuk, cuti atau tugas rasmi hari ini.",
+            "severity": "danger",
+        })
+    for record in late_records:
+        local_dt = timezone.localtime(record.check_in) if record.check_in else None
+        attention.append({
+            "name": record.user.get_full_name() or record.user.username,
+            "issue": "Hadir lewat",
+            "detail": f"Daftar masuk pada {local_dt:%H:%M}." if local_dt else "Daftar masuk lewat.",
+            "severity": "warning",
+        })
+    for record in no_checkout_yesterday:
+        attention.append({
+            "name": record.user.get_full_name() or record.user.username,
+            "issue": "Tiada daftar keluar semalam",
+            "detail": f"Rekod {yesterday:%d/%m/%Y} belum lengkap.",
+            "severity": "info",
+        })
+
+    timeline = []
+    for record in records.filter(check_in__isnull=False).order_by("check_in"):
+        local_dt = timezone.localtime(record.check_in)
+        timeline.append({
+            "name": record.user.get_full_name() or record.user.username,
+            "time": local_dt.strftime("%H:%M"),
+            "status": record.get_status_display(),
+            "late": record.status == "LEWAT",
+        })
+
+    def person_rows(items, kind):
+        rows = []
+        for item in items:
+            rows.append({
+                "name": item.user.get_full_name() or item.user.username,
+                "detail": item.get_leave_type_display() if kind == "leave" else item.title,
+            })
+        return rows
+
+    if context["absent_count"]:
+        brief = f'{context["absent_count"]} staf belum daftar masuk. Sila semak status mereka.'
+    elif context["late"]:
+        brief = f'Semua staf telah direkodkan, tetapi {context["late"]} orang hadir lewat.'
+    else:
+        brief = "Semua staf telah direkodkan. Tiada tindakan segera diperlukan."
+
+    return {
+        **context,
+        "yesterday": yesterday,
+        "no_checkout_count": no_checkout_yesterday.count(),
+        "attention_items": attention,
+        "timeline_items": timeline,
+        "leave_items": person_rows(leave_items, "leave"),
+        "duty_items": person_rows(duty_items, "duty"),
+        "daily_brief": brief,
+    }
+
+
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
+def monitoring_center(request):
+    payload = _monitoring_center_payload(request)
+    if payload is None:
+        messages.error(request, "Anda tidak mempunyai kebenaran untuk membuka pusat pemantauan.")
+        return redirect("dashboard")
+    return render(request, "attendance/monitoring_center.html", payload)
+
+
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
+def monitoring_center_live(request):
+    payload = _monitoring_center_payload(request)
+    if payload is None:
+        return JsonResponse({"ok": False}, status=403)
+    return JsonResponse({
+        "ok": True,
+        "total": payload["total"],
+        "attended": payload["attended"],
+        "late": payload["late"],
+        "absent": payload["absent_count"],
+        "on_leave": payload["on_leave"],
+        "on_duty": payload["on_duty"],
+        "percentage": payload["percentage"],
+        "no_checkout": payload["no_checkout_count"],
+        "daily_brief": payload["daily_brief"],
+        "attention": payload["attention_items"][:12],
+        "timeline": payload["timeline_items"][-15:],
+        "leave_items": payload["leave_items"][:10],
+        "duty_items": payload["duty_items"][:10],
+        "updated_at": timezone.localtime().strftime("%H:%M:%S"),
+    })
+
+
 @role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
 def dashboard_live_data(request):
     """Small JSON endpoint used by the V10.5 dashboard auto-refresh."""

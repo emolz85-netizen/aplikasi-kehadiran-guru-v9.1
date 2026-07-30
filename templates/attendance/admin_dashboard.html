@@ -39,6 +39,7 @@
   <header><div><h2>Tindakan Pantas</h2><p>Menu utama untuk {{ USER_ROLE_LABEL }}.</p></div></header>
   <div class="enterprise-action-grid">
     {% if can_record_attendance %}<a href="{% url 'my_attendance' %}" class="attendance-action"><span>🕒</span><b>Daftar Kehadiran Saya</b><small>Masuk {{ target_in|time:"H:i" }} · Keluar {{ target_out|time:"H:i" }}</small></a>{% endif %}
+    <a href="{% url 'monitoring_center' %}" class="monitoring-action"><span>📡</span><b>Pusat Pemantauan</b><small>Pantau kehadiran, lewat dan tindakan secara langsung.</small></a>
     <a href="{% url 'report_page' %}"><span>📄</span><b>Laporan Profesional</b><small>Jana, cetak dan eksport laporan rasmi.</small></a>
     {% if can_approve %}<a href="{% url 'leave_admin' %}"><span>✅</span><b>Kelulusan Cuti</b><small>Semak permohonan yang menunggu tindakan.</small></a>{% endif %}
     {% if can_view_map %}<a href="{% url 'attendance_map' %}"><span>🗺️</span><b>Peta Kehadiran</b><small>Lihat lokasi daftar masuk hari ini.</small></a>{% endif %}
