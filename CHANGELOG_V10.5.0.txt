@@ -1,0 +1,8 @@
+V10.5.0 – ENTERPRISE SMART DASHBOARD FOUNDATION
+
+- Dashboard pengurusan moden dan responsif mengikut peranan.
+- Smart Summary, KPI cards, trend 7 hari dan purata waktu daftar masuk.
+- Senarai guru memerlukan perhatian.
+- Aktiviti terkini dikemas kini automatik setiap 60 saat.
+- Endpoint JSON dashboard-admin/live/ dengan kawalan peranan.
+- Semua fungsi V10.4.1 dikekalkan.

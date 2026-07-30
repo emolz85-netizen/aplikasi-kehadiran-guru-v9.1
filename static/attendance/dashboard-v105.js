@@ -1,0 +1,8 @@
+(function(){
+  const url=window.V105_LIVE_URL;if(!url)return;
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+  function renderLatest(items){const box=document.getElementById('latestActivity');if(!box)return;if(!items.length){box.innerHTML='<p class="empty-state">Belum ada aktiviti hari ini.</p>';return}box.innerHTML=items.map(x=>`<div class="activity-row"><span class="activity-dot ${x.late?'amber':'green'}">${x.late?'◷':'✓'}</span><div><b>${escapeHtml(x.name)}</b><small>${x.time}</small></div><em class="status-mini ${x.late?'amber':'green'}">${escapeHtml(x.status)}</em></div>`).join('')}
+  function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+  async function refresh(){try{const r=await fetch(url,{headers:{'X-Requested-With':'XMLHttpRequest'},cache:'no-store'});if(!r.ok)throw new Error('network');const d=await r.json();if(!d.ok)return;set('kpiTotal',d.total);set('kpiAttended',d.attended);set('kpiLate',d.late);set('kpiAbsent',d.absent);set('kpiRate',d.percentage+'%');set('summaryAttended',d.attended);set('summaryLate',d.late);set('summaryAbsent',d.absent);set('summaryPercentage',d.percentage+'%');set('ringPercentage',d.percentage+'%');set('averageCheckin',d.average_checkin);set('lastUpdated',d.updated_at);const ring=document.getElementById('attendanceRing');if(ring)ring.style.setProperty('--pct',d.percentage);const badge=document.getElementById('operationBadge');if(badge){badge.textContent=d.operational_status;badge.className=(d.late+d.absent)?'enterprise-alert':'enterprise-ok'}renderLatest(d.latest);set('liveStatus','Live')}catch(e){set('liveStatus','Offline')}}
+  refresh();setInterval(refresh,60000);
+})();

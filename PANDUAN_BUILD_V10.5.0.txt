@@ -1,0 +1,9 @@
+CARA DEPLOY
+1. Ekstrak ZIP dan gantikan semua fail dalam repository.
+2. GitHub Desktop Summary: Build V10.5.0 - Enterprise Smart Dashboard Foundation
+3. Commit dan Push origin.
+4. Tunggu Render Auto Deploy selesai.
+5. Log keluar dan log masuk semula.
+6. Uji akaun Guru Besar, GPK, Kerani dan Admin.
+
+Tiada migration baharu diperlukan untuk build ini.

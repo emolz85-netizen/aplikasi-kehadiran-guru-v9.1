@@ -692,10 +692,19 @@ def profile_page(request):
 
 @role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
 def admin_dashboard(request):
-    profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
-    if not profile.has_management_dashboard:
+    context = _enterprise_dashboard_context(request)
+    if context is None:
         messages.error(request, "Anda tidak mempunyai kebenaran untuk membuka dashboard pengurusan.")
         return redirect("dashboard")
+    return render(request, "attendance/admin_dashboard.html", context)
+
+
+def _enterprise_dashboard_context(request):
+    """Build the V10.5 role-aware enterprise dashboard context."""
+    profile, _ = TeacherProfile.objects.get_or_create(user=request.user)
+    if not profile.has_management_dashboard:
+        return None
+
     role = profile.effective_role
     dashboard_titles = {
         "GURU_BESAR": "Dashboard Guru Besar",
@@ -711,18 +720,22 @@ def admin_dashboard(request):
         "ADMIN": "Pengurusan pengguna, keselamatan, tetapan dan operasi sistem.",
         "SUPER_ADMIN": "Kawalan penuh sistem, audit, konfigurasi dan kesihatan aplikasi.",
     }
+    role_focus = {
+        "GURU_BESAR": "Fokus hari ini: prestasi keseluruhan sekolah dan isu yang memerlukan keputusan.",
+        "GPK": "Fokus hari ini: guru lewat, guru belum hadir dan tindakan operasi segera.",
+        "KERANI": "Fokus hari ini: ketepatan rekod, laporan rasmi dan dokumen sokongan.",
+        "ADMIN": "Fokus hari ini: operasi pengguna, keselamatan dan kestabilan sistem.",
+        "SUPER_ADMIN": "Fokus hari ini: kesihatan aplikasi, audit dan kawalan keseluruhan sistem.",
+    }
+
     today = timezone.localdate()
     User = get_user_model()
     teachers = User.objects.filter(is_active=True, is_staff=False).order_by("first_name", "username")
-    records = Attendance.objects.filter(date=today).select_related("user").order_by("check_in")
+    records = Attendance.objects.filter(date=today).select_related("user").order_by("-check_in")
 
     attended_ids = set(records.filter(check_in__isnull=False).values_list("user_id", flat=True))
-    leave_ids = set(LeaveRequest.objects.filter(
-        status="DILULUSKAN", start_date__lte=today, end_date__gte=today
-    ).values_list("user_id", flat=True))
-    duty_ids = set(OfficialDuty.objects.filter(
-        status="DILULUSKAN", start_date__lte=today, end_date__gte=today
-    ).values_list("user_id", flat=True))
+    leave_ids = set(LeaveRequest.objects.filter(status="DILULUSKAN", start_date__lte=today, end_date__gte=today).values_list("user_id", flat=True))
+    duty_ids = set(OfficialDuty.objects.filter(status="DILULUSKAN", start_date__lte=today, end_date__gte=today).values_list("user_id", flat=True))
 
     total = teachers.count()
     attended = len(attended_ids)
@@ -731,52 +744,80 @@ def admin_dashboard(request):
     on_duty = teachers.filter(id__in=duty_ids).count()
     excused_ids = leave_ids | duty_ids
     absent = teachers.exclude(id__in=attended_ids | excused_ids)
+    absent_count = absent.count()
     percentage = round((attended / total * 100), 1) if total else 0
 
-    # Statistik tujuh hari terakhir untuk graf ringkas tanpa pustaka luaran.
     weekly_stats = []
-    max_week_count = 1
     for offset in range(6, -1, -1):
-        day = today - timezone.timedelta(days=offset)
+        day = today - timedelta(days=offset)
         count = Attendance.objects.filter(date=day, check_in__isnull=False).count()
-        max_week_count = max(max_week_count, count)
-        weekly_stats.append({"date": day, "count": count})
-    for item in weekly_stats:
-        item["height"] = round((item["count"] / max_week_count) * 100)
+        rate = round((count / total * 100), 1) if total else 0
+        weekly_stats.append({"date": day, "count": count, "rate": rate, "height": max(4, round(rate)) if count else 2})
+
+    monthly_stats = []
+    for offset in range(29, -1, -1):
+        day = today - timedelta(days=offset)
+        count = Attendance.objects.filter(date=day, check_in__isnull=False).count()
+        monthly_stats.append({"label": day.strftime("%d %b"), "count": count})
+
+    checkin_minutes = []
+    for dt in records.filter(check_in__isnull=False).values_list("check_in", flat=True):
+        local_dt = timezone.localtime(dt) if timezone.is_aware(dt) else dt
+        checkin_minutes.append(local_dt.hour * 60 + local_dt.minute)
+    if checkin_minutes:
+        avg_minutes = round(sum(checkin_minutes) / len(checkin_minutes))
+        average_checkin = f"{avg_minutes // 60:02d}:{avg_minutes % 60:02d}"
+    else:
+        average_checkin = "--:--"
 
     school = SchoolSettings.load()
     today_holiday = SchoolHoliday.objects.filter(date=today, is_active=True).first()
     target_in, target_out = school.times_for_date(today)
+    attention_count = late + absent_count
+    operational_status = "Perlu perhatian" if attention_count else "Operasi normal"
 
-    return render(request, "attendance/admin_dashboard.html", {
-        "today": today,
-        "school": school,
-        "target_in": target_in,
-        "target_out": target_out,
-        "today_holiday": today_holiday,
-        "total": total,
-        "attended": attended,
-        "late": late,
-        "on_leave": on_leave,
-        "on_duty": on_duty,
-        "absent": absent,
-        "percentage": percentage,
-        "records": records,
-        "weekly_stats": weekly_stats,
+    return {
+        "today": today, "school": school, "target_in": target_in, "target_out": target_out,
+        "today_holiday": today_holiday, "total": total, "attended": attended, "late": late,
+        "on_leave": on_leave, "on_duty": on_duty, "absent": absent, "absent_count": absent_count,
+        "percentage": percentage, "records": records, "weekly_stats": weekly_stats,
+        "monthly_stats_json": json.dumps(monthly_stats), "average_checkin": average_checkin,
+        "attention_count": attention_count, "operational_status": operational_status,
         "pending_leave": LeaveRequest.objects.filter(status="MENUNGGU").count(),
         "pending_duty": OfficialDuty.objects.filter(status="MENUNGGU").count(),
         "recent_leave_requests": LeaveRequest.objects.select_related("user").filter(status="MENUNGGU")[:5],
-        "dashboard_role": role,
-        "dashboard_title": dashboard_titles.get(role, "Dashboard Pengurusan"),
+        "dashboard_role": role, "dashboard_title": dashboard_titles.get(role, "Dashboard Pengurusan"),
         "dashboard_subtitle": dashboard_subtitles.get(role, "Ringkasan sistem kehadiran sekolah."),
+        "role_focus": role_focus.get(role, "Ringkasan operasi sekolah hari ini."),
         "can_approve": role in {"GURU_BESAR", "GPK", "ADMIN", "SUPER_ADMIN"},
         "can_manage_system": role in {"ADMIN", "SUPER_ADMIN"},
         "can_reset_audit": role in {"ADMIN", "SUPER_ADMIN"},
         "is_read_only_office": role in {"KERANI", "GPK", "GURU_BESAR"},
-        "can_view_audit": role in AUDIT_VIEW_ROLES,
-        "can_manage_users": role in SYSTEM_ADMIN_ROLES,
-        "can_manage_security": role in SYSTEM_ADMIN_ROLES,
-        "can_view_map": role in MANAGEMENT_ROLES,
+        "can_view_audit": role in AUDIT_VIEW_ROLES, "can_manage_users": role in SYSTEM_ADMIN_ROLES,
+        "can_manage_security": role in SYSTEM_ADMIN_ROLES, "can_view_map": role in MANAGEMENT_ROLES,
+    }
+
+
+@role_required("GURU_BESAR", "GPK", "KERANI", "ADMIN", "SUPER_ADMIN")
+def dashboard_live_data(request):
+    """Small JSON endpoint used by the V10.5 dashboard auto-refresh."""
+    context = _enterprise_dashboard_context(request)
+    if context is None:
+        return JsonResponse({"ok": False}, status=403)
+    latest = []
+    for record in context["records"][:5]:
+        latest.append({
+            "name": record.user.get_full_name() or record.user.username,
+            "time": timezone.localtime(record.check_in).strftime("%H:%M") if record.check_in else "--:--",
+            "status": record.get_status_display(),
+            "late": record.status == "LEWAT",
+        })
+    return JsonResponse({
+        "ok": True, "total": context["total"], "attended": context["attended"],
+        "late": context["late"], "absent": context["absent_count"],
+        "percentage": context["percentage"], "average_checkin": context["average_checkin"],
+        "operational_status": context["operational_status"], "latest": latest,
+        "updated_at": timezone.localtime().strftime("%H:%M:%S"),
     })
 
 
