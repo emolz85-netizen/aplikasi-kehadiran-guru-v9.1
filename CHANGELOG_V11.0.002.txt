@@ -1,0 +1,14 @@
+eHadir Guru Enterprise — V11.0.002
+Enterprise Core Architecture
+Release date: 30 July 2026
+
+PERUBAHAN UTAMA
+1. Memperkenalkan tema rasmi Emoz Enterprise Green.
+2. Menambah Enterprise Control Center sebagai pintu masuk pentadbiran utama.
+3. Menyusun navigasi mengikut Enterprise Control, Attendance Operations, dan Insight & Governance.
+4. Menambah identiti aplikasi, sekolah dan tarikh pada header.
+5. Menyeragamkan kad, panel, butang, radius, sempadan dan bayang UI.
+6. Mengemas kini paparan License & Version kepada Build 11.0.002.
+7. Mengekalkan semua data, logo sekolah, SchoolSettings dan struktur pangkalan data sedia ada.
+
+TIADA MIGRASI PANGKALAN DATA diperlukan untuk build ini.

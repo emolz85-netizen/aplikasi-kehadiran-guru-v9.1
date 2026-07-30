@@ -1,0 +1,12 @@
+SENARAI UJIAN V11.0.002
+
+[ ] Login sebagai Super Admin / Administrator
+[ ] Dashboard memaparkan header aplikasi, sekolah dan tarikh
+[ ] Enterprise Control Center boleh dibuka dari sidebar
+[ ] Semua menu lama masih boleh dicapai
+[ ] Logo sekolah dan SchoolSettings kekal
+[ ] Dashboard guru tidak terganggu
+[ ] Paparan desktop dan telefon responsif
+[ ] Dark mode / density toggle masih berfungsi
+[ ] Laporan, audit, peta dan notifikasi boleh dibuka
+[ ] Build dipaparkan sebagai 11.0.002

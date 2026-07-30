@@ -1,0 +1,9 @@
+BUILD: 11.0.002 — Enterprise Core Architecture
+
+1. Backup build stabil dan pangkalan data.
+2. Ganti fail projek dengan kandungan ZIP ini.
+3. Commit dan push melalui GitHub Desktop.
+4. Tunggu Render auto-deploy.
+5. Jalankan ujian dalam UJIAN_V11.0.002.txt.
+
+Build ini tidak memerlukan migrasi pangkalan data baharu.

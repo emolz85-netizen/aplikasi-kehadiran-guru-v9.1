@@ -3,7 +3,7 @@
 {% block title %}{{ dashboard_title }}{% endblock %}
 {% block content %}
 <section class="v105-hero">
-  <div><span class="eyebrow">{{ USER_ROLE_LABEL|upper }} · ENTERPRISE SMART DASHBOARD</span><h1>{{ dashboard_title }}</h1><p>{{ dashboard_subtitle }}</p><small>{{ role_focus }}</small></div>
+  <div><span class="eyebrow">{{ USER_ROLE_LABEL|upper }} · ENTERPRISE CORE ARCHITECTURE</span><h1>{{ dashboard_title }}</h1><p>{{ dashboard_subtitle }}</p><small>{{ role_focus }}</small></div>
   <div class="v105-live-card"><span class="live-dot"></span><div><b id="liveStatus">Live</b><small>Dikemas kini <span id="lastUpdated">{% now "H:i:s" %}</span></small></div></div>
 </section>
 
@@ -25,7 +25,7 @@
 
 {% if can_view_enterprise_statistics %}
 <section class="v1053-enterprise-statistics">
-  <header class="v1053-section-heading"><div><span class="eyebrow">V10.5.3 · ENTERPRISE STATISTICS</span><h2>Statistik Kehadiran Enterprise</h2><p>Analisis mingguan dan bulanan untuk tindakan pengurusan.</p></div><span class="v105-chip">{{ USER_ROLE_LABEL }}</span></header>
+  <header class="v1053-section-heading"><div><span class="eyebrow">V11.0.002 · ENTERPRISE INSIGHTS</span><h2>Statistik Kehadiran Enterprise</h2><p>Analisis mingguan dan bulanan untuk tindakan pengurusan.</p></div><span class="v105-chip">{{ USER_ROLE_LABEL }}</span></header>
   <div class="v1053-stat-grid">
     <article><small>Peratus Hari Ini</small><strong>{{ percentage }}%</strong><em>{{ attended }} daripada {{ total }} guru</em></article>
     <article><small>Peratus Minggu Ini</small><strong>{{ weekly_attendance_rate }}%</strong><em class="{% if weekly_trend < 0 %}trend-down{% else %}trend-up{% endif %}">{% if weekly_trend >= 0 %}▲{% else %}▼{% endif %} {{ weekly_trend }} mata</em></article>

@@ -1,0 +1,29 @@
+/* eHadir Guru Enterprise V11.0.002 — Enterprise Core Architecture */
+:root {
+  --enterprise-950:#052e2b; --enterprise-900:#064e3b; --enterprise-800:#065f46;
+  --enterprise-700:#047857; --enterprise-600:#059669; --enterprise-500:#10b981;
+  --enterprise-100:#d1fae5; --enterprise-50:#ecfdf5; --enterprise-ink:#102a25;
+  --enterprise-muted:#64748b; --enterprise-border:#dbe7e2; --enterprise-surface:#ffffff;
+  --enterprise-shadow:0 14px 38px rgba(15,76,63,.10); --enterprise-radius:18px;
+}
+body{font-family:Inter,Poppins,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f4f8f6;color:var(--enterprise-ink)}
+.role-sidebar{background:linear-gradient(180deg,var(--enterprise-950),var(--enterprise-900));box-shadow:12px 0 35px rgba(3,46,40,.18)}
+.sidebar-brand{border-bottom:1px solid rgba(255,255,255,.12)}
+.sidebar-brand-copy strong{letter-spacing:.01em}.sidebar-brand-copy small{opacity:.76}
+.sidebar-release{display:inline-flex!important;width:max-content;margin-top:7px;padding:4px 9px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.08);font-size:10px!important;letter-spacing:.04em}
+.nav-group-title{font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.52)}
+.sidebar-nav a{border-radius:12px;margin:3px 9px;transition:background .18s ease,transform .18s ease}
+.sidebar-nav a:hover{transform:translateX(2px);background:rgba(255,255,255,.10)}
+.sidebar-nav a.active{background:linear-gradient(135deg,var(--enterprise-600),var(--enterprise-500));box-shadow:0 8px 20px rgba(16,185,129,.22)}
+.professional-header{background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--enterprise-border);box-shadow:0 5px 20px rgba(15,76,63,.05)}
+.enterprise-header-identity{display:flex;flex-direction:column;min-width:190px}.enterprise-header-identity strong{font-size:14px;color:var(--enterprise-900)}.enterprise-header-identity span{font-size:11px;color:var(--enterprise-muted)}
+.enterprise-header-date{display:flex;flex-direction:column;padding-left:18px;border-left:1px solid var(--enterprise-border)}.enterprise-header-date small{font-size:10px;color:var(--enterprise-muted);text-transform:uppercase;letter-spacing:.08em}.enterprise-header-date strong{font-size:12px;color:var(--enterprise-ink)}
+.v105-hero,.smc-hero{background:linear-gradient(135deg,var(--enterprise-950),var(--enterprise-700));border-radius:22px;box-shadow:var(--enterprise-shadow)}
+.v105-kpi,.pro-panel,.smc-overview article,.smc-module,.smc-license{border:1px solid var(--enterprise-border);border-radius:var(--enterprise-radius);box-shadow:0 8px 26px rgba(15,76,63,.06)}
+.v105-kpi:hover,.smc-module:hover{transform:translateY(-2px);box-shadow:var(--enterprise-shadow);border-color:#a7d8c8}
+.enterprise-action-grid a{border-radius:16px;border:1px solid var(--enterprise-border);transition:.18s ease}.enterprise-action-grid a:hover{transform:translateY(-2px);border-color:var(--enterprise-500);box-shadow:0 10px 24px rgba(5,150,105,.12)}
+.smc-access-badge,.v105-chip,.smc-stable{background:var(--enterprise-100);color:var(--enterprise-800);border:1px solid #a7f3d0}
+.sidebar-version{border-top:1px solid rgba(255,255,255,.12);line-height:1.45}.sidebar-version b{color:#fff}.sidebar-version span,.sidebar-version small{color:rgba(255,255,255,.68)}
+footer{font-size:11px;letter-spacing:.01em;color:#718078}
+@media(max-width:900px){.enterprise-header-date{display:none}.enterprise-header-identity{min-width:0}.enterprise-header-identity strong{font-size:12px}.enterprise-header-identity span{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+@media(max-width:560px){.enterprise-header-identity{display:none}.v105-hero,.smc-hero{border-radius:16px}}
