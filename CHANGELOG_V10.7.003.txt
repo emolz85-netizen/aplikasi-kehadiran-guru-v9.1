@@ -1,0 +1,13 @@
+eHadir Guru Enterprise V10.7.003 – Refined Login License Layout
+
+Tarikh keluaran: 30 Julai 2026
+
+Perubahan:
+- Menyusun semula maklumat lesen selepas alamat sekolah.
+- Mengasingkan Product, Developed by dan Product by kepada baris yang kemas.
+- Menambah footer rasmi hak cipta.
+- Mengekalkan reka bentuk lama bagi Kod Sekolah dan Alamat Sekolah.
+- Tidak menambah nombor telefon atau e-mel sekolah.
+- Menggunakan susunan font moden dan jarak yang lebih profesional.
+- Mengekalkan logo sekolah serta semua data SchoolSettings sedia ada.
+- Build dinaikkan kepada 10.7.003.

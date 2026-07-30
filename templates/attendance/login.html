@@ -8,8 +8,22 @@
     <span class="eyebrow">SISTEM KEHADIRAN GURU</span>
     <h1>{{ SCHOOL_NAME }}</h1>
     {% if SCHOOL.school_code %}<p class="school-code">Kod Sekolah: {{ SCHOOL.school_code }}</p>{% endif %}
-    {% if SCHOOL.address %}<p>{{ SCHOOL.address }}</p>{% else %}<p>Telupid, Sabah</p>{% endif %}
-    <div class="login-product-credit"><strong>{{ APP_PRODUCT }}</strong><span>Developed by {{ APP_DEVELOPER }}</span><small>Product by {{ APP_COMPANY }}</small></div>
+    {% if SCHOOL.address %}<p class="school-address">{{ SCHOOL.address }}</p>{% else %}<p class="school-address">Telupid, Sabah</p>{% endif %}
+
+    <section class="login-product-credit" aria-label="Maklumat pembangun dan lesen">
+      <div class="login-credit-divider" aria-hidden="true"></div>
+      <strong class="login-credit-product">{{ APP_PRODUCT }}</strong>
+      <div class="login-credit-item">
+        <span>Developed by</span>
+        <b>{{ APP_DEVELOPER }}</b>
+      </div>
+      <div class="login-credit-item">
+        <span>Product by</span>
+        <b>{{ APP_COMPANY }}</b>
+      </div>
+      <div class="login-credit-divider login-credit-divider-bottom" aria-hidden="true"></div>
+      <footer class="login-credit-footer">© 2026 {{ APP_COMPANY }}.<br>All Rights Reserved.</footer>
+    </section>
   </div>
   <section class="card login branded-login-card">
     <h2>Log Masuk</h2>

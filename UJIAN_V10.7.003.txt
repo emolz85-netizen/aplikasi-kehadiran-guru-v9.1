@@ -1,0 +1,11 @@
+UJIAN V10.7.003 – LOGIN LICENSE LAYOUT
+
+[ ] Kod Sekolah kekal menggunakan data SchoolSettings.
+[ ] Alamat Sekolah kekal menggunakan data SchoolSettings.
+[ ] Tiada nombor telefon atau e-mel sekolah dipaparkan.
+[ ] eHadir Guru Enterprise berada pada baris tersendiri.
+[ ] Developed by dan Raimol Salati tidak bercantum.
+[ ] Product by dan Emoz San Technologies tidak bercantum.
+[ ] Footer copyright dipaparkan dengan kemas.
+[ ] Logo sekolah masih dipaparkan dan tidak dipadam.
+[ ] Paparan desktop dan telefon responsif.

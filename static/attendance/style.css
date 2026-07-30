@@ -305,5 +305,16 @@ button[disabled]{opacity:.55;cursor:not-allowed}
 
 /* V10.7.002 official product licensing */
 .smc-license-copyright{margin:18px 0 0;padding-top:14px;border-top:1px solid rgba(148,163,184,.28);text-align:center;font-size:.82rem;color:#64748b}
-.login-product-credit{margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.22);display:flex;flex-direction:column;gap:4px}
-.login-product-credit strong{font-size:1rem}.login-product-credit span,.login-product-credit small{opacity:.9}
+/* V10.7.003 refined login license branding */
+.branding-panel{font-family:Inter,Poppins,"Segoe UI",Arial,sans-serif}
+.school-logo-main{object-fit:contain;image-rendering:auto;filter:drop-shadow(0 10px 22px rgba(0,0,0,.16))}
+.branding-panel .school-code,.branding-panel .school-address{margin-left:auto;margin-right:auto;max-width:520px;line-height:1.55}
+.login-product-credit{width:min(100%,520px);margin:28px auto 0;padding:0 18px 4px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:#fff}
+.login-credit-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent)}
+.login-credit-divider-bottom{margin-top:2px}
+.login-credit-product{display:block;font-size:clamp(1rem,1.4vw,1.18rem);font-weight:800;line-height:1.35;letter-spacing:.01em}
+.login-credit-item{display:flex;flex-direction:column;align-items:center;gap:3px;line-height:1.25}
+.login-credit-item span{font-size:.78rem;font-weight:500;letter-spacing:.025em;opacity:.82}
+.login-credit-item b{font-size:.95rem;font-weight:800;overflow-wrap:anywhere}
+.login-credit-footer{font-size:.74rem;line-height:1.5;opacity:.84}
+@media(max-width:760px){.login-product-credit{margin-top:22px;padding-left:8px;padding-right:8px;gap:10px}.login-credit-product{font-size:1rem}.login-credit-item b{font-size:.9rem}.login-credit-footer{font-size:.7rem}}
